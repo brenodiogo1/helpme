@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CalendarCheck, DollarSign } from "lucide-react";
+import { RevenueChart } from "@/components/RevenueChart";
+import { RecentBookings } from "@/components/RecentBookings";
 
 const Dashboard = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -46,6 +48,14 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
+      </div>
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+            <RevenueChart />
+        </div>
+        <div className="lg:col-span-3">
+            <RecentBookings />
+        </div>
       </div>
     </div>
   );
