@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar, Smile } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const cities = [
   "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Tilburg",
@@ -30,8 +31,10 @@ const Index = () => {
               placeholder="Voer je postcode in (bijv. 1012 AB)"
               className="text-black"
             />
-            <Button size="lg" className="w-full sm:w-auto">
-              <Search className="mr-2 h-4 w-4" /> Vind schoonmakers
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link to="/zoeken">
+                <Search className="mr-2 h-4 w-4" /> Vind schoonmakers
+              </Link>
             </Button>
           </div>
         </div>
