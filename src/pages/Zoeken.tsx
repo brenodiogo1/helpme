@@ -27,7 +27,7 @@ const mockSchoonmakers: Schoonmaker[] = [
     ratingCount: 92,
     hourlyRate: 17.00,
     bio: "Flexibele en hardwerkende schoonmaker beschikbaar voor wekelijkse klussen. Ik gebruik milieuvriendelijke producten en laat uw huis stralen.",
-    services: ["Reguliere schoonmak", "Milieuvriendelijk", "Huisdier-vriendelijk"],
+    services: ["Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk"],
     city: "Utrecht"
   },
   {
@@ -91,7 +91,7 @@ const Zoeken = () => {
                 </div>
             </div>
           </div>
-        aside>
+        </aside>
 
         {/* Results */}
         <main className="md:col-span-3">
