@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar, Smile } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import HomeRegistration from "@/components/HomeRegistration";
 
 const cities = [
   "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Tilburg",
@@ -9,6 +11,8 @@ const cities = [
 ];
 
 const Index = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -16,32 +20,35 @@ const Index = () => {
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop')" }}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1596733639235-365013b854a7?q=80&w=2070&auto=format&fit=crop')" }}
         ></div>
         <div className="relative z-10 p-4 container">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Vind de beste schoonmakers in jouw buurt
+            {t('hero.title')}
           </h1>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Boek een betrouwbare, gescreende schoonmaker in slechts 60 seconden.
+            {t('hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
             <Input
               type="text"
-              placeholder="Voer je postcode in (bijv. 1012 AB)"
+              placeholder={t('hero.postalCodePlaceholder')}
               className="text-black"
             />
             <Button size="lg" className="w-full sm:w-auto" asChild>
               <Link to="/zoeken">
-                <Search className="mr-2 h-4 w-4" /> Vind schoonmakers
+                <Search className="mr-2 h-4 w-4" /> {t('hero.findCleaners')}
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
+      {/* Registration Section */}
+      <HomeRegistration />
+
       {/* How It Works Section */}
-      <section id="hoe-het-werkt" className="py-16 lg:py-24 bg-secondary">
+      <section id="hoe-het-werkt" className="py-16 lg:py-24">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-2">Hoe werkt het?</h2>
           <p className="text-muted-foreground mb-12">Jouw huis schoon in 3 simpele stappen.</p>
@@ -78,7 +85,7 @@ const Index = () => {
       </section>
 
       {/* Featured Cities Section */}
-      <section className="py-16 lg:py-24">
+      <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">We zijn actief in heel Nederland</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">

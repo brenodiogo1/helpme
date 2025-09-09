@@ -2,8 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const Header = () => {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -13,8 +17,8 @@ const Header = () => {
             <span className="hidden font-bold sm:inline-block">CleanNL</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link to="/#hoe-het-werkt">Hoe het werkt</Link>
-            <Link to="/voor-schoonmakers">Voor schoonmakers</Link>
+            <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
+            <Link to="/voor-schoonmakers">{t('header.forCleaners')}</Link>
           </nav>
         </div>
 
@@ -35,20 +39,23 @@ const Header = () => {
                     <Sparkles className="h-6 w-6 text-primary" />
                     <span>CleanNL</span>
                   </Link>
-                  <Link to="/#hoe-het-werkt">Hoe het werkt</Link>
-                  <Link to="/voor-schoonmakers">Voor schoonmakers</Link>
+                  <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
+                  <Link to="/voor-schoonmakers">{t('header.forCleaners')}</Link>
                 </nav>
               </SheetContent>
             </Sheet>
           </div>
-          <nav className="flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link to="/inloggen">Inloggen</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/registreren">Registreren</Link>
-            </Button>
-          </nav>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <nav className="hidden sm:flex items-center gap-2">
+              <Button variant="ghost" asChild>
+                <Link to="/inloggen">{t('header.login')}</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/registreren">{t('header.register')}</Link>
+              </Button>
+            </nav>
+          </div>
         </div>
       </div>
     </header>
