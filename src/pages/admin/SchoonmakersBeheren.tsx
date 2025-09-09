@@ -1,0 +1,76 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Schoonmaker } from "@/types";
+import { MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const mockSchoonmakers: Schoonmaker[] = [
+    { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam" },
+    { id: "2", name: "Ben Janssen", photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.8, ratingCount: 92, hourlyRate: 17.00, bio: "...", services: [], city: "Utrecht" },
+    { id: "3", name: "Carla Bakker", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", ratingAvg: 5.0, ratingCount: 210, hourlyRate: 20.00, bio: "...", services: [], city: "Rotterdam" },
+];
+
+const SchoonmakersBeheren = () => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Schoonmakers</CardTitle>
+        <CardDescription>
+          Beheer de schoonmakers op het platform.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Naam</TableHead>
+              <TableHead>Stad</TableHead>
+              <TableHead>Uurtarief</TableHead>
+              <TableHead>Beoordeling</TableHead>
+              <TableHead>
+                <span className="sr-only">Acties</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {mockSchoonmakers.map((schoonmaker) => (
+              <TableRow key={schoonmaker.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="hidden h-9 w-9 sm:flex">
+                      <AvatarImage src={schoonmaker.photoUrl} alt={schoonmaker.name} />
+                      <AvatarFallback>{schoonmaker.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {schoonmaker.name}
+                  </div>
+                </TableCell>
+                <TableCell>{schoonmaker.city}</TableCell>
+                <TableCell>€{schoonmaker.hourlyRate.toFixed(2)}</TableCell>
+                <TableCell>{schoonmaker.ratingAvg.toFixed(1)} ({schoonmaker.ratingCount})</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Acties</DropdownMenuLabel>
+                      <DropdownMenuItem>Bewerken</DropdownMenuItem>
+                      <DropdownMenuItem>Verwijderen</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default SchoonmakersBeheren;

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -11,6 +11,12 @@ import SchoonmakerProfiel from "./pages/SchoonmakerProfiel";
 import Boeken from "./pages/Boeken";
 import Bevestiging from "./pages/Bevestiging";
 import VoorSchoonmakers from "./pages/VoorSchoonmakers";
+import Login from "./pages/Login";
+import Registreren from "./pages/Registreren";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import SchoonmakersBeheren from "./pages/admin/SchoonmakersBeheren";
+import BoekingenBeheren from "./pages/admin/BoekingenBeheren";
 
 const queryClient = new QueryClient();
 
@@ -20,18 +26,42 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            element={
+              <Layout>
+                <Outlet />
+              </Layout>
+            }
+          >
             <Route path="/" element={<Index />} />
             <Route path="/zoeken" element={<Zoeken />} />
             <Route path="/schoonmaker/:id" element={<SchoonmakerProfiel />} />
             <Route path="/boeken/:id" element={<Boeken />} />
             <Route path="/bevestiging" element={<Bevestiging />} />
             <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+            <Route path="/login" element={<Login />} />
+            <Route path="/registreren" element={<Registreren />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
+            <Route path="boekingen" element={<BoekingenBeheren />} />
+          </Route>
+
+          {/* Catch-all Route */}
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <NotFound />
+              </Layout>
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

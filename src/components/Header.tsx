@@ -41,12 +41,20 @@ const Header = () => {
                   </Link>
                   <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
                   <Link to="/voor-schoonmakers">{t('header.forCleaners')}</Link>
+                  <Link to="/login">Inloggen</Link>
+                  <Link to="/registreren">Aanmelden</Link>
                 </nav>
               </SheetContent>
             </Sheet>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <LanguageSwitcher />
+            <Button variant="ghost" asChild>
+              <Link to="/login">Inloggen</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/registreren">Aanmelden</Link>
+            </Button>
           </div>
         </div>
       </div>
