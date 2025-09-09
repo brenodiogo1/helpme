@@ -15,8 +15,13 @@ const VoorSchoonmakers = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-primary text-primary-foreground">
-        <div className="container text-center py-20 lg:py-32">
+      <section className="relative text-white">
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop')" }}
+        ></div>
+        <div className="relative z-10 container text-center py-20 lg:py-32">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             Word schoonmaker bij CleanNL
           </h1>

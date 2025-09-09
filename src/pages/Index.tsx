@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Calendar, Smile } from "lucide-react";
+import { Search, MapPin, Calendar, Smile, ShieldCheck, Star, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const cities = [
   "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Tilburg",
@@ -80,14 +81,57 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Cities Section */}
+      {/* Why Choose Us Section */}
       <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor CleanNL?</h2>
+          <p className="text-muted-foreground mb-12">Jouw tevredenheid is onze prioriteit.</p>
+          <div className="grid md:grid-cols-3 gap-8 text-left">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+                <CardTitle>Betrouwbaar & Gescreend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Elke schoonmaker op ons platform is zorgvuldig gescreend en beoordeeld.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <Star className="h-8 w-8 text-primary" />
+                <CardTitle>Topkwaliteit Gegarandeerd</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <Clock className="h-8 w-8 text-primary" />
+                <CardTitle>Flexibel & Eenvoudig</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Cities Section */}
+      <section className="py-16 lg:py-24">
+        <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">We zijn actief in heel Nederland</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             {cities.map((city) => (
-              <Button key={city} variant="outline" className="w-full">
-                {city}
+              <Button key={city} variant="outline" asChild>
+                <Link to="/zoeken">{city}</Link>
               </Button>
             ))}
           </div>

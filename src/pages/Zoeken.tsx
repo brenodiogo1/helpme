@@ -11,7 +11,7 @@ const mockSchoonmakers: Schoonmaker[] = [
   {
     id: "1",
     name: "Anna de Vries",
-    photoUrl: "https://i.pravatar.cc/150?img=1",
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
     ratingAvg: 4.9,
     ratingCount: 128,
     hourlyRate: 18.50,
@@ -22,7 +22,7 @@ const mockSchoonmakers: Schoonmaker[] = [
   {
     id: "2",
     name: "Ben Janssen",
-    photoUrl: "https://i.pravatar.cc/150?img=2",
+    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop",
     ratingAvg: 4.8,
     ratingCount: 92,
     hourlyRate: 17.00,
@@ -33,7 +33,7 @@ const mockSchoonmakers: Schoonmaker[] = [
   {
     id: "3",
     name: "Carla Bakker",
-    photoUrl: "https://i.pravatar.cc/150?img=3",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
     ratingAvg: 5.0,
     ratingCount: 210,
     hourlyRate: 20.00,

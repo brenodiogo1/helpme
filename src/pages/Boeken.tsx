@@ -15,7 +15,7 @@ import { showLoading, showSuccess, dismissToast } from "@/utils/toast";
 const mockSchoonmaker: Schoonmaker = {
     id: "1",
     name: "Anna de Vries",
-    photoUrl: "https://i.pravatar.cc/150?img=1",
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
     ratingAvg: 4.9,
     ratingCount: 128,
     hourlyRate: 18.50,
