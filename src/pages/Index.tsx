@@ -21,30 +21,32 @@ const Index = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-[60vh] flex items-center justify-center text-center text-white">
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+      <section className="relative">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/hero-image.png')" }}
         ></div>
-        <div className="relative z-10 p-4 container">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {t('hero.title')}
-          </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            {t('hero.subtitle')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <Input
-              type="text"
-              placeholder={t('hero.postalCodePlaceholder')}
-              className="text-black"
-            />
-            <Button size="lg" className="w-full sm:w-auto" asChild>
-              <Link to="/zoeken">
-                <Search className="mr-2 h-4 w-4" /> {t('hero.findCleaners')}
-              </Link>
-            </Button>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10 md:from-black/70 md:via-black/30 md:to-transparent"></div>
+        <div className="relative container mx-auto px-4 py-24 sm:py-32 md:py-48 text-white">
+          <div className="md:w-1/2 lg:w-2/3 text-center md:text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+              {t('hero.title')}
+            </h1>
+            <p className="text-lg md:text-xl mb-8 max-w-xl mx-auto md:mx-0">
+              {t('hero.subtitle')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto md:mx-0">
+              <Input
+                type="text"
+                placeholder={t('hero.postalCodePlaceholder')}
+                className="text-black"
+              />
+              <Button size="lg" className="w-full sm:w-auto" asChild>
+                <Link to="/zoeken">
+                  <Search className="mr-2 h-4 w-4" /> {t('hero.findCleaners')}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
