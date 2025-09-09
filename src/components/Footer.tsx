@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -40,8 +39,8 @@ const Footer = () => {
         </div>
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span>© {new Date().getFullYear()} HelpMe. Alle rechten voorbehouden.</span>
+            <img src="/logo.png" alt="HelpMe Logo" className="h-8" />
+            <span>© {new Date().getFullYear()}. Alle rechten voorbehouden.</span>
           </div>
         </div>
       </div>

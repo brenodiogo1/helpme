@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { showSuccess } from "@/utils/toast";
 
@@ -38,7 +37,7 @@ const RegistrerenKlant = () => {
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <Sparkles className="h-8 w-8 mx-auto text-primary" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-12 mx-auto" />
           <CardTitle className="text-2xl mt-2">Account aanmaken (Klant)</CardTitle>
           <CardDescription>
             Voer je gegevens in om de beste schoonmakers te vinden.

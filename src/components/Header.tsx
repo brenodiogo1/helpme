@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Sparkles } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -12,9 +12,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
-          <Link to="/" className="mr-6 flex items-center space-x-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">HelpMe</span>
+          <Link to="/" className="mr-6 flex items-center">
+            <img src="/logo.png" alt="HelpMe Logo" className="h-10" />
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
@@ -36,8 +35,7 @@ const Header = () => {
                     to="/"
                     className="flex items-center gap-2 text-lg font-semibold"
                   >
-                    <Sparkles className="h-6 w-6 text-primary" />
-                    <span>HelpMe</span>
+                    <img src="/logo.png" alt="HelpMe Logo" className="h-10" />
                   </Link>
                   <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
                   <Link to="/voor-schoonmakers">{t('header.forCleaners')}</Link>
