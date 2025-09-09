@@ -47,14 +47,6 @@ const Header = () => {
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <nav className="hidden sm:flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link to="/inloggen">{t('header.login')}</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/registreren">{t('header.register')}</Link>
-              </Button>
-            </nav>
           </div>
         </div>
       </div>

@@ -1,28 +1,12 @@
 {
   "header": {
     "howItWorks": "Hoe het werkt",
-    "forCleaners": "Voor schoonmakers",
-    "login": "Inloggen",
-    "register": "Registreren"
+    "forCleaners": "Voor schoonmakers"
   },
   "hero": {
     "title": "Vind de beste schoonmakers in jouw buurt",
     "subtitle": "Boek een betrouwbare, gescreende schoonmaker in slechts 60 seconden.",
     "postalCodePlaceholder": "Voer je postcode in (bijv. 1012 AB)",
     "findCleaners": "Vind schoonmakers"
-  },
-  "homeRegistration": {
-    "title": "Nog geen account? Registreer nu!",
-    "customerTab": "Ik zoek een schoonmaker",
-    "cleanerTab": "Ik ben een schoonmaker",
-    "customerCardTitle": "Maak een klantaccount aan",
-    "customerCardDescription": "Vind en boek de beste schoonmakers in enkele minuten.",
-    "cleanerCardTitle": "Word schoonmaker bij CleanNL",
-    "cleanerCardDescription": "Verdien geld op je eigen voorwaarden.",
-    "nameLabel": "Naam",
-    "emailLabel": "E-mailadres",
-    "passwordLabel": "Wachtwoord",
-    "registerAsCustomer": "Registreer als klant",
-    "registerAsCleaner": "Meld je aan als schoonmaker"
   }
 }

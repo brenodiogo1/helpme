@@ -11,8 +11,6 @@ import SchoonmakerProfiel from "./pages/SchoonmakerProfiel";
 import Boeken from "./pages/Boeken";
 import Bevestiging from "./pages/Bevestiging";
 import VoorSchoonmakers from "./pages/VoorSchoonmakers";
-import Login from "./pages/Login";
-import Registreren from "./pages/Registreren";
 
 const queryClient = new QueryClient();
 
@@ -30,8 +28,6 @@ const App = () => (
             <Route path="/boeken/:id" element={<Boeken />} />
             <Route path="/bevestiging" element={<Bevestiging />} />
             <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
-            <Route path="/inloggen" element={<Login />} />
-            <Route path="/registreren" element={<Registreren />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

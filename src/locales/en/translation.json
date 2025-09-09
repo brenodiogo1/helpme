@@ -1,28 +1,12 @@
 {
   "header": {
     "howItWorks": "How it works",
-    "forCleaners": "For cleaners",
-    "login": "Log in",
-    "register": "Sign up"
+    "forCleaners": "For cleaners"
   },
   "hero": {
     "title": "Find the best cleaners in your area",
     "subtitle": "Book a reliable, screened cleaner in just 60 seconds.",
     "postalCodePlaceholder": "Enter your postal code (e.g. 1012 AB)",
     "findCleaners": "Find cleaners"
-  },
-  "homeRegistration": {
-    "title": "No account yet? Register now!",
-    "customerTab": "I'm looking for a cleaner",
-    "cleanerTab": "I am a cleaner",
-    "customerCardTitle": "Create a customer account",
-    "customerCardDescription": "Find and book the best cleaners in minutes.",
-    "cleanerCardTitle": "Become a cleaner at CleanNL",
-    "cleanerCardDescription": "Earn money on your own terms.",
-    "nameLabel": "Name",
-    "emailLabel": "Email address",
-    "passwordLabel": "Password",
-    "registerAsCustomer": "Register as customer",
-    "registerAsCleaner": "Sign up as a cleaner"
   }
 }

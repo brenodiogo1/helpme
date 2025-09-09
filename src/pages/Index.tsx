@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar, Smile } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import HomeRegistration from "@/components/HomeRegistration";
 
 const cities = [
   "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Tilburg",
@@ -43,9 +42,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Registration Section */}
-      <HomeRegistration />
 
       {/* How It Works Section */}
       <section id="hoe-het-werkt" className="py-16 lg:py-24">
