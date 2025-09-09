@@ -3,21 +3,23 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Layout from "./components/Layout";
-import Zoeken from "./pages/Zoeken";
-import SchoonmakerProfiel from "./pages/SchoonmakerProfiel";
-import Boeken from "./pages/Boeken";
-import Bevestiging from "./pages/Bevestiging";
-import VoorSchoonmakers from "./pages/VoorSchoonmakers";
-import Login from "./pages/Login";
-import Registreren from "./pages/Registreren";
-import AdminLayout from "./pages/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import SchoonmakersBeheren from "./pages/admin/SchoonmakersBeheren";
-import BoekingenBeheren from "./pages/admin/BoekingenBeheren";
-import SchoonmakerForm from "./pages/admin/SchoonmakerForm";
+import Index from "@/pages/Index";
+import NotFound from "@/pages/NotFound";
+import Layout from "@/components/Layout";
+import Zoeken from "@/pages/Zoeken";
+import SchoonmakerProfiel from "@/pages/SchoonmakerProfiel";
+import Boeken from "@/pages/Boeken";
+import Bevestiging from "@/pages/Bevestiging";
+import VoorSchoonmakers from "@/pages/VoorSchoonmakers";
+import Login from "@/pages/Login";
+import Registreren from "@/pages/Registreren";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import Dashboard from "@/pages/admin/Dashboard";
+import SchoonmakersBeheren from "@/pages/admin/SchoonmakersBeheren";
+import BoekingenBeheren from "@/pages/admin/BoekingenBeheren";
+import SchoonmakerForm from "@/pages/admin/SchoonmakerForm";
+import CleanerLayout from "@/pages/cleaner/CleanerLayout";
+import CleanerDashboard from "@/pages/cleaner/CleanerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +46,11 @@ const App = () => (
             <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registreren" element={<Registreren />} />
+          </Route>
+
+          {/* Cleaner Dashboard Routes */}
+          <Route path="/dashboard" element={<CleanerLayout />}>
+            <Route index element={<CleanerDashboard />} />
           </Route>
 
           {/* Admin Routes */}
