@@ -28,6 +28,16 @@ import CustomerBookings from "@/pages/customer/CustomerBookings";
 import CustomerProfile from "@/pages/customer/CustomerProfile";
 import RegistrerenKlant from "@/pages/RegistrerenKlant";
 import RegistrerenSchoonmaker from "@/pages/RegistrerenSchoonmaker";
+import CustomersBeheren from "./pages/admin/CustomersBeheren";
+import SubscriptionsBeheren from "./pages/admin/SubscriptionsBeheren";
+import AdminSettings from "./pages/admin/AdminSettings";
+import CleanerAvailability from "./pages/cleaner/CleanerAvailability";
+import CleanerEarnings from "./pages/cleaner/CleanerEarnings";
+import CleanerSubscription from "./pages/cleaner/CleanerSubscription";
+import CleanerSettings from "./pages/cleaner/CleanerSettings";
+import CustomerPayment from "./pages/customer/CustomerPayment";
+import CustomerAddresses from "./pages/customer/CustomerAddresses";
+import CustomerSettings from "./pages/customer/CustomerSettings";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +73,10 @@ const App = () => (
             <Route index element={<CleanerDashboard />} />
             <Route path="boekingen" element={<MijnBoekingen />} />
             <Route path="profiel" element={<CleanerProfiel />} />
+            <Route path="beschikbaarheid" element={<CleanerAvailability />} />
+            <Route path="inkomsten" element={<CleanerEarnings />} />
+            <Route path="abonnement" element={<CleanerSubscription />} />
+            <Route path="instellingen" element={<CleanerSettings />} />
           </Route>
 
           {/* Customer Account Routes */}
@@ -70,6 +84,9 @@ const App = () => (
             <Route index element={<CustomerDashboard />} />
             <Route path="boekingen" element={<CustomerBookings />} />
             <Route path="profiel" element={<CustomerProfile />} />
+            <Route path="betaalmethoden" element={<CustomerPayment />} />
+            <Route path="adressen" element={<CustomerAddresses />} />
+            <Route path="instellingen" element={<CustomerSettings />} />
           </Route>
 
           {/* Admin Routes */}
@@ -78,7 +95,10 @@ const App = () => (
             <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
             <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
             <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
+            <Route path="klanten" element={<CustomersBeheren />} />
             <Route path="boekingen" element={<BoekingenBeheren />} />
+            <Route path="abonnementen" element={<SubscriptionsBeheren />} />
+            <Route path="instellingen" element={<AdminSettings />} />
           </Route>
 
           {/* Catch-all Route */}

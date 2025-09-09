@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Settings } from "lucide-react";
+import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +37,26 @@ const CleanerSidebar = () => {
               Mijn Boekingen
             </Link>
             <Link
+              to="/dashboard/beschikbaarheid"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/dashboard/beschikbaarheid") && "bg-muted text-primary"
+              )}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Beschikbaarheid
+            </Link>
+            <Link
+              to="/dashboard/inkomsten"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/dashboard/inkomsten") && "bg-muted text-primary"
+              )}
+            >
+              <Wallet className="h-4 w-4" />
+              Inkomsten
+            </Link>
+            <Link
               to="/dashboard/profiel"
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -45,6 +65,16 @@ const CleanerSidebar = () => {
             >
               <User className="h-4 w-4" />
               Mijn Profiel
+            </Link>
+            <Link
+              to="/dashboard/abonnement"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/dashboard/abonnement") && "bg-muted text-primary"
+              )}
+            >
+              <Star className="h-4 w-4" />
+              Pro Abonnement
             </Link>
             <Link
               to="/dashboard/instellingen"
