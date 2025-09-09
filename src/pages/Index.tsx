@@ -9,12 +9,12 @@ import ReviewCard from "@/components/ReviewCard";
 import { Review } from "@/types";
 
 const cities = [
-  { name: "Amsterdam", image: "https://images.unsplash.com/photo-1581287053822-fd7bf4f4bf38?q=80&w=800&auto=format&fit=crop" },
-  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1559653435-552751c23678?q=80&w=800&auto=format&fit=crop" },
-  { name: "Den Haag", image: "https://images.unsplash.com/photo-1618553681509-926200357038?q=80&w=800&auto=format&fit=crop" },
-  { name: "Utrecht", image: "https://images.unsplash.com/photo-1598610942257-9a1910a1654b?q=80&w=800&auto=format&fit=crop" },
-  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1589612229833-b558c4554959?q=80&w=800&auto=format&fit=crop" },
-  { name: "Groningen", image: "https://images.unsplash.com/photo-1572949029855-834e5b5b3a40?q=80&w=800&auto=format&fit=crop" },
+  { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?q=80&w=800&auto=format&fit=crop" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1564426827992-ea858a7acb6a?q=80&w=800&auto=format&fit=crop" },
+  { name: "Den Haag", image: "https://images.unsplash.com/photo-1584999323121-892a295a545c?q=80&w=800&auto=format&fit=crop" },
+  { name: "Utrecht", image: "https://images.unsplash.com/photo-1561042236-5593b754aa58?q=80&w=800&auto=format&fit=crop" },
+  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1630598377393-9a23c953951a?q=80&w=800&auto=format&fit=crop" },
+  { name: "Groningen", image: "https://images.unsplash.com/photo-1627899028693-716597021553?q=80&w=800&auto=format&fit=crop" },
 ];
 
 const mockReviews: Review[] = [
