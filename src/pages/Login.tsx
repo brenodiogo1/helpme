@@ -1,11 +1,37 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { showSuccess } from "@/utils/toast";
+
+const formSchema = z.object({
+  email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
+  password: z.string().min(1, { message: "Wachtwoord is verplicht." }),
+});
 
 const Login = () => {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // In een echte app zou je hier de gebruiker authenticeren.
+    console.log(values);
+    showSuccess("Je bent succesvol ingelogd! (Simulatie)");
+  }
+
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
@@ -17,32 +43,47 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="naam@voorbeeld.com"
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input placeholder="naam@voorbeeld.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Wachtwoord</Label>
-                <Link
-                  to="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Wachtwoord vergeten?
-                </Link>
-              </div>
-              <Input id="password" type="password" required />
-            </div>
-            <Button type="submit" className="w-full">
-              Inloggen
-            </Button>
-          </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center">
+                      <FormLabel>Wachtwoord</FormLabel>
+                      <Link
+                        to="#"
+                        className="ml-auto inline-block text-sm underline"
+                      >
+                        Wachtwoord vergeten?
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full">
+                Inloggen
+              </Button>
+            </form>
+          </Form>
           <div className="mt-4 text-center text-sm">
             Nog geen account?{" "}
             <Link to="/registreren" className="underline">
