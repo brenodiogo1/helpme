@@ -1,3 +1,11 @@
+export interface Review {
+  id: string;
+  author: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
 export interface Schoonmaker {
   id: string;
   name: string;
@@ -8,4 +16,5 @@ export interface Schoonmaker {
   bio: string;
   services: string[];
   city: string;
+  reviews?: Review[];
 }

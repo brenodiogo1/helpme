@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Schoonmaker } from "@/types";
 import { Badge } from "./ui/badge";
+import { Link } from "react-router-dom";
 
 interface SchoonmakerCardProps {
   schoonmaker: Schoonmaker;
@@ -39,7 +40,9 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
           €{schoonmaker.hourlyRate.toFixed(2)}
           <span className="text-sm font-normal text-muted-foreground"> / uur</span>
         </div>
-        <Button>Bekijk profiel</Button>
+        <Button asChild>
+          <Link to={`/schoonmaker/${schoonmaker.id}`}>Bekijk profiel</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
