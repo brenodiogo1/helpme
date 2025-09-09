@@ -20,6 +20,12 @@ import BoekingenBeheren from "@/pages/admin/BoekingenBeheren";
 import SchoonmakerForm from "@/pages/admin/SchoonmakerForm";
 import CleanerLayout from "@/pages/cleaner/CleanerLayout";
 import CleanerDashboard from "@/pages/cleaner/CleanerDashboard";
+import MijnBoekingen from "@/pages/cleaner/MijnBoekingen";
+import CleanerProfiel from "@/pages/cleaner/CleanerProfiel";
+import CustomerLayout from "@/pages/customer/CustomerLayout";
+import CustomerDashboard from "@/pages/customer/CustomerDashboard";
+import CustomerBookings from "@/pages/customer/CustomerBookings";
+import CustomerProfile from "@/pages/customer/CustomerProfile";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +57,15 @@ const App = () => (
           {/* Cleaner Dashboard Routes */}
           <Route path="/dashboard" element={<CleanerLayout />}>
             <Route index element={<CleanerDashboard />} />
+            <Route path="boekingen" element={<MijnBoekingen />} />
+            <Route path="profiel" element={<CleanerProfiel />} />
+          </Route>
+
+          {/* Customer Account Routes */}
+          <Route path="/account" element={<CustomerLayout />}>
+            <Route index element={<CustomerDashboard />} />
+            <Route path="boekingen" element={<CustomerBookings />} />
+            <Route path="profiel" element={<CustomerProfile />} />
           </Route>
 
           {/* Admin Routes */}
