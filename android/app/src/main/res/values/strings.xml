@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">whispering-ferret-bloom</string>
+    <string name="title_activity_main">whispering-ferret-bloom</string>
+    <string name="package_name">com.example.whisperingferretbloom</string>
+    <string name="custom_url_scheme">com.example.whisperingferretbloom</string>
+</resources>
