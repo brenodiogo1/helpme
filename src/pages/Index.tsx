@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Calendar, Smile, ShieldCheck, Star, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, MapPin, Calendar as CalendarIcon, Smile, ShieldCheck, Star, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import ReviewCard from "@/components/ReviewCard";
 import { Review } from "@/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?q=80&w=800&auto=format&fit=crop" },
@@ -28,6 +35,18 @@ const mockReviews: Review[] = [
 
 const Index = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [postcode, setPostcode] = useState("");
+  const [date, setDate] = useState<Date | undefined>();
+  const [time, setTime] = useState<string | undefined>();
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (postcode) params.append("postcode", postcode);
+    if (date) params.append("date", date.toISOString().split('T')[0]);
+    if (time) params.append("time", time);
+    navigate(`/zoeken?${params.toString()}`);
+  };
 
   return (
     <div className="flex flex-col">
@@ -46,16 +65,43 @@ const Index = () => {
             <p className="text-lg md:text-xl mb-8 max-w-xl mx-auto md:mx-0">
               {t('hero.subtitle')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto md:mx-0">
-              <Input
-                type="text"
-                placeholder={t('hero.postalCodePlaceholder')}
-                className="text-black"
-              />
-              <Button size="lg" className="w-full sm:w-auto" asChild>
-                <Link to="/zoeken">
-                  <Search className="mr-2 h-4 w-4" /> {t('hero.findCleaners')}
-                </Link>
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 items-center">
+                <Input
+                  type="text"
+                  placeholder={t('hero.postalCodePlaceholder')}
+                  className="text-black"
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value)}
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal text-black">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "dd-MM-yyyy") : <span>Kies een datum</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Select onValueChange={setTime} value={time}>
+                  <SelectTrigger className="text-black">
+                    <SelectValue placeholder="Kies een tijd" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="lg" className="w-full mt-2" onClick={handleSearch}>
+                <Search className="mr-2 h-4 w-4" /> {t('hero.findCleaners')}
               </Button>
             </div>
           </div>
@@ -79,7 +125,7 @@ const Index = () => {
             </div>
             <div className="flex flex-col items-center">
               <div className="bg-primary text-primary-foreground rounded-full p-4 mb-4">
-                <Calendar className="h-8 w-8" />
+                <CalendarIcon className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-semibold mb-2">2. Kies een datum</h3>
               <p className="text-muted-foreground">
