@@ -6,11 +6,10 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
-import { showSuccess } from "@/utils/toast";
+import { Link, useNavigate } from "react-router-dom";
+import { showSuccess, showError } from "@/utils/toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -18,6 +17,7 @@ const formSchema = z.object({
 });
 
 const Login = () => {
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -27,9 +27,30 @@ const Login = () => {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // In een echte app zou je hier de gebruiker authenticeren.
-    console.log(values);
-    showSuccess("Je bent succesvol ingelogd! (Simulatie)");
+    const { email, password } = values;
+
+    // Admin user
+    if (email === "admin@helpme.com" && password === "admin123") {
+      showSuccess("Succesvol ingelogd als admin!");
+      navigate("/admin");
+      return;
+    }
+
+    // Cleaner user
+    if (email === "schoonmaker@helpme.com" && password === "schoonmaker123") {
+      showSuccess("Succesvol ingelogd als schoonmaker!");
+      navigate("/dashboard");
+      return;
+    }
+
+    // Customer user
+    if (email === "klant@helpme.com" && password === "klant123") {
+      showSuccess("Succesvol ingelogd!");
+      navigate("/account");
+      return;
+    }
+
+    showError("Ongeldige e-mail of wachtwoord.");
   }
 
   return (
@@ -39,7 +60,7 @@ const Login = () => {
           <Sparkles className="h-8 w-8 mx-auto text-primary" />
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
-            Voer je e-mailadres in om in te loggen op je account
+            Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -89,6 +110,11 @@ const Login = () => {
             <Link to="/registreren" className="underline">
               Aanmelden
             </Link>
+          </div>
+          <div className="mt-6 text-xs text-muted-foreground text-center space-y-1 border-t pt-4">
+            <p><strong>Admin:</strong> admin@helpme.com / admin123</p>
+            <p><strong>Schoonmaker:</strong> schoonmaker@helpme.com / schoonmaker123</p>
+            <p><strong>Klant:</strong> klant@helpme.com / klant123</p>
           </div>
         </CardContent>
       </Card>
