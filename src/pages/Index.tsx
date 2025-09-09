@@ -17,11 +17,11 @@ const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?q=80&w=800&auto=format&fit=crop" },
-  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1564426827992-ea858a7acb6a?q=80&w=800&auto=format&fit=crop" },
-  { name: "Den Haag", image: "https://images.unsplash.com/photo-1584999323121-892a295a545c?q=80&w=800&auto=format&fit=crop" },
-  { name: "Utrecht", image: "https://images.unsplash.com/photo-1561042236-5593b754aa58?q=80&w=800&auto=format&fit=crop" },
-  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1630598377393-9a23c953951a?q=80&w=800&auto=format&fit=crop" },
-  { name: "Groningen", image: "https://images.unsplash.com/photo-1627899028693-716597021553?q=80&w=800&auto=format&fit=crop" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1594864853236-818a086d5202?q=80&w=800&auto=format&fit=crop" },
+  { name: "Den Haag", image: "https://images.unsplash.com/photo-1618897554035-43c6f5665131?q=80&w=800&auto=format&fit=crop" },
+  { name: "Utrecht", image: "https://images.unsplash.com/photo-1594781539462-393b7f6e1886?q=80&w=800&auto=format&fit=crop" },
+  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1579253498-243080170428?q=80&w=800&auto=format&fit=crop" },
+  { name: "Groningen", image: "https://images.unsplash.com/photo-1570164742218-8a8a5f00a633?q=80&w=800&auto=format&fit=crop" },
 ];
 
 const mockReviews: Review[] = [
