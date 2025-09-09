@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { showLoading, showSuccess, dismissToast } from "@/utils/toast";
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -33,10 +34,12 @@ const extraServices = [
 const Boeken = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
     const { date, time } = location.state || {};
 
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
 
@@ -54,6 +57,26 @@ const Boeken = () => {
                 ? prev.filter(id => id !== serviceId) 
                 : [...prev, serviceId]
         );
+    };
+
+    const handleConfirmBooking = () => {
+        setIsProcessing(true);
+        const toastId = showLoading("Betaling verwerken...");
+
+        setTimeout(() => {
+            dismissToast(toastId);
+            showSuccess("Betaling geslaagd!");
+
+            const bookingDetails = {
+                schoonmaker,
+                date,
+                time,
+                hours,
+                totalPrice,
+            };
+
+            navigate("/bevestiging", { state: { bookingDetails } });
+        }, 2000);
     };
 
     if (!date || !time) {
@@ -81,11 +104,11 @@ const Boeken = () => {
                     <div>
                         <Label className="font-semibold">Hoeveel uur?</Label>
                         <div className="flex items-center gap-4 mt-2">
-                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.max(2, h - 1))}>
+                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.max(2, h - 1))} disabled={isProcessing}>
                                 <Minus className="h-4 w-4" />
                             </Button>
                             <span className="text-lg font-bold w-12 text-center">{hours} uur</span>
-                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.min(8, h + 1))}>
+                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.min(8, h + 1))} disabled={isProcessing}>
                                 <Plus className="h-4 w-4" />
                             </Button>
                         </div>
@@ -98,6 +121,7 @@ const Boeken = () => {
                                     <Checkbox 
                                         id={service.id} 
                                         onCheckedChange={() => handleServiceChange(service.id)}
+                                        disabled={isProcessing}
                                     />
                                     <Label htmlFor={service.id} className="flex justify-between w-full">
                                         <span>{service.label}</span>
@@ -133,7 +157,9 @@ const Boeken = () => {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button size="lg" className="w-full">Nu betalen en bevestigen</Button>
+                    <Button size="lg" className="w-full" onClick={handleConfirmBooking} disabled={isProcessing}>
+                        {isProcessing ? "Verwerken..." : "Nu betalen en bevestigen"}
+                    </Button>
                 </CardFooter>
             </Card>
         </div>
