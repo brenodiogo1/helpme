@@ -4,10 +4,15 @@ import { Search, MapPin, Calendar, Smile, ShieldCheck, Star, Clock } from "lucid
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const cities = [
-  "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Tilburg",
-  "Groningen", "Almere", "Breda", "Nijmegen",
+  { name: "Amsterdam", image: "https://images.unsplash.com/photo-1581287053822-fd7bf4f4bf38?q=80&w=800&auto=format&fit=crop" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1559653435-552751c23678?q=80&w=800&auto=format&fit=crop" },
+  { name: "Den Haag", image: "https://images.unsplash.com/photo-1618553681509-926200357038?q=80&w=800&auto=format&fit=crop" },
+  { name: "Utrecht", image: "https://images.unsplash.com/photo-1598610942257-9a1910a1654b?q=80&w=800&auto=format&fit=crop" },
+  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1589612229833-b558c4554959?q=80&w=800&auto=format&fit=crop" },
+  { name: "Groningen", image: "https://images.unsplash.com/photo-1572949029855-834e5b5b3a40?q=80&w=800&auto=format&fit=crop" },
 ];
 
 const Index = () => {
@@ -128,11 +133,18 @@ const Index = () => {
       <section className="py-16 lg:py-24">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">We zijn actief in heel Nederland</h2>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {cities.map((city) => (
-              <Button key={city} variant="outline" asChild>
-                <Link to="/zoeken">{city}</Link>
-              </Button>
+              <Link to="/zoeken" key={city.name} className="group relative">
+                <Card className="overflow-hidden">
+                  <AspectRatio ratio={16 / 9}>
+                    <img src={city.image} alt={city.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                  </AspectRatio>
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <h3 className="text-2xl font-bold text-white">{city.name}</h3>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
