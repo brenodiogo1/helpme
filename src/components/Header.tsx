@@ -14,7 +14,7 @@ const Header = () => {
         <div className="mr-4 hidden md:flex">
           <Link to="/" className="mr-6 flex items-center space-x-2">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">CleanNL</span>
+            <span className="hidden font-bold sm:inline-block">HelpMe</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
@@ -37,7 +37,7 @@ const Header = () => {
                     className="flex items-center gap-2 text-lg font-semibold"
                   >
                     <Sparkles className="h-6 w-6 text-primary" />
-                    <span>CleanNL</span>
+                    <span>HelpMe</span>
                   </Link>
                   <Link to="/#hoe-het-werkt">{t('header.howItWorks')}</Link>
                   <Link to="/voor-schoonmakers">{t('header.forCleaners')}</Link>

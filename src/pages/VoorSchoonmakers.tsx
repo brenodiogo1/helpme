@@ -23,7 +23,7 @@ const VoorSchoonmakers = () => {
         ></div>
         <div className="relative z-10 container text-center py-20 lg:py-32">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Word schoonmaker bij CleanNL
+            Word schoonmaker bij HelpMe
           </h1>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
             Verdien goed, werk flexibel en wees je eigen baas. Meld je vandaag nog aan.
@@ -38,7 +38,7 @@ const VoorSchoonmakers = () => {
       <section className="py-16 lg:py-24">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold">De voordelen van werken via CleanNL</h2>
+            <h2 className="text-3xl font-bold">De voordelen van werken via HelpMe</h2>
             <p className="text-muted-foreground mt-2">Alles wat je nodig hebt om succesvol te zijn.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

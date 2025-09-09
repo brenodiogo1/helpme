@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container py-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-semibold mb-2">CleanNL</h3>
+            <h3 className="font-semibold mb-2">HelpMe</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/over-ons">Over ons</Link></li>
               <li><Link to="/pers">Pers</Link></li>
@@ -41,7 +41,7 @@ const Footer = () => {
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span>© {new Date().getFullYear()} CleanNL. Alle rechten voorbehouden.</span>
+            <span>© {new Date().getFullYear()} HelpMe. Alle rechten voorbehouden.</span>
           </div>
         </div>
       </div>

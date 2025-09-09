@@ -89,7 +89,7 @@ const Index = () => {
       {/* Why Choose Us Section */}
       <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor CleanNL?</h2>
+          <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor HelpMe?</h2>
           <p className="text-muted-foreground mb-12">Jouw tevredenheid is onze prioriteit.</p>
           <div className="grid md:grid-cols-3 gap-8 text-left">
             <Card>
