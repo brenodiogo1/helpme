@@ -2,9 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Schoonmaker } from "@/types";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
 
 const mockSchoonmakers: Schoonmaker[] = [
     { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam" },
@@ -15,11 +16,19 @@ const mockSchoonmakers: Schoonmaker[] = [
 const SchoonmakersBeheren = () => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Schoonmakers</CardTitle>
-        <CardDescription>
-          Beheer de schoonmakers op het platform.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Schoonmakers</CardTitle>
+          <CardDescription>
+            Beheer de schoonmakers op het platform.
+          </CardDescription>
+        </div>
+        <Button asChild>
+          <Link to="/admin/schoonmakers/nieuw">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Nieuwe Toevoegen
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
@@ -59,7 +68,9 @@ const SchoonmakersBeheren = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Acties</DropdownMenuLabel>
-                      <DropdownMenuItem>Bewerken</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/admin/schoonmakers/bewerken/${schoonmaker.id}`}>Bewerken</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Verwijderen</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

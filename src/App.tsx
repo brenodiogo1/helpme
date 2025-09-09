@@ -17,6 +17,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import SchoonmakersBeheren from "./pages/admin/SchoonmakersBeheren";
 import BoekingenBeheren from "./pages/admin/BoekingenBeheren";
+import SchoonmakerForm from "./pages/admin/SchoonmakerForm";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,8 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
+            <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
+            <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
             <Route path="boekingen" element={<BoekingenBeheren />} />
           </Route>
 
