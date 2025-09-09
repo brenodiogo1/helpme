@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import LeaveReviewDialog from "@/components/LeaveReviewDialog";
 
 const mockBoekingen = [
     { id: "B101", schoonmaker: "Anna de Vries", datum: "2024-05-10", status: "Voltooid", bedrag: 55.50 },
@@ -10,47 +12,66 @@ const mockBoekingen = [
 ];
 
 const CustomerBookings = () => {
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [selectedSchoonmaker, setSelectedSchoonmaker] = useState("");
+
+  const handleOpenReviewDialog = (schoonmakerName: string) => {
+    setSelectedSchoonmaker(schoonmakerName);
+    setIsReviewDialogOpen(true);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Mijn Boekingen</CardTitle>
-        <CardDescription>
-          Bekijk hier je boekingsgeschiedenis en aankomende afspraken.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Schoonmaker</TableHead>
-              <TableHead>Datum</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Bedrag</TableHead>
-              <TableHead>Acties</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockBoekingen.map((boeking) => (
-              <TableRow key={boeking.id}>
-                <TableCell className="font-medium">{boeking.schoonmaker}</TableCell>
-                <TableCell>{boeking.datum}</TableCell>
-                <TableCell>
-                  <Badge variant={boeking.status === "Voltooid" ? "default" : "secondary"}>
-                    {boeking.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">€{boeking.bedrag.toFixed(2)}</TableCell>
-                <TableCell className="text-right">
-                    <Button variant="outline" size="sm">
-                        {boeking.status === "Voltooid" ? "Opnieuw boeken" : "Beheren"}
-                    </Button>
-                </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Mijn Boekingen</CardTitle>
+          <CardDescription>
+            Bekijk hier je boekingsgeschiedenis en aankomende afspraken.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Schoonmaker</TableHead>
+                <TableHead>Datum</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Bedrag</TableHead>
+                <TableHead>Acties</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {mockBoekingen.map((boeking) => (
+                <TableRow key={boeking.id}>
+                  <TableCell className="font-medium">{boeking.schoonmaker}</TableCell>
+                  <TableCell>{boeking.datum}</TableCell>
+                  <TableCell>
+                    <Badge variant={boeking.status === "Voltooid" ? "default" : "secondary"}>
+                      {boeking.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">€{boeking.bedrag.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => boeking.status === "Voltooid" && handleOpenReviewDialog(boeking.schoonmaker)}
+                      >
+                          {boeking.status === "Voltooid" ? "Beoordeling schrijven" : "Beheren"}
+                      </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <LeaveReviewDialog 
+        open={isReviewDialogOpen}
+        onOpenChange={setIsReviewDialogOpen}
+        schoonmakerName={selectedSchoonmaker}
+      />
+    </>
   );
 };
 

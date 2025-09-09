@@ -1,24 +1,34 @@
-import { Star } from "lucide-react";
+import { Star, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Schoonmaker } from "@/types";
 import { Badge } from "./ui/badge";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { showSuccess } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 interface SchoonmakerCardProps {
   schoonmaker: Schoonmaker;
 }
 
 const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    showSuccess(isFavorite ? `${schoonmaker.name} verwijderd van favorieten.` : `${schoonmaker.name} toegevoegd aan favorieten.`);
+  };
+
   return (
     <Card className="flex flex-col">
-      <CardHeader className="flex flex-row items-center gap-4">
+      <CardHeader className="flex flex-row items-start gap-4">
         <Avatar className="h-16 w-16">
           <AvatarImage src={schoonmaker.photoUrl} alt={schoonmaker.name} />
           <AvatarFallback>{schoonmaker.name.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div>
+        <div className="flex-grow">
           <h3 className="text-xl font-bold">{schoonmaker.name}</h3>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -26,6 +36,9 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
             <span>({schoonmaker.ratingCount} reviews)</span>
           </div>
         </div>
+        <Button variant="ghost" size="icon" onClick={toggleFavorite}>
+          <Heart className={cn("h-5 w-5", isFavorite && "fill-red-500 text-red-500")} />
+        </Button>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-muted-foreground line-clamp-3">{schoonmaker.bio}</p>

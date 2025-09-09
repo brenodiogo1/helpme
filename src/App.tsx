@@ -38,6 +38,8 @@ import CleanerSettings from "./pages/cleaner/CleanerSettings";
 import CustomerPayment from "./pages/customer/CustomerPayment";
 import CustomerAddresses from "./pages/customer/CustomerAddresses";
 import CustomerSettings from "./pages/customer/CustomerSettings";
+import FavoriteCleaners from "./pages/customer/FavoriteCleaners";
+import MyReviews from "./pages/cleaner/MyReviews";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +77,7 @@ const App = () => (
             <Route path="profiel" element={<CleanerProfiel />} />
             <Route path="beschikbaarheid" element={<CleanerAvailability />} />
             <Route path="inkomsten" element={<CleanerEarnings />} />
+            <Route path="recensies" element={<MyReviews />} />
             <Route path="abonnement" element={<CleanerSubscription />} />
             <Route path="instellingen" element={<CleanerSettings />} />
           </Route>
@@ -84,6 +87,7 @@ const App = () => (
             <Route index element={<CustomerDashboard />} />
             <Route path="boekingen" element={<CustomerBookings />} />
             <Route path="profiel" element={<CustomerProfile />} />
+            <Route path="favorieten" element={<FavoriteCleaners />} />
             <Route path="betaalmethoden" element={<CustomerPayment />} />
             <Route path="adressen" element={<CustomerAddresses />} />
             <Route path="instellingen" element={<CustomerSettings />} />

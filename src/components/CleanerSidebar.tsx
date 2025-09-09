@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays } from "lucide-react";
+import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +55,16 @@ const CleanerSidebar = () => {
             >
               <Wallet className="h-4 w-4" />
               Inkomsten
+            </Link>
+            <Link
+              to="/dashboard/recensies"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/dashboard/recensies") && "bg-muted text-primary"
+              )}
+            >
+              <Star className="h-4 w-4" />
+              Mijn Recensies
             </Link>
             <Link
               to="/dashboard/profiel"
