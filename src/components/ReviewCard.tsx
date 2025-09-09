@@ -12,6 +12,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
     <Card>
       <CardHeader className="flex flex-row items-center gap-4 pb-2">
         <Avatar>
+          <AvatarImage src={review.avatarUrl} alt={review.author} />
           <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>

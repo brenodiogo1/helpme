@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const benefits = [
   "Bepaal je eigen uurtarief",
@@ -28,8 +29,8 @@ const VoorSchoonmakers = () => {
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
             Verdien goed, werk flexibel en wees je eigen baas. Meld je vandaag nog aan.
           </p>
-          <Button size="lg" variant="secondary">
-            Meld je nu aan
+          <Button size="lg" variant="secondary" asChild>
+            <Link to="/registreren/schoonmaker">Meld je nu aan</Link>
           </Button>
         </div>
       </section>
@@ -103,8 +104,8 @@ const VoorSchoonmakers = () => {
             Word onderdeel van de beste schoonmaak-community van Nederland.
             De aanmelding is gratis en duurt slechts 5 minuten.
           </p>
-          <Button size="lg">
-            Start je aanmelding
+          <Button size="lg" asChild>
+            <Link to="/registreren/schoonmaker">Start je aanmelding</Link>
           </Button>
         </div>
       </section>

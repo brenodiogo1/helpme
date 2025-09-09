@@ -4,6 +4,7 @@ export interface Review {
   rating: number;
   comment: string;
   date: string;
+  avatarUrl?: string;
 }
 
 export interface Schoonmaker {

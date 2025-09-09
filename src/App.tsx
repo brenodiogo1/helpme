@@ -26,6 +26,8 @@ import CustomerLayout from "@/pages/customer/CustomerLayout";
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 import CustomerBookings from "@/pages/customer/CustomerBookings";
 import CustomerProfile from "@/pages/customer/CustomerProfile";
+import RegistrerenKlant from "@/pages/RegistrerenKlant";
+import RegistrerenSchoonmaker from "@/pages/RegistrerenSchoonmaker";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registreren" element={<Registreren />} />
+            <Route path="/registreren/klant" element={<RegistrerenKlant />} />
+            <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
           </Route>
 
           {/* Cleaner Dashboard Routes */}
