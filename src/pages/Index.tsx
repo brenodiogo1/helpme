@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import ReviewCard from "@/components/ReviewCard";
+import { Review } from "@/types";
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1581287053822-fd7bf4f4bf38?q=80&w=800&auto=format&fit=crop" },
@@ -13,6 +15,15 @@ const cities = [
   { name: "Utrecht", image: "https://images.unsplash.com/photo-1598610942257-9a1910a1654b?q=80&w=800&auto=format&fit=crop" },
   { name: "Eindhoven", image: "https://images.unsplash.com/photo-1589612229833-b558c4554959?q=80&w=800&auto=format&fit=crop" },
   { name: "Groningen", image: "https://images.unsplash.com/photo-1572949029855-834e5b5b3a40?q=80&w=800&auto=format&fit=crop" },
+];
+
+const mockReviews: Review[] = [
+    { id: "r1", author: "Mark V.", rating: 5, comment: "Geweldige service! Anna was punctueel, professioneel en mijn huis is brandschoon. Zeker een aanrader.", date: "2023-10-20" },
+    { id: "r2", author: "Linda de Groot", rating: 5, comment: "Ik ben zo blij met het werk van Ben. Hij is zeer grondig en vriendelijk. Ik boek hem zeker opnieuw.", date: "2023-10-18" },
+    { id: "r3", author: "Sander Janssen", rating: 5, comment: "Topkwaliteit en zeer betrouwbaar. Carla heeft fantastisch werk geleverd na onze verbouwing.", date: "2023-10-15" },
+    { id: "r4", author: "Chantal Willems", rating: 4, comment: "Goede schoonmaak, communicatie kon iets beter. Maar het resultaat was prima.", date: "2023-10-12" },
+    { id: "r5", author: "Familie de Boer", rating: 5, comment: "Eva is een topper! Ze is geweldig met onze hond en het huis ruikt altijd heerlijk fris na haar bezoek.", date: "2023-10-10" },
+    { id: "r6", author: "Pieter van Dijk", rating: 5, comment: "Eindelijk iemand gevonden die echt weet wat schoonmaken is. Zeer tevreden over de dieptereiniging.", date: "2023-10-05" },
 ];
 
 const Index = () => {
@@ -131,8 +142,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Cities Section */}
+      {/* Testimonials Section */}
       <section className="py-16 lg:py-24">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-12">Wat onze klanten zeggen</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {mockReviews.map(review => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Cities Section */}
+      <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">We zijn actief in heel Nederland</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
