@@ -42,8 +42,12 @@ const Header = () => {
             </Sheet>
           </div>
           <nav className="flex items-center gap-2">
-            <Button variant="ghost">Inloggen</Button>
-            <Button>Registreren</Button>
+            <Button variant="ghost" asChild>
+              <Link to="/inloggen">Inloggen</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/registreren">Registreren</Link>
+            </Button>
           </nav>
         </div>
       </div>
