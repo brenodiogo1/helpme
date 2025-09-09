@@ -19,7 +19,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1596733639235-365013b854a7?q=80&w=2070&auto=format&fit=crop')" }}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1603712725038-92d867c1f0c3?q=80&w=2070&auto=format&fit=crop')" }}
         ></div>
         <div className="relative z-10 p-4 container">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
