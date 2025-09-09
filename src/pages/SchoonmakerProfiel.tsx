@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, MapPin, CheckCircle } from "lucide-react";
 import ReviewCard from "@/components/ReviewCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Mock data for a single cleaner, including reviews
 const mockSchoonmaker: Schoonmaker = {
@@ -26,12 +28,21 @@ const mockSchoonmaker: Schoonmaker = {
     ]
 };
 
+const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const SchoonmakerProfiel = () => {
   const { id } = useParams<{ id: string }>();
-  // In a real app, you would fetch the cleaner's data based on the id.
-  // For now, we'll just use the mock data.
+  const navigate = useNavigate();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [time, setTime] = useState<string | undefined>();
+
   const schoonmaker = mockSchoonmaker;
+
+  const handleBooking = () => {
+    if (date && time) {
+      navigate(`/boeken/${schoonmaker.id}`, { state: { date: date.toISOString(), time } });
+    }
+  };
 
   if (!schoonmaker) {
     return <div>Schoonmaker niet gevonden</div>;
@@ -99,16 +110,29 @@ const SchoonmakerProfiel = () => {
             <CardHeader>
               <CardTitle className="text-center">Boek {schoonmaker.name}</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center">
-                <div className="text-2xl font-bold mb-4">
+            <CardContent className="flex flex-col items-center space-y-4">
+                <div className="text-2xl font-bold">
                     €{schoonmaker.hourlyRate.toFixed(2)}
                     <span className="text-base font-normal text-muted-foreground"> / uur</span>
                 </div>
                 <Calendar
                     mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
                     className="rounded-md border"
                 />
-                <Button size="lg" className="mt-4 w-full">Beschikbaarheid controleren</Button>
+                <Select onValueChange={setTime} value={time}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Kies een tijd" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {timeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Button size="lg" className="w-full" disabled={!date || !time} onClick={handleBooking}>
+                  Boek nu
+                </Button>
             </CardContent>
           </Card>
         </aside>

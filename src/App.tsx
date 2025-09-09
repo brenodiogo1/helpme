@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import Zoeken from "./pages/Zoeken";
 import SchoonmakerProfiel from "./pages/SchoonmakerProfiel";
+import Boeken from "./pages/Boeken";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/zoeken" element={<Zoeken />} />
             <Route path="/schoonmaker/:id" element={<SchoonmakerProfiel />} />
+            <Route path="/boeken/:id" element={<Boeken />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
