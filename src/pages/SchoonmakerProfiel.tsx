@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react"; // Removido useMemo
+import { useParams, useNavigate } from "react-router-dom"; // Removido useLocation, Link
 import { Schoonmaker } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,43 +21,47 @@ const mockSchoonmaker: Schoonmaker = {
     ratingCount: 128,
     hourlyRate: 18.50,
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers. Ik ben flexibel inzetbaar en neem mijn eigen, milieuvriendelijke schoonmaakmiddelen mee. Ik kijk ernaar uit om ook uw huis te laten stralen!",
-    services: ["Dieptereiniging", "Ramen wassen", "Strijken", "Milieuvriendelijk", "Huisdier-vriendelijk", "Oven reinigen"], // Serviços de exemplo
+    services: ["Dieptereiniging", "Ramen wassen", "Strijken", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging"],
     city: "Amsterdam",
-    address: "Kerkstraat 12, 1012 AB Amsterdam",
-    phoneNumber: "+31612345678",
+    address: "Kerkstraat 12, 1012 AB Amsterdam", // Novo campo
+    phoneNumber: "+31612345678", // Novo campo
     reviews: [
         { id: "r1", author: "Piet H.", rating: 5, comment: "Anna is fantastisch! Ons huis was nog nooit zo schoon.", date: "2023-10-15" },
         { id: "r2", author: "Janneke S.", rating: 5, comment: "Zeer professioneel en vriendelijk. Een echte aanrader.", date: "2023-10-10" },
         { id: "r3", author: "Klaas de Wit", rating: 4, comment: "Goed werk geleverd, was alleen 10 minuten te laat.", date: "2023-09-28" },
     ],
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
-    unavailableDates: [format(addDays(new Date(), 10), "yyyy-MM-dd")],
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Frijdag"], // Exemplo de disponibilidade semanal
+    unavailableDates: [format(addDays(new Date(), 10), "yyyy-MM-dd")], // Exemplo de data específica indisponível
 };
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const SchoonmakerProfiel = () => {
-  useParams<{ id: string }>();
+  useParams<{ id: string }>(); // Removido 'schoonmakerId'
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | undefined>();
 
   const schoonmaker = mockSchoonmaker;
 
+  // Função para verificar se uma data está disponível
   const isDateAvailable = (day: Date) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Reset time for comparison
 
+    // Disable past dates
     if (isBefore(day, today)) {
       return false;
     }
 
+    // Check specific unavailable dates
     const formattedUnavailableDates = schoonmaker.unavailableDates?.map(d => format(new Date(d), "yyyy-MM-dd")) || [];
     if (formattedUnavailableDates.includes(format(day, "yyyy-MM-dd"))) {
       return false;
     }
 
-    const dayName = format(day, "eeee", { locale: nl });
+    // Check general available days of week
+    const dayName = format(day, "eeee", { locale: nl }); // Get day name in Dutch
     if (!schoonmaker.availableDaysOfWeek?.includes(dayName)) {
       return false;
     }
@@ -188,7 +192,7 @@ const SchoonmakerProfiel = () => {
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    disabled={(day) => !isDateAvailable(day)}
+                    disabled={(day) => !isDateAvailable(day)} // Usar a função de disponibilidade
                     className="rounded-md border"
                 />
                 <Select onValueChange={setTime} value={time}>

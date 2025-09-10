@@ -41,7 +41,6 @@ export interface Booking {
   first_name?: string; // Novo campo
   last_name?: string; // Novo campo
   email?: string; // Novo campo
-  extra_services?: string[]; // NOVO CAMPO: Serviços extras selecionados
   cleaners: {
     name: string;
     photo_url?: string;

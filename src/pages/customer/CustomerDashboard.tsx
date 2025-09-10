@@ -1,19 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { CalendarPlus, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
 import CustomerBookingTimeline from "@/components/CustomerBookingTimeline";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
-import { Booking } from "@/types";
+import { Booking } from "@/types"; // Removido format e nl
 
 const CustomerDashboard = () => {
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
-  const [customerName, setCustomerName] = useState<string>("Gebruiker");
-  const [totalBookings, setTotalBookings] = useState<number>(0);
-  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [customerName, setCustomerName] = useState<string>("Gebruiker"); // Estado para o nome do cliente
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,8 +42,7 @@ const CustomerDashboard = () => {
         setCustomerName(profileData.first_name || "Gebruiker");
       }
 
-      // Fetch upcoming booking
-      const { data: upcomingData, error: upcomingError } = await supabase
+      const { data, error } = await supabase
         .from('bookings')
         .select(`
           id,
@@ -61,49 +58,26 @@ const CustomerDashboard = () => {
           cleaners (name)
         `)
         .eq('customer_id', user.id)
-        .in('status', ['pending_offer', 'accepted', 'executing', 'paid_pending_assignment'])
+        .in('status', ['pending_offer', 'accepted', 'executing']) // Only show active bookings
         .order('booking_date', { ascending: true })
         .limit(1)
         .single();
 
-      if (upcomingError && upcomingError.code !== 'PGRST116') {
-        throw new Error(upcomingError.message);
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+        throw new Error(error.message);
       }
 
-      if (upcomingData) {
+      if (data) {
+        // Mapear os dados para corresponder à interface Booking
         const mappedBooking: Booking = {
-          ...upcomingData,
-          // Ensure cleaners is a single object or null, not an array
-          cleaners: upcomingData.cleaners && Array.isArray(upcomingData.cleaners) && upcomingData.cleaners.length > 0 
-                      ? upcomingData.cleaners[0] 
-                      : null,
-          profiles: null,
+          ...data,
+          cleaners: data.cleaners && data.cleaners.length > 0 ? data.cleaners[0] : null,
+          profiles: null, // Profiles data is not selected here, so set to null
         };
         setUpcomingBooking(mappedBooking);
       } else {
         setUpcomingBooking(null);
       }
-
-      // Fetch all bookings for statistics
-      const { data: allBookingsData, error: allBookingsError } = await supabase
-        .from('bookings')
-        .select('id, total_price, status')
-        .eq('customer_id', user.id);
-
-      if (allBookingsError) {
-        throw new Error(allBookingsError.message);
-      }
-
-      setTotalBookings(allBookingsData.length);
-      const totalAmount = allBookingsData.reduce((sum, booking) => {
-        // Only sum completed or accepted bookings for total spent
-        if (booking.status === 'completed' || booking.status === 'accepted' || booking.status === 'paid_pending_assignment') {
-          return sum + booking.total_price;
-        }
-        return sum;
-      }, 0);
-      setTotalSpent(totalAmount);
-
     } catch (err: any) {
       setError(err.message);
       showError(err.message);
@@ -116,7 +90,7 @@ const CustomerDashboard = () => {
     return (
       <div>
         <h1 className="text-3xl font-bold mb-6">Welkom terug!</h1>
-        <p>Laden van je dashboard...</p>
+        <p>Laden van je volgende afspraak...</p>
       </div>
     );
   }
@@ -133,52 +107,6 @@ const CustomerDashboard = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Welkom terug, {customerName}!</h1>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Totaal Boekingen</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalBookings}</div>
-            <p className="text-xs text-muted-foreground">Alle tijden</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Totaal Uitgegeven</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{totalSpent.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Voor voltooide en geaccepteerde boekingen</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Volgende Afspraak</CardTitle>
-            <CalendarPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {upcomingBooking ? `${upcomingBooking.booking_time} op ${new Date(upcomingBooking.booking_date).toLocaleDateString('nl-NL')}` : "Geen"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {upcomingBooking ? `met ${upcomingBooking.cleaners?.name || 'een schoonmaker'}` : "Boek nu een schoonmaker!"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gemiddelde Duur</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3 uur</div> {/* Mock data for average duration */}
-            <p className="text-xs text-muted-foreground">Per boeking</p>
-          </CardContent>
-        </Card>
-      </div>
       <div className="grid gap-8 md:grid-cols-2">
         {upcomingBooking ? (
           <CustomerBookingTimeline
@@ -209,6 +137,9 @@ const CustomerDashboard = () => {
           </Card>
         )}
         <LiveActivityFeed />
+      </div>
+      <div className="mt-8">
+        {/* Other dashboard content */}
       </div>
     </div>
   );
