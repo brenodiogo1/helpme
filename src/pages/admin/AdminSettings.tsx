@@ -20,7 +20,7 @@ const formSchema = z.object({
   twilioPhoneNumber: z.string().optional(),
   sendGridApiKey: z.string().optional(),
   // Campos de pagamento existentes
-  stripeSecretKey: z.string().optional(),
+  stripeSecretKey: z.string().optional(), // Manter para referência, mas será um segredo do Supabase
   stripePublishableKey: z.string().optional(),
   paypalClientId: z.string().optional(),
   idealApiKey: z.string().optional(),
@@ -38,8 +38,8 @@ const AdminSettings = () => {
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
       // Valores padrão para campos de pagamento (simulados)
-      stripeSecretKey: "sk_test_...",
-      stripePublishableKey: "pk_test_...",
+      stripeSecretKey: "sk_test_...", // Apenas para exibição, não será salvo diretamente
+      stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "", // Carregar do .env
       paypalClientId: "AZ...",
       idealApiKey: "your_ideal_api_key",
     },
@@ -55,7 +55,7 @@ const AdminSettings = () => {
       sendGridApiKey: settings.sendGridApiKey,
       // Manter os valores de pagamento como estão, pois não são gerenciados pelo contexto de settings
       stripeSecretKey: form.getValues("stripeSecretKey"),
-      stripePublishableKey: form.getValues("stripePublishableKey"),
+      stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
       paypalClientId: form.getValues("paypalClientId"),
       idealApiKey: form.getValues("idealApiKey"),
     });
@@ -69,6 +69,16 @@ const AdminSettings = () => {
     updateSetting("twilioAuthToken", values.twilioAuthToken || "");
     updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
     updateSetting("sendGridApiKey", values.sendGridApiKey || "");
+
+    // Para a chave publicável do Stripe, podemos salvá-la no .env ou em um contexto,
+    // mas para a secreta, é crucial que seja um segredo do Supabase.
+    // Aqui, apenas simulamos o salvamento para a publicável.
+    // A chave secreta NÃO deve ser salva aqui.
+    if (values.stripePublishableKey) {
+        // Em um cenário real, você pode querer salvar isso em um banco de dados
+        // ou garantir que o .env seja atualizado. Por enquanto, apenas logamos.
+        console.log("Stripe Publishable Key updated (simulated):", values.stripePublishableKey);
+    }
 
     console.log("Configurações salvas (simulação):", values);
     showSuccess("Instellingen opgeslagen! (Simulatie)");
@@ -130,8 +140,12 @@ const AdminSettings = () => {
                     <FormItem>
                       <FormLabel>Stripe Secret Key</FormLabel>
                       <FormControl>
-                        <Input id="stripe-key" placeholder="sk_test_..." {...field} />
+                        <Input id="stripe-key" placeholder="sk_test_..." {...field} disabled /> {/* Desabilitado, pois é um segredo do Supabase */}
                       </FormControl>
+                      <FormDescription>
+                        A chave secreta do Stripe deve ser configurada como um segredo de ambiente no Supabase para a Edge Function `create-payment-intent`.
+                        Nome do segredo: <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">STRIPE_SECRET_KEY</code>.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -145,6 +159,9 @@ const AdminSettings = () => {
                       <FormControl>
                         <Input id="stripe-publishable-key" placeholder="pk_test_..." {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Esta chave é usada no frontend. Certifique-se de que está definida em seu arquivo <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> como <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">VITE_STRIPE_PUBLISHABLE_KEY</code>.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

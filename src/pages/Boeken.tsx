@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import { Minus, Plus, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { supabase } from "@/integrations/supabase/client";
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
+import CheckoutForm from "@/components/CheckoutForm"; // Vamos criar este componente
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -23,8 +26,8 @@ const mockSchoonmaker: Schoonmaker = {
     bio: "Bio",
     services: [],
     city: "Amsterdam",
-    address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
-    phoneNumber: "+31612345678", // Adicionado
+    address: "Kerkstraat 12, 1012 AB Amsterdam",
+    phoneNumber: "+31612345678",
 };
 
 const extraServices = [
@@ -33,6 +36,11 @@ const extraServices = [
     { id: "koelkast", label: "Koelkast reinigen", price: 15.00 },
     { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
 ];
+
+// Carregar o Stripe fora do componente para evitar recargas desnecessárias
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 const Boeken = () => {
     const { id } = useParams<{ id: string }>();
@@ -43,7 +51,7 @@ const Boeken = () => {
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
 
@@ -55,79 +63,37 @@ const Boeken = () => {
     }, [selectedServices]);
     const totalPrice = basePrice + extrasPrice;
 
-    const handleServiceChange = (serviceId: string) => {
-        setSelectedServices(prev => 
-            prev.includes(serviceId) 
-                ? prev.filter(id => id !== serviceId) 
-                : [...prev, serviceId]
-        );
-    };
+    useEffect(() => {
+        // Criar PaymentIntent quando o componente é montado ou o preço total muda
+        const createPaymentIntent = async () => {
+            if (!totalPrice || totalPrice <= 0) return;
 
-    const handleConfirmBooking = async () => {
-        setIsProcessing(true);
-        const toastId = showLoading("Betaling verwerken en boeking aanmaken...");
-
-        try {
-            // Get current user ID
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) {
-                throw new Error("Gebruiker niet ingelogd.");
-            }
-
-            // 1. Create the booking entry with 'pending_offer' status
-            const { data: bookingData, error: bookingError } = await supabase
-                .from('bookings')
-                .insert({
-                    customer_id: user.id,
-                    cleaner_id: schoonmaker.id,
-                    booking_date: format(new Date(date), "yyyy-MM-dd"),
-                    booking_time: time,
-                    duration_hours: hours,
-                    total_price: totalPrice,
-                    status: 'pending_offer',
-                })
-                .select()
-                .single();
-
-            if (bookingError || !bookingData) {
-                throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking.");
-            }
-
-            // 2. Create the job offer for the cleaner
-            const { error: offerError } = await supabase
-                .from('job_offers')
-                .insert({
-                    booking_id: bookingData.id,
-                    cleaner_id: schoonmaker.id,
-                    status: 'pending',
+            try {
+                const response = await supabase.functions.invoke('create-payment-intent', {
+                    body: JSON.stringify({ amount: totalPrice, currency: 'eur' }),
                 });
 
-            if (offerError) {
-                throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding.");
+                if (response.error) {
+                    throw new Error(response.error.message);
+                }
+
+                const { clientSecret } = response.data as { clientSecret: string };
+                setClientSecret(clientSecret);
+            } catch (error: any) {
+                console.error("Error fetching client secret:", error);
+                showError("Falha ao inicializar o pagamento: " + error.message);
             }
+        };
 
-            dismissToast(toastId);
-            showSuccess("Boeking succesvol aangevraagd! De schoonmaker zal de aanvraag beoordelen.");
+        createPaymentIntent();
+    }, [totalPrice]);
 
-            const bookingDetails = {
-                schoonmaker,
-                date,
-                time,
-                hours,
-                totalPrice,
-                status: 'pending_offer',
-                bookingId: bookingData.id,
-            };
-
-            navigate("/bevestiging", { state: { bookingDetails } });
-
-        } catch (error: any) {
-            dismissToast(toastId);
-            showError(error.message || "Er is een onverwachte fout opgetreden bij het boeken.");
-            console.error("Booking error:", error);
-        } finally {
-            setIsProcessing(false);
-        }
+    const handleServiceChange = (serviceId: string) => {
+        setSelectedServices(prev =>
+            prev.includes(serviceId)
+                ? prev.filter(id => id !== serviceId)
+                : [...prev, serviceId]
+        );
     };
 
     if (!date || !time) {
@@ -141,6 +107,20 @@ const Boeken = () => {
             </div>
         );
     }
+
+    const options: StripeElementsOptions = {
+        clientSecret,
+        appearance: {
+            theme: 'stripe',
+            variables: {
+                colorPrimary: '#60a5fa', // Tailwind blue-400
+                colorText: '#334155', // Tailwind slate-700
+                colorBackground: '#ffffff',
+                colorDanger: '#ef4444', // Tailwind red-500
+                fontFamily: 'Inter, sans-serif',
+            },
+        },
+    };
 
     return (
         <div className="container py-8 max-w-3xl mx-auto">
@@ -169,8 +149,8 @@ const Boeken = () => {
                         <div className="grid grid-cols-2 gap-4 mt-2">
                             {extraServices.map(service => (
                                 <div key={service.id} className="flex items-center space-x-2">
-                                    <Checkbox 
-                                        id={service.id} 
+                                    <Checkbox
+                                        id={service.id}
                                         onCheckedChange={() => handleServiceChange(service.id)}
                                         disabled={isProcessing}
                                     />
@@ -206,23 +186,33 @@ const Boeken = () => {
                             </div>
                         </div>
                     </div>
-                     <Separator />
+                    <Separator />
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <Button variant={paymentMethod === 'ideal' ? 'default' : 'outline'} onClick={() => setPaymentMethod('ideal')}>iDEAL</Button>
-                            <Button variant={paymentMethod === 'paypal' ? 'default' : 'outline'} onClick={() => setPaymentMethod('paypal')}>PayPal</Button>
-                            <Button variant={paymentMethod === 'creditcard' ? 'default' : 'outline'} onClick={() => setPaymentMethod('creditcard')}>
-                                <CreditCard className="mr-2 h-4 w-4" /> Creditcard
-                            </Button>
-                        </div>
+                        {stripePromise && clientSecret ? (
+                            <Elements stripe={stripePromise} options={options}>
+                                <CheckoutForm
+                                    schoonmaker={schoonmaker}
+                                    date={date}
+                                    time={time}
+                                    hours={hours}
+                                    totalPrice={totalPrice}
+                                    selectedServices={selectedServices}
+                                    setIsProcessing={setIsProcessing}
+                                />
+                            </Elements>
+                        ) : (
+                            <div className="text-center text-muted-foreground">
+                                Carregando opções de pagamento...
+                                {!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && (
+                                    <p className="text-red-500 text-sm mt-2">
+                                        Erro: VITE_STRIPE_PUBLISHABLE_KEY não está configurada no .env
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </CardContent>
-                <CardFooter>
-                    <Button size="lg" className="w-full" onClick={handleConfirmBooking} disabled={isProcessing || !paymentMethod}>
-                        {isProcessing ? "Verwerken..." : `Betaal €${totalPrice.toFixed(2)} en bevestig`}
-                    </Button>
-                </CardFooter>
             </Card>
         </div>
     );
