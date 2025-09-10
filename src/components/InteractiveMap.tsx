@@ -4,8 +4,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api';
 import { Users, MapPin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSettings } from "@/contexts/SettingsContext"; // Importar o hook de contexto
 
-const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"]; // 'localContext' removido
+const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
 
 interface ActivityDot {
   id: number;
@@ -30,8 +31,11 @@ const center = {
 };
 
 const InteractiveMap: React.FC<InteractiveMapProps> = ({ dots }) => {
+  const { settings } = useSettings(); // Obter as configurações do contexto
+  const googleMapsApiKey = settings.googleMapsApiKey; // Usar a chave do contexto
+
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: googleMapsApiKey, // Usar a chave do contexto
     libraries: libraries,
   });
 
@@ -44,6 +48,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({ dots }) => {
   const onUnmount = useCallback(function callback(map: google.maps.Map) {
     setMap(null);
   }, []);
+
+  if (!googleMapsApiKey) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+        <p>Google Maps API Key não configurada. Por favor, configure-a no painel de administração.</p>
+      </div>
+    );
+  }
 
   if (loadError) return <div>Erro ao carregar o Google Maps</div>;
   if (!isLoaded) return <div>Carregando Mapa...</div>;

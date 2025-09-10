@@ -6,34 +6,71 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { showSuccess } from "@/utils/toast";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"; // Adicionado FormDescription
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Link } from "react-router-dom";
+import { useSettings } from "@/contexts/SettingsContext"; // Importar o hook de contexto
+import { useEffect } from "react"; // Importar useEffect
 
 const formSchema = z.object({
+  googleMapsApiKey: z.string().optional(),
+  twilioAccountSid: z.string().optional(),
+  twilioAuthToken: z.string().optional(),
+  twilioPhoneNumber: z.string().optional(),
+  sendGridApiKey: z.string().optional(),
+  // Campos de pagamento existentes
   stripeSecretKey: z.string().optional(),
   stripePublishableKey: z.string().optional(),
   paypalClientId: z.string().optional(),
   idealApiKey: z.string().optional(),
-  googleMapsApiKey: z.string().optional(), // Novo campo para a chave da API do Google Maps
 });
 
 const AdminSettings = () => {
+  const { settings, updateSetting } = useSettings(); // Usar o hook de contexto
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      googleMapsApiKey: settings.googleMapsApiKey,
+      twilioAccountSid: settings.twilioAccountSid,
+      twilioAuthToken: settings.twilioAuthToken,
+      twilioPhoneNumber: settings.twilioPhoneNumber,
+      sendGridApiKey: settings.sendGridApiKey,
+      // Valores padrão para campos de pagamento (simulados)
       stripeSecretKey: "sk_test_...",
       stripePublishableKey: "pk_test_...",
       paypalClientId: "AZ...",
       idealApiKey: "your_ideal_api_key",
-      googleMapsApiKey: "AIzaSy...", // Valor de exemplo
     },
   });
 
+  // Atualizar os valores do formulário quando as configurações do contexto mudarem
+  useEffect(() => {
+    form.reset({
+      googleMapsApiKey: settings.googleMapsApiKey,
+      twilioAccountSid: settings.twilioAccountSid,
+      twilioAuthToken: settings.twilioAuthToken,
+      twilioPhoneNumber: settings.twilioPhoneNumber,
+      sendGridApiKey: settings.sendGridApiKey,
+      // Manter os valores de pagamento como estão, pois não são gerenciados pelo contexto de settings
+      stripeSecretKey: form.getValues("stripeSecretKey"),
+      stripePublishableKey: form.getValues("stripePublishableKey"),
+      paypalClientId: form.getValues("paypalClientId"),
+      idealApiKey: form.getValues("idealApiKey"),
+    });
+  }, [settings, form]);
+
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    // Atualizar o contexto com os novos valores
+    updateSetting("googleMapsApiKey", values.googleMapsApiKey || "");
+    updateSetting("twilioAccountSid", values.twilioAccountSid || "");
+    updateSetting("twilioAuthToken", values.twilioAuthToken || "");
+    updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
+    updateSetting("sendGridApiKey", values.sendGridApiKey || "");
+
+    console.log("Configurações salvas (simulação):", values);
     showSuccess("Instellingen opgeslagen! (Simulatie)");
   }
 
@@ -60,6 +97,30 @@ const AdminSettings = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-lg">
+              <div className="space-y-2">
+                <h3 className="font-semibold">Google Maps</h3>
+                <FormField
+                  control={form.control}
+                  name="googleMapsApiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Google Maps API Key</FormLabel>
+                      <FormControl>
+                        <Input id="google-maps-api-key" placeholder="AIzaSy..." {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Obtenha sua chave de API no {" "}
+                        <Link to="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          Google Cloud Console
+                        </Link>
+                        .
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Separator />
               <div className="space-y-2">
                 <h3 className="font-semibold">Betalingsgateways</h3>
                 <FormField
@@ -117,20 +178,66 @@ const AdminSettings = () => {
               </div>
               <Separator />
               <div className="space-y-2">
-                <h3 className="font-semibold">Google Maps</h3>
+                <h3 className="font-semibold">SMS Notificaties (Twilio)</h3>
                 <FormField
                   control={form.control}
-                  name="googleMapsApiKey"
+                  name="twilioAccountSid"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Google Maps API Key</FormLabel>
+                      <FormLabel>Twilio Account SID</FormLabel>
                       <FormControl>
-                        <Input id="google-maps-api-key" placeholder="AIzaSy..." {...field} />
+                        <Input id="twilio-account-sid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="twilioAuthToken"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Twilio Auth Token</FormLabel>
+                      <FormControl>
+                        <Input id="twilio-auth-token" placeholder="your_auth_token" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="twilioPhoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Twilio Telefoonnummer</FormLabel>
+                      <FormControl>
+                        <Input id="twilio-phone-number" placeholder="+1234567890" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        O número de telefone Twilio que será usado para enviar SMS.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="font-semibold">E-mail Notificaties (SendGrid)</h3>
+                <FormField
+                  control={form.control}
+                  name="sendGridApiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SendGrid API Key</FormLabel>
+                      <FormControl>
+                        <Input id="sendgrid-api-key" placeholder="SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
                       </FormControl>
                       <FormDescription>
                         Obtenha sua chave de API no {" "}
-                        <Link to="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                          Google Cloud Console
+                        <Link to="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          SendGrid Dashboard
                         </Link>
                         .
                       </FormDescription>
