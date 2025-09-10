@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
-import CheckoutForm from "@/components/CheckoutForm"; // Vamos criar este componente
+import { loadStripe } from '@stripe/stripe-js';
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -51,7 +49,7 @@ const Boeken = () => {
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const checkoutRef = useRef<HTMLDivElement>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
 
@@ -63,37 +61,64 @@ const Boeken = () => {
     }, [selectedServices]);
     const totalPrice = basePrice + extrasPrice;
 
-    useEffect(() => {
-        // Criar PaymentIntent quando o componente é montado ou o preço total muda
-        const createPaymentIntent = async () => {
-            if (!totalPrice || totalPrice <= 0) return;
-
-            try {
-                const response = await supabase.functions.invoke('create-payment-intent', {
-                    body: JSON.stringify({ amount: totalPrice, currency: 'eur' }),
-                });
-
-                if (response.error) {
-                    throw new Error(response.error.message);
-                }
-
-                const { clientSecret } = response.data as { clientSecret: string };
-                setClientSecret(clientSecret);
-            } catch (error: any) {
-                console.error("Error fetching client secret:", error);
-                showError("Falha ao inicializar o pagamento: " + error.message);
-            }
-        };
-
-        createPaymentIntent();
-    }, [totalPrice]);
-
     const handleServiceChange = (serviceId: string) => {
         setSelectedServices(prev =>
             prev.includes(serviceId)
                 ? prev.filter(id => id !== serviceId)
                 : [...prev, serviceId]
         );
+    };
+
+    const handleInitiateCheckout = async () => {
+        setIsProcessing(true);
+        const toastId = showLoading("Sessie voor betaling aanmaken...");
+
+        try {
+            if (!stripePromise) {
+                throw new Error("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
+            }
+            const stripe = await stripePromise;
+            if (!stripe) {
+                throw new Error("Falha ao carregar o Stripe.");
+            }
+
+            const returnUrl = `${window.location.origin}/bevestiging`;
+
+            const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                body: JSON.stringify({
+                    amount: totalPrice,
+                    currency: 'eur',
+                    return_url: returnUrl,
+                }),
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            const { clientSecret } = data as { clientSecret: string };
+
+            dismissToast(toastId);
+            showSuccess("Sessie aangemaakt. Redirigindo para betaling...");
+
+            // Pass booking details to confirmation page via state
+            const bookingDetails = {
+                schoonmaker,
+                date,
+                time,
+                hours,
+                totalPrice,
+                selectedServices,
+            };
+            navigate(returnUrl, { state: { bookingDetails, clientSecret } }); // Pass clientSecret to confirmation page
+
+        } catch (error: any) {
+            dismissToast(toastId);
+            showError(error.message || "Er is een onverwachte fout opgetreden bij het starten van de betaling.");
+            console.error("Checkout initiation error:", error);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     if (!date || !time) {
@@ -107,20 +132,6 @@ const Boeken = () => {
             </div>
         );
     }
-
-    const options: StripeElementsOptions = {
-        clientSecret,
-        appearance: {
-            theme: 'stripe',
-            variables: {
-                colorPrimary: '#60a5fa', // Tailwind blue-400
-                colorText: '#334155', // Tailwind slate-700
-                colorBackground: '#ffffff',
-                colorDanger: '#ef4444', // Tailwind red-500
-                fontFamily: 'Inter, sans-serif',
-            },
-        },
-    };
 
     return (
         <div className="container py-8 max-w-3xl mx-auto">
@@ -189,29 +200,12 @@ const Boeken = () => {
                     <Separator />
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
-                        {stripePromise && clientSecret ? (
-                            <Elements stripe={stripePromise} options={options}>
-                                <CheckoutForm
-                                    schoonmaker={schoonmaker}
-                                    date={date}
-                                    time={time}
-                                    hours={hours}
-                                    totalPrice={totalPrice}
-                                    selectedServices={selectedServices}
-                                    setIsProcessing={setIsProcessing}
-                                    isProcessing={isProcessing}
-                                />
-                            </Elements>
-                        ) : (
-                            <div className="text-center text-muted-foreground">
-                                Carregando opções de pagamento...
-                                {!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && (
-                                    <p className="text-red-500 text-sm mt-2">
-                                        Erro: VITE_STRIPE_PUBLISHABLE_KEY não está configurada no .env
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                        <div ref={checkoutRef} id="checkout">
+                            {/* Stripe Checkout will be rendered here */}
+                        </div>
+                        <Button size="lg" className="w-full mt-6" onClick={handleInitiateCheckout} disabled={isProcessing}>
+                            {isProcessing ? "Verwerken..." : `Betaal €${totalPrice.toFixed(2)} en bevestig`}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
