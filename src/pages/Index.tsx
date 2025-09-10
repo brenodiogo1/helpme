@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
-import QuickBooking from "@/pages/admin/QuickBooking"; // Importar o componente QuickBooking
+// import QuickBooking from "@/pages/admin/QuickBooking"; // Remover importação
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -119,13 +119,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Booking Section (New) */}
-      <section className="py-16 lg:py-24 bg-gray-50">
+      {/* Quick Booking Section (Removed) */}
+      {/* <section className="py-16 lg:py-24 bg-gray-50">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8">Agendamento Rápido</h2>
           <QuickBooking />
         </div>
-      </section>
+      </section> */}
 
       {/* How It Works Section */}
       <section id="hoe-het-werkt" className="py-16 lg:py-24">

@@ -58,7 +58,7 @@ import CleanerProvider from "./pages/cleaner/CleanerProvider";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { useEffect } from "react";
 import MijnTaken from "./pages/cleaner/MijnTaken";
-// import QuickBooking from "./pages/admin/QuickBooking"; // Remover importação se não for mais usada aqui
+import QuickBooking from "./pages/admin/QuickBooking"; // Importar a nova página
 
 const queryClient = new QueryClient();
 
@@ -101,6 +101,7 @@ const App = () => {
                 <Route path="/registreren" element={<Registreren />} />
                 <Route path="/registreren/klant" element={<RegistrerenKlant />} />
                 <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
+                <Route path="/quick-booking" element={<QuickBooking />} /> {/* Nova rota pública */}
                 {/* Legal Pages */}
                 <Route path="/over-ons" element={<OverOns />} />
                 <Route path="/pers" element={<Pers />} />
