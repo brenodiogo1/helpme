@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -45,6 +46,12 @@ const formSchema = z.object({
 
 const PublicQuickBooking = () => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['places'],
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,6 +79,31 @@ const PublicQuickBooking = () => {
       .reduce((total, service) => total + service.price, 0);
   }, [selectedExtraServices]);
   const totalPrice = basePrice + extrasPrice;
+
+  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = autocomplete;
+  };
+
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.address_components) {
+        let address = "";
+        let postcode = "";
+        for (const component of place.address_components) {
+          if (component.types.includes("street_number")) {
+            address = component.long_name + " " + address;
+          } else if (component.types.includes("route")) {
+            address += component.long_name;
+          } else if (component.types.includes("postal_code")) {
+            postcode = component.long_name;
+          }
+        }
+        form.setValue("address", address.trim());
+        form.setValue("postcode", postcode);
+      }
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsProcessing(true);
@@ -118,6 +150,14 @@ const PublicQuickBooking = () => {
       setIsProcessing(false);
     }
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="container py-8 max-w-3xl mx-auto text-center">
+        <p>Laden van Google Maps...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 max-w-3xl mx-auto">
@@ -193,7 +233,19 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Adres</FormLabel>
                       <FormControl>
-                        <Input placeholder="Kerkstraat 12" {...field} disabled={isProcessing} />
+                        {isLoaded ? (
+                          <Autocomplete
+                            onLoad={onLoad}
+                            onPlaceChanged={onPlaceChanged}
+                            options={{
+                              componentRestrictions: { country: "nl" }, // Restrict to Netherlands
+                            }}
+                          >
+                            <Input placeholder="Kerkstraat 12" {...field} disabled={isProcessing} />
+                          </Autocomplete>
+                        ) : (
+                          <Input placeholder="Kerkstraat 12" {...field} disabled={isProcessing} />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>
