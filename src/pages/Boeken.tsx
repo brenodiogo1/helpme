@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { showLoading, showSuccess, dismissToast } from "@/utils/toast";
+import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -62,13 +63,51 @@ const Boeken = () => {
         );
     };
 
-    const handleConfirmBooking = () => {
+    const handleConfirmBooking = async () => {
         setIsProcessing(true);
-        const toastId = showLoading("Betaling verwerken...");
+        const toastId = showLoading("Betaling verwerken en boeking aanmaken...");
 
-        setTimeout(() => {
+        try {
+            // Get current user ID
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error("Gebruiker niet ingelogd.");
+            }
+
+            // 1. Create the booking entry with 'pending_offer' status
+            const { data: bookingData, error: bookingError } = await supabase
+                .from('bookings')
+                .insert({
+                    customer_id: user.id,
+                    cleaner_id: schoonmaker.id,
+                    booking_date: format(new Date(date), "yyyy-MM-dd"),
+                    booking_time: time,
+                    duration_hours: hours,
+                    total_price: totalPrice,
+                    status: 'pending_offer',
+                })
+                .select()
+                .single();
+
+            if (bookingError || !bookingData) {
+                throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking.");
+            }
+
+            // 2. Create the job offer for the cleaner
+            const { error: offerError } = await supabase
+                .from('job_offers')
+                .insert({
+                    booking_id: bookingData.id,
+                    cleaner_id: schoonmaker.id,
+                    status: 'pending',
+                });
+
+            if (offerError) {
+                throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding.");
+            }
+
             dismissToast(toastId);
-            showSuccess("Betaling geslaagd!");
+            showSuccess("Boeking succesvol aangevraagd! De schoonmaker zal de aanvraag beoordelen.");
 
             const bookingDetails = {
                 schoonmaker,
@@ -76,10 +115,19 @@ const Boeken = () => {
                 time,
                 hours,
                 totalPrice,
+                status: 'pending_offer',
+                bookingId: bookingData.id,
             };
 
             navigate("/bevestiging", { state: { bookingDetails } });
-        }, 2000);
+
+        } catch (error: any) {
+            dismissToast(toastId);
+            showError(error.message || "Er is een onverwachte fout opgetreden bij het boeken.");
+            console.error("Booking error:", error);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     if (!date || !time) {

@@ -4,12 +4,12 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarCheck, UserPlus, DollarSign, Star, MapPin } from "lucide-react";
+import { CalendarCheck, UserPlus, DollarSign, Star, MapPin, ListTodo, CheckCircle, XCircle } from "lucide-react"; // Adicionado ListTodo, CheckCircle, XCircle
 import { cn } from "@/lib/utils";
 
 interface ActivityEvent {
   id: string;
-  type: 'booking' | 'cleaner_joined' | 'review' | 'job_completed';
+  type: 'booking' | 'cleaner_joined' | 'review' | 'job_completed' | 'job_offer_accepted' | 'job_offer_rejected' | 'booking_cancelled';
   message: string;
   timestamp: string;
   icon: React.ReactNode;
@@ -19,11 +19,15 @@ interface ActivityEvent {
 }
 
 const generateRandomEvent = (id: number): ActivityEvent => {
-  const eventTypes = ['booking', 'cleaner_joined', 'review', 'job_completed'] as const; // Adicionado 'as const' aqui
+  const eventTypes = ['booking', 'cleaner_joined', 'review', 'job_completed', 'job_offer_accepted', 'job_offer_rejected', 'booking_cancelled'] as const;
   const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
   const now = new Date();
   const cities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"];
   const randomCity = cities[Math.floor(Math.random() * cities.length)];
+  const cleanerNames = ["Anna", "Ben", "Carla", "Daan", "Eva", "Frank", "Gerda", "Hans"];
+  const customerNames = ["Piet", "Janneke", "Klaas", "Henk", "Mark", "Linda", "Sander", "Chantal"];
+  const randomCleaner = cleanerNames[Math.floor(Math.random() * cleanerNames.length)];
+  const randomCustomer = customerNames[Math.floor(Math.random() * customerNames.length)];
 
   let message = "";
   let icon: React.ReactNode;
@@ -33,36 +37,49 @@ const generateRandomEvent = (id: number): ActivityEvent => {
 
   switch (randomType) {
     case 'booking':
-      message = `Nova reserva em ${randomCity}!`;
+      message = `Nieuwe boeking aangevraagd in ${randomCity}!`;
       icon = <CalendarCheck className="h-4 w-4" />;
       colorClass = "text-blue-500";
       break;
     case 'cleaner_joined':
-      const cleanerNames = ["Anna", "Ben", "Carla", "Daan", "Eva"];
-      const randomCleaner = cleanerNames[Math.floor(Math.random() * cleanerNames.length)];
-      message = `${randomCleaner} se juntou como faxineiro(a)!`;
+      message = `${randomCleaner} heeft zich aangemeld als schoonmaker!`;
       icon = <UserPlus className="h-4 w-4" />;
       colorClass = "text-purple-500";
       avatarUrl = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
       avatarFallback = randomCleaner.charAt(0);
       break;
     case 'review':
-      const customerNames = ["Piet", "Janneke", "Klaas", "Henk"];
-      const randomCustomer = customerNames[Math.floor(Math.random() * customerNames.length)];
-      message = `${randomCustomer} deixou uma nova avaliação de 5 estrelas!`;
+      message = `${randomCustomer} heeft een nieuwe 5-sterren beoordeling achtergelaten!`;
       icon = <Star className="h-4 w-4" />;
       colorClass = "text-yellow-500";
       avatarUrl = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
       avatarFallback = randomCustomer.charAt(0);
       break;
     case 'job_completed':
-      const cleanerNames2 = ["Anna", "Ben", "Carla", "Daan", "Eva"];
-      const randomCleaner2 = cleanerNames2[Math.floor(Math.random() * cleanerNames2.length)];
-      message = `${randomCleaner2} concluiu uma limpeza em ${randomCity}.`;
+      message = `${randomCleaner} heeft een schoonmaakklus in ${randomCity} voltooid.`;
       icon = <DollarSign className="h-4 w-4" />;
       colorClass = "text-green-500";
       avatarUrl = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
-      avatarFallback = randomCleaner2.charAt(0);
+      avatarFallback = randomCleaner.charAt(0);
+      break;
+    case 'job_offer_accepted':
+      message = `${randomCleaner} heeft een jobaanbieding geaccepteerd!`;
+      icon = <CheckCircle className="h-4 w-4" />;
+      colorClass = "text-green-600";
+      avatarUrl = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
+      avatarFallback = randomCleaner.charAt(0);
+      break;
+    case 'job_offer_rejected':
+      message = `${randomCleaner} heeft een jobaanbieding geweigerd.`;
+      icon = <XCircle className="h-4 w-4" />;
+      colorClass = "text-red-500";
+      avatarUrl = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
+      avatarFallback = randomCleaner.charAt(0);
+      break;
+    case 'booking_cancelled':
+      message = `Een boeking in ${randomCity} is geannuleerd.`;
+      icon = <XCircle className="h-4 w-4" />;
+      colorClass = "text-red-700";
       break;
   }
 
@@ -97,8 +114,8 @@ const LiveActivityFeed = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Atividade em Tempo Real</CardTitle>
-        <CardDescription>Eventos recentes na plataforma.</CardDescription>
+        <CardTitle>Live Activiteitenfeed</CardTitle>
+        <CardDescription>Recente gebeurtenissen op het platform.</CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-64">

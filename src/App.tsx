@@ -55,18 +55,22 @@ import CleanerChat from "./pages/cleaner/CleanerChat";
 import CustomerChat from "./pages/customer/CustomerChat";
 import AdminChat from "./pages/admin/AdminChat";
 import CleanerProvider from "./pages/cleaner/CleanerProvider";
-import { SettingsProvider } from "@/contexts/SettingsContext"; // Importar SettingsProvider
-import { useEffect } from "react"; // Importar useEffect
+import { SettingsProvider } from "@/contexts/SettingsContext";
+import { useEffect } from "react";
+import MijnTaken from "./pages/cleaner/MijnTaken"; // Importar a nova página
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Para garantir que a chave da API do Google Maps seja carregada no início
-  // e para que o Vite a reconheça, mesmo que não seja usada diretamente aqui.
-  // Em um ambiente de produção, a chave viria do backend ou de variáveis de ambiente.
   useEffect(() => {
     if (import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
       console.log("VITE_GOOGLE_MAPS_API_KEY is set.");
+    }
+    if (import.meta.env.VITE_SUPABASE_URL) {
+      console.log("VITE_SUPABASE_URL is set.");
+    }
+    if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.log("VITE_SUPABASE_ANON_KEY is set.");
     }
   }, []);
 
@@ -75,7 +79,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <SettingsProvider> {/* Envolver a aplicação com SettingsProvider */}
+        <SettingsProvider>
           <BrowserRouter>
             <Routes>
               {/* Public Routes */}
@@ -111,6 +115,7 @@ const App = () => {
               {/* Cleaner Dashboard Routes */}
               <Route path="/dashboard" element={<CleanerLayout />}>
                 <Route index element={<CleanerDashboard />} />
+                <Route path="taken" element={<MijnTaken />} /> {/* Nova rota */}
                 <Route path="boekingen" element={<MijnBoekingen />} />
                 <Route path="profiel" element={<CleanerProfiel />} />
                 <Route path="beschikbaarheid" element={<CleanerAvailability />} />
