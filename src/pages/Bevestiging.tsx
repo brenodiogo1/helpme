@@ -1,4 +1,4 @@
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 import { loadStripe } from '@stripe/stripe-js';
-import { Schoonmaker } from "@/types";
+// Removido import { Schoonmaker } from "@/types";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -16,7 +16,6 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 
 const Bevestiging = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState<'loading' | 'succeeded' | 'failed' | 'pending'>('loading');
   const [bookingCreated, setBookingCreated] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(location.state?.bookingDetails || null);
@@ -62,7 +61,7 @@ const Bevestiging = () => {
           setPaymentStatus('succeeded');
 
           // Retrieve booking details from location state
-          const { schoonmaker, date, time, hours, totalPrice, selectedServices } = bookingDetails;
+          const { schoonmaker, date, time, hours, totalPrice } = bookingDetails; // Removido selectedServices
 
           if (!bookingCreated && bookingDetails) {
             const { data: { user }, error: userError } = await supabase.auth.getUser();

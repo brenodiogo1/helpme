@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState } from "react"; // Removido useMemo, useRef, useEffect
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar as CalendarIcon, Smile, ShieldCheck, Star, Clock } from "lucide-react";

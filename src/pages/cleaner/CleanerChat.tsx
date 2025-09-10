@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react"; // Removido React
 import ChatWindow from "@/components/ChatWindow";
 
 const mockCleanerMessages = [

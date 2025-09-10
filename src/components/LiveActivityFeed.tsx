@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarCheck, UserPlus, DollarSign, Star, MapPin, ListTodo, CheckCircle, XCircle } from "lucide-react"; // Adicionado ListTodo, CheckCircle, XCircle
+import { CalendarCheck, UserPlus, DollarSign, Star, CheckCircle, XCircle } from "lucide-react"; // Adicionado CheckCircle
 import { cn } from "@/lib/utils";
 
 interface ActivityEvent {

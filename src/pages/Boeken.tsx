@@ -1,12 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react"; // Removido useEffect
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"; // Removido CardFooter
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, CreditCard } from "lucide-react";
+import { Minus, Plus } from "lucide-react"; // Removido CreditCard
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";

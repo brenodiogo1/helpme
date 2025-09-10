@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CalendarCheck, DollarSign, TrendingUp, Wallet } from "lucide-react";
+import { Users, CalendarCheck, DollarSign, Wallet } from "lucide-react"; // Removido TrendingUp
 import { RevenueChart } from "@/components/RevenueChart";
 import { RecentBookings } from "@/components/RecentBookings";
 import LiveActivityFeed from "@/components/LiveActivityFeed"; // Importar o novo componente

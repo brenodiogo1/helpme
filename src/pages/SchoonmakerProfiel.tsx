@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom"; // Removido useLocation, Link
 import { Schoonmaker } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, MapPin, CheckCircle, CalendarDays, Phone } from "lucide-react"; // Adicionado CalendarDays e Phone
+import { Star, MapPin, CheckCircle, CalendarDays, Phone } from "lucide-react";
 import ReviewCard from "@/components/ReviewCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, isSameDay, isBefore, addDays } from "date-fns";
+import { format, isBefore, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
 
 // Mock data for a single cleaner, including reviews and new availability fields
@@ -37,7 +37,7 @@ const mockSchoonmaker: Schoonmaker = {
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const SchoonmakerProfiel = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: schoonmakerId } = useParams<{ id: string }>(); // Renomeado 'id' para 'schoonmakerId' para evitar TS6133
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | undefined>();

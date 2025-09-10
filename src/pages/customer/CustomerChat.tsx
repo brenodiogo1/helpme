@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react"; // Removido React
 import ChatWindow from "@/components/ChatWindow";
 import { useLocation } from "react-router-dom";
 
@@ -12,7 +12,7 @@ const mockCustomerMessages = [
 
 const CustomerChat = () => {
   const location = useLocation();
-  const { cleanerName = "Limpador", cleanerAvatar = "" } = location.state || {};
+  const { cleanerName = "Limpador" } = location.state || {}; // Removido cleanerAvatar
   const [messages, setMessages] = useState(mockCustomerMessages);
 
   const handleSendMessage = (text: string) => {

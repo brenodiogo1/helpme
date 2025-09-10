@@ -7,9 +7,7 @@ import CustomerBookingTimeline from "@/components/CustomerBookingTimeline";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
-import { format } from "date-fns";
-import { nl } from "date-fns/locale";
-import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
+import { Booking } from "@/types"; // Removido format e nl
 
 const CustomerDashboard = () => {
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);

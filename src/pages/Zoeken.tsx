@@ -1,8 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react"; // Removido useEffect
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox"; // Removido Button
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -146,10 +145,11 @@ const Zoeken = () => {
   const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || "");
   const [filterPostcode, setFilterPostcode] = useState<string>(searchParams.get("postcode") || "");
 
-  useEffect(() => {
-    setFilterCity(searchParams.get("city") || "");
-    setFilterPostcode(searchParams.get("postcode") || "");
-  }, [searchParams]);
+  // Removido useEffect, pois não é mais necessário para esta lógica
+  // useEffect(() => {
+  //   setFilterCity(searchParams.get("city") || "");
+  //   setFilterPostcode(searchParams.get("postcode") || "");
+  // }, [searchParams]);
 
   const handleServiceChange = (service: string) => {
     setSelectedServices(prev =>
@@ -192,7 +192,8 @@ const Zoeken = () => {
 
   const filteredSchoonmakers = useMemo(() => {
     const searchDateParam = searchParams.get("date");
-    const searchTimeParam = searchParams.get("time");
+    // Removido searchTimeParam, pois não é mais utilizado
+    // const searchTimeParam = searchParams.get("time");
 
     let searchDate: Date | null = null;
     if (searchDateParam) {
