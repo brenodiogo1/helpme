@@ -53,7 +53,8 @@ import PayoutSettings from "./pages/cleaner/PayoutSettings";
 import PayoutsBeheren from "./pages/admin/PayoutsBeheren";
 import CleanerChat from "./pages/cleaner/CleanerChat";
 import CustomerChat from "./pages/customer/CustomerChat";
-import AdminChat from "./pages/admin/AdminChat"; // Importando o novo AdminChat
+import AdminChat from "./pages/admin/AdminChat";
+import CleanerProvider from "./pages/cleaner/CleanerProvider"; // Importando o novo componente
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="uitbetalingen" element={<PayoutSettings />} />
             <Route path="recensies" element={<MyReviews />} />
             <Route path="abonnement" element={<CleanerSubscription />} />
+            <Route path="provedor" element={<CleanerProvider />} /> {/* Nova rota */}
             <Route path="instellingen" element={<CleanerSettings />} />
             <Route path="chat" element={<CleanerChat />} />
           </Route>
@@ -131,7 +133,7 @@ const App = () => (
             <Route path="uitbetalingen" element={<PayoutsBeheren />} />
             <Route path="abonnementen" element={<SubscriptionsBeheren />} />
             <Route path="instellingen" element={<AdminSettings />} />
-            <Route path="chat" element={<AdminChat />} /> {/* Usando o novo AdminChat */}
+            <Route path="chat" element={<AdminChat />} />
           </Route>
 
           {/* Catch-all Route */}

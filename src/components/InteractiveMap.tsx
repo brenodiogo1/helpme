@@ -5,7 +5,7 @@ import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api';
 import { Users, MapPin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ["places"];
+const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"]; // 'localContext' removido
 
 interface ActivityDot {
   id: number;
