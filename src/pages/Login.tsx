@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
+import { useUser } from "@/context/UserContext";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -16,7 +17,7 @@ const formSchema = z.object({
 });
 
 const Login = () => {
-  const navigate = useNavigate();
+  const { login } = useUser();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -28,24 +29,21 @@ const Login = () => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password } = values;
 
-    // Admin user
     if (email === "admin@helpme.com" && password === "admin123") {
       showSuccess("Succesvol ingelogd als admin!");
-      navigate("/admin");
+      login({ name: "Admin", role: "admin" });
       return;
     }
 
-    // Cleaner user
     if (email === "schoonmaker@helpme.com" && password === "schoonmaker123") {
       showSuccess("Succesvol ingelogd als schoonmaker!");
-      navigate("/dashboard");
+      login({ name: "Anna de Vries", role: "cleaner" });
       return;
     }
 
-    // Customer user
     if (email === "klant@helpme.com" && password === "klant123") {
       showSuccess("Succesvol ingelogd!");
-      navigate("/account");
+      login({ name: "Piet H.", role: "customer" });
       return;
     }
 
@@ -56,7 +54,7 @@ const Login = () => {
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
             Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.
