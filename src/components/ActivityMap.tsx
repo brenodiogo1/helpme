@@ -95,7 +95,7 @@ const ActivityMap = () => {
               </div>
             )}
             <img 
-              src="https://images.unsplash.com/photo-1596934361360-2422d0cf29b9?q=80&w=1364&auto=format&fit=crop" 
+              src="/map-of-netherlands.png" // Caminho para a imagem local do mapa
               alt="Mapa da Holanda" 
               className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
