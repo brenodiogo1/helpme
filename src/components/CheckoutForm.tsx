@@ -17,6 +17,7 @@ interface CheckoutFormProps {
   totalPrice: number;
   selectedServices: string[];
   setIsProcessing: (processing: boolean) => void;
+  isProcessing: boolean; // Adicionado: o estado de processamento também precisa ser passado
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
@@ -27,6 +28,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   totalPrice,
   selectedServices,
   setIsProcessing,
+  isProcessing, // Adicionado: desestruturar a prop
 }) => {
   const stripe = useStripe();
   const elements = useElements();
