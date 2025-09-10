@@ -49,6 +49,8 @@ import SchoonmakerFAQ from "./pages/legal/SchoonmakerFAQ";
 import AlgemeneVoorwaarden from "./pages/legal/AlgemeneVoorwaarden";
 import Privacybeleid from "./pages/legal/Privacybeleid";
 import Cookiebeleid from "./pages/legal/Cookiebeleid";
+import PayoutSettings from "./pages/cleaner/PayoutSettings";
+import PayoutsBeheren from "./pages/admin/PayoutsBeheren";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +98,7 @@ const App = () => (
             <Route path="profiel" element={<CleanerProfiel />} />
             <Route path="beschikbaarheid" element={<CleanerAvailability />} />
             <Route path="inkomsten" element={<CleanerEarnings />} />
+            <Route path="uitbetalingen" element={<PayoutSettings />} />
             <Route path="recensies" element={<MyReviews />} />
             <Route path="abonnement" element={<CleanerSubscription />} />
             <Route path="instellingen" element={<CleanerSettings />} />
@@ -120,6 +123,7 @@ const App = () => (
             <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
             <Route path="klanten" element={<CustomersBeheren />} />
             <Route path="boekingen" element={<BoekingenBeheren />} />
+            <Route path="uitbetalingen" element={<PayoutsBeheren />} />
             <Route path="abonnementen" element={<SubscriptionsBeheren />} />
             <Route path="instellingen" element={<AdminSettings />} />
           </Route>

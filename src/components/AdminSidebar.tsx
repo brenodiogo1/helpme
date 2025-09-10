@@ -1,8 +1,9 @@
-import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem } from "lucide-react";
+import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Separator } from "./ui/separator";
 
 const AdminSidebar = () => {
   const location = useLocation();
@@ -21,7 +22,7 @@ const AdminSidebar = () => {
             <span className="sr-only">Toggle notifications</span>
           </Button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 overflow-auto py-2">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             <Link
               to="/admin"
@@ -67,6 +68,16 @@ const AdminSidebar = () => {
               Klanten
             </Link>
             <Link
+              to="/admin/uitbetalingen"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/admin/uitbetalingen") && "bg-muted text-primary"
+              )}
+            >
+              <Wallet className="h-4 w-4" />
+              Uitbetalingen
+            </Link>
+            <Link
               to="/admin/abonnementen"
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -87,6 +98,13 @@ const AdminSidebar = () => {
               Instellingen
             </Link>
           </nav>
+        </div>
+        <div className="mt-auto p-4">
+          <Separator className="mb-4" />
+          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+            <LogOut className="h-4 w-4" />
+            Uitloggen
+          </Link>
         </div>
       </div>
     </div>

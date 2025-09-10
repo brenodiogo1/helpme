@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast } from "@/utils/toast";
@@ -40,6 +40,7 @@ const Boeken = () => {
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
 
@@ -155,10 +156,21 @@ const Boeken = () => {
                             </div>
                         </div>
                     </div>
+                     <Separator />
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <Button variant={paymentMethod === 'ideal' ? 'default' : 'outline'} onClick={() => setPaymentMethod('ideal')}>iDEAL</Button>
+                            <Button variant={paymentMethod === 'paypal' ? 'default' : 'outline'} onClick={() => setPaymentMethod('paypal')}>PayPal</Button>
+                            <Button variant={paymentMethod === 'creditcard' ? 'default' : 'outline'} onClick={() => setPaymentMethod('creditcard')}>
+                                <CreditCard className="mr-2 h-4 w-4" /> Creditcard
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
                 <CardFooter>
-                    <Button size="lg" className="w-full" onClick={handleConfirmBooking} disabled={isProcessing}>
-                        {isProcessing ? "Verwerken..." : "Nu betalen en bevestigen"}
+                    <Button size="lg" className="w-full" onClick={handleConfirmBooking} disabled={isProcessing || !paymentMethod}>
+                        {isProcessing ? "Verwerken..." : `Betaal €${totalPrice.toFixed(2)} en bevestig`}
                     </Button>
                 </CardFooter>
             </Card>
