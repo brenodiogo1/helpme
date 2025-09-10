@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CalendarCheck, Clock, Star, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import ActivityMap from "@/components/ActivityMap";
 
 const mockUpcomingBooking = {
     customer: "Familie de Jong",
@@ -56,7 +57,7 @@ const CleanerDashboard = () => {
           </CardContent>
         </Card>
       </div>
-      <div>
+      <div className="grid gap-8 md:grid-cols-2">
         <Card>
             <CardHeader>
                 <CardTitle>Je volgende afspraak</CardTitle>
@@ -72,6 +73,7 @@ const CleanerDashboard = () => {
                 </Button>
             </CardContent>
         </Card>
+        <ActivityMap />
       </div>
     </div>
   );

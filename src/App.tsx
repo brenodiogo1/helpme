@@ -40,6 +40,15 @@ import CustomerAddresses from "./pages/customer/CustomerAddresses";
 import CustomerSettings from "./pages/customer/CustomerSettings";
 import FavoriteCleaners from "./pages/customer/FavoriteCleaners";
 import MyReviews from "./pages/cleaner/MyReviews";
+import OverOns from "./pages/legal/OverOns";
+import Pers from "./pages/legal/Pers";
+import Carriere from "./pages/legal/Carriere";
+import Prijzen from "./pages/legal/Prijzen";
+import FAQ from "./pages/legal/FAQ";
+import SchoonmakerFAQ from "./pages/legal/SchoonmakerFAQ";
+import AlgemeneVoorwaarden from "./pages/legal/AlgemeneVoorwaarden";
+import Privacybeleid from "./pages/legal/Privacybeleid";
+import Cookiebeleid from "./pages/legal/Cookiebeleid";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +77,16 @@ const App = () => (
             <Route path="/registreren" element={<Registreren />} />
             <Route path="/registreren/klant" element={<RegistrerenKlant />} />
             <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
+            {/* Legal Pages */}
+            <Route path="/over-ons" element={<OverOns />} />
+            <Route path="/pers" element={<Pers />} />
+            <Route path="/carriere" element={<Carriere />} />
+            <Route path="/prijzen" element={<Prijzen />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/schoonmaker-faq" element={<SchoonmakerFAQ />} />
+            <Route path="/algemene-voorwaarden" element={<AlgemeneVoorwaarden />} />
+            <Route path="/privacybeleid" element={<Privacybeleid />} />
+            <Route path="/cookiebeleid" element={<Cookiebeleid />} />
           </Route>
 
           {/* Cleaner Dashboard Routes */}

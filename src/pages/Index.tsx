@@ -12,14 +12,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ActivityMap from "@/components/ActivityMap";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?q=80&w=800&auto=format&fit=crop" },
-  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1594864853236-818a086d5202?q=80&w=800&auto=format&fit=crop" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1560223199-54b35157351a?q=80&w=800&auto=format&fit=crop" },
   { name: "Den Haag", image: "https://images.unsplash.com/photo-1618897554035-43c6f5665131?q=80&w=800&auto=format&fit=crop" },
-  { name: "Utrecht", image: "https://images.unsplash.com/photo-1594781539462-393b7f6e1886?q=80&w=800&auto=format&fit=crop" },
+  { name: "Utrecht", image: "https://images.unsplash.com/photo-1561371228-789c35549834?q=80&w=800&auto=format&fit=crop" },
   { name: "Eindhoven", image: "https://images.unsplash.com/photo-1579253498-243080170428?q=80&w=800&auto=format&fit=crop" },
   { name: "Groningen", image: "https://images.unsplash.com/photo-1570164742218-8a8a5f00a633?q=80&w=800&auto=format&fit=crop" },
 ];
@@ -145,8 +146,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
+      {/* Activity Map Section */}
       <section className="py-16 lg:py-24 bg-secondary">
+        <div className="container mx-auto">
+            <ActivityMap />
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 lg:py-24">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor HelpMe?</h2>
           <p className="text-muted-foreground mb-12">Jouw tevredenheid is onze prioriteit.</p>
@@ -189,7 +197,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 lg:py-24">
+      <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">Wat onze klanten zeggen</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -201,7 +209,7 @@ const Index = () => {
       </section>
 
       {/* Featured Cities Section */}
-      <section className="py-16 lg:py-24 bg-secondary">
+      <section className="py-16 lg:py-24">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">We zijn actief in heel Nederland</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

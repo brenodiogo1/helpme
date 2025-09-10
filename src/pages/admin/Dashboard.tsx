@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CalendarCheck, DollarSign } from "lucide-react";
 import { RevenueChart } from "@/components/RevenueChart";
 import { RecentBookings } from "@/components/RecentBookings";
+import ActivityMap from "@/components/ActivityMap";
 
 const Dashboard = () => {
   return (
@@ -48,6 +49,9 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
+      </div>
+      <div className="mb-8">
+        <ActivityMap />
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">

@@ -69,17 +69,19 @@ const Header = () => {
 
                   <div className="mt-auto">
                     <Separator className="my-4" />
-                    <div className="flex flex-col gap-6 text-xl">
-                      <Link to="/login" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
-                        <LogIn className="h-6 w-6" />
-                        Inloggen
-                      </Link>
-                      <Button asChild size="lg">
-                        <Link to="/registreren" className="flex items-center gap-4">
-                           <UserPlus className="h-6 w-6" />
-                           Aanmelden
-                        </Link>
-                      </Button>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" asChild size="lg">
+                            <Link to="/login">
+                                <LogIn className="mr-2 h-5 w-5" />
+                                Inloggen
+                            </Link>
+                        </Button>
+                        <Button asChild size="lg">
+                            <Link to="/registreren">
+                                <UserPlus className="mr-2 h-5 w-5" />
+                                Aanmelden
+                            </Link>
+                        </Button>
                     </div>
                     <div className="mt-6 flex justify-center">
                       <LanguageSwitcher />

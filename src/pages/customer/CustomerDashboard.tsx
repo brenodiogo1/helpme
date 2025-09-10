@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CalendarPlus } from "lucide-react";
+import ActivityMap from "@/components/ActivityMap";
 
 const mockUpcomingBooking = {
     schoonmaker: "Anna de Vries",
@@ -45,6 +46,9 @@ const CustomerDashboard = () => {
                 </Button>
             </CardContent>
         </Card>
+      </div>
+      <div className="mt-8">
+        <ActivityMap />
       </div>
     </div>
   );
