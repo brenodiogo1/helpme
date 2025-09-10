@@ -223,8 +223,8 @@ const Index = () => {
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* Featured Cities Section */}
       <section className="py-16 lg:py-24">
