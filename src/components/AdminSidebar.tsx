@@ -1,4 +1,4 @@
-import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet, MessageSquare, CalendarPlus } from "lucide-react"; // Adicionado CalendarPlus
+import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet, MessageSquare } from "lucide-react"; // Removido CalendarPlus
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +47,8 @@ const AdminSidebar = () => {
                 6
               </Badge>
             </Link>
-            <Link
-              to="/admin/quick-booking" // Novo link para Agendamento Rápido
+            {/* <Link
+              to="/admin/quick-booking" // Link removido
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 isActive("/admin/quick-booking") && "bg-muted text-primary"
@@ -56,7 +56,7 @@ const AdminSidebar = () => {
             >
               <CalendarPlus className="h-4 w-4" />
               Snelle Boeking
-            </Link>
+            </Link> */}
             <Link
               to="/admin/schoonmakers"
               className={cn(

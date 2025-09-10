@@ -58,7 +58,7 @@ import CleanerProvider from "./pages/cleaner/CleanerProvider";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { useEffect } from "react";
 import MijnTaken from "./pages/cleaner/MijnTaken";
-import QuickBooking from "./pages/admin/QuickBooking"; // Importar a nova página
+// import QuickBooking from "./pages/admin/QuickBooking"; // Remover importação se não for mais usada aqui
 
 const queryClient = new QueryClient();
 
@@ -153,7 +153,7 @@ const App = () => {
                 <Route path="abonnementen" element={<SubscriptionsBeheren />} />
                 <Route path="instellingen" element={<AdminSettings />} />
                 <Route path="chat" element={<AdminChat />} />
-                <Route path="quick-booking" element={<QuickBooking />} /> {/* Nova rota */}
+                {/* <Route path="quick-booking" element={<QuickBooking />} /> */} {/* Rota removida */}
               </Route>
 
               {/* Catch-all Route */}
