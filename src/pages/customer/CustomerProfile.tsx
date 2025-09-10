@@ -47,7 +47,7 @@ const CustomerProfile = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, phone_number') // Fetch phone_number
           .eq('id', user.id)
           .single();
 
@@ -59,7 +59,7 @@ const CustomerProfile = () => {
           firstName: data?.first_name || user.user_metadata.first_name || "",
           lastName: data?.last_name || user.user_metadata.last_name || "",
           email: user.email || "",
-          phone: "", // Phone number is not in profiles table by default
+          phone: data?.phone_number || "", // Set phone number
         });
       } catch (err: any) {
         showError(err.message);
@@ -80,18 +80,9 @@ const CustomerProfile = () => {
 
     const toastId = showLoading("Profiel bijwerken...");
     try {
-      // Update auth.users metadata
-      const { error: authUpdateError } = await supabase.auth.updateUser({
-        data: {
-          first_name: values.firstName,
-          last_name: values.lastName,
-        },
-      });
-
-      if (authUpdateError) {
-        throw new Error(authUpdateError.message);
-      }
-
+      // Update auth.users metadata (if needed, though first/last name are already handled by trigger)
+      // For now, we'll rely on the profiles table for first/last name and phone.
+      
       // Update public.profiles table
       const { error: profileUpdateError } = await supabase
         .from('profiles')
@@ -99,6 +90,7 @@ const CustomerProfile = () => {
           id: user.id,
           first_name: values.firstName,
           last_name: values.lastName,
+          phone_number: values.phone, // Save phone number
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
