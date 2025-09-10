@@ -16,26 +16,13 @@ const CleanerChat = () => {
   const handleSendMessage = (text: string) => {
     const newMessage = {
       id: String(messages.length + 1),
-      sender: "user" as const, // Explicitly cast to 'user'
+      sender: "user" as const,
       text,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    // Simulate admin response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: String(prev.length + 1),
-          sender: "admin" as const, // Explicitly cast to 'admin'
-          senderName: "Admin",
-          text: "Entendido. Vou verificar isso para você.",
-          timestamp: new Date().toISOString(),
-          avatarUrl: "https://i.pravatar.cc/150?img=11",
-        },
-      ]);
-    }, 1500);
+    // A resposta automática foi removida para permitir comunicação manual.
   };
 
   return (

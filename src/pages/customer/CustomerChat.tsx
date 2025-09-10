@@ -18,26 +18,13 @@ const CustomerChat = () => {
   const handleSendMessage = (text: string) => {
     const newMessage = {
       id: String(messages.length + 1),
-      sender: "user" as const, // Explicitly cast to 'user'
+      sender: "user" as const,
       text,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    // Simulate cleaner response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: String(prev.length + 1),
-          sender: "other" as const, // Explicitly cast to 'other'
-          senderName: cleanerName,
-          text: "Obrigado por confirmar!",
-          timestamp: new Date().toISOString(),
-          avatarUrl: cleanerAvatar,
-        },
-      ]);
-    }, 1500);
+    // A resposta automática foi removida para permitir comunicação manual.
   };
 
   return (
