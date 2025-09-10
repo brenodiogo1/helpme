@@ -53,7 +53,7 @@ import PayoutSettings from "./pages/cleaner/PayoutSettings";
 import PayoutsBeheren from "./pages/admin/PayoutsBeheren";
 import CleanerChat from "./pages/cleaner/CleanerChat";
 import CustomerChat from "./pages/customer/CustomerChat";
-// import AdminChat from "./pages/admin/AdminChat"; // Removido: módulo não encontrado e não utilizado
+import AdminChat from "./pages/admin/AdminChat"; // Importando o novo AdminChat
 
 const queryClient = new QueryClient();
 
@@ -131,7 +131,7 @@ const App = () => (
             <Route path="uitbetalingen" element={<PayoutsBeheren />} />
             <Route path="abonnementen" element={<SubscriptionsBeheren />} />
             <Route path="instellingen" element={<AdminSettings />} />
-            <Route path="chat" element={<CleanerChat />} /> {/* Admin uses CleanerChat to talk to cleaners */}
+            <Route path="chat" element={<AdminChat />} /> {/* Usando o novo AdminChat */}
           </Route>
 
           {/* Catch-all Route */}
