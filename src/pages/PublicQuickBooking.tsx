@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"; // Removido FormDescription
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,7 +22,7 @@ import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label"; // Adicionado importação de Label
+import { Label } from "@/components/ui/label"; // <-- Importação adicionada aqui
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -237,7 +237,7 @@ const PublicQuickBooking = () => {
 
     } catch (error: any) {
       dismissToast(toastId);
-      showError(error.message || "Er is een onverwachte fout opgetreden bij het verzenden van de aanvraag.");
+      showError(error.message || "Er is een onverwachte fout opgetredene bij het verzenden van de aanvraag.");
       console.error("Quick booking submission error:", error);
     } finally {
       setIsSubmitting(false);
