@@ -57,7 +57,8 @@ import AdminChat from "./pages/admin/AdminChat";
 import CleanerProvider from "./pages/cleaner/CleanerProvider";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { useEffect } from "react";
-import MijnTaken from "./pages/cleaner/MijnTaken"; // Importar a nova página
+import MijnTaken from "./pages/cleaner/MijnTaken";
+import QuickBooking from "./pages/admin/QuickBooking"; // Importar a nova página
 
 const queryClient = new QueryClient();
 
@@ -115,7 +116,7 @@ const App = () => {
               {/* Cleaner Dashboard Routes */}
               <Route path="/dashboard" element={<CleanerLayout />}>
                 <Route index element={<CleanerDashboard />} />
-                <Route path="taken" element={<MijnTaken />} /> {/* Nova rota */}
+                <Route path="taken" element={<MijnTaken />} />
                 <Route path="boekingen" element={<MijnBoekingen />} />
                 <Route path="profiel" element={<CleanerProfiel />} />
                 <Route path="beschikbaarheid" element={<CleanerAvailability />} />
@@ -152,6 +153,7 @@ const App = () => {
                 <Route path="abonnementen" element={<SubscriptionsBeheren />} />
                 <Route path="instellingen" element={<AdminSettings />} />
                 <Route path="chat" element={<AdminChat />} />
+                <Route path="quick-booking" element={<QuickBooking />} /> {/* Nova rota */}
               </Route>
 
               {/* Catch-all Route */}
