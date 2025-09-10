@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"; // Adicionado useEffect
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Schoonmaker } from "@/types";
-import { format, getDay } from "date-fns";
-import { nl } from "date-fns/locale"; // Importar 'nl'
-import { Input } from "@/components/ui/input"; // Importar Input
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
+import { Input } from "@/components/ui/input";
 
 const mockSchoonmakers: Schoonmaker[] = [
   {
@@ -129,31 +129,32 @@ const mockSchoonmakers: Schoonmaker[] = [
     city: "Rotterdam",
     address: "Weena 700, 3013 AL Rotterdam",
     phoneNumber: "+31689012345",
-    availableDaysOfWeek: ["Maandag", "Quarta-feira", "Vrijdag"],
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
     unavailableDates: [],
   },
 ];
 
 const allServices = [...new Set(mockSchoonmakers.flatMap(s => s.services))].sort();
-const allCities = [...new Set(mockSchoonmakers.map(s => s.city))].sort(); // Obter todas as cidades únicas
-const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]; // Ordem para getDay()
+const allCities = [...new Set(mockSchoonmakers.map(s => s.city))].sort();
+const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
 
 const Zoeken = () => {
-  const [searchParams, setSearchParams] = useSearchParams(); // Usar setSearchParams para atualizar a URL
+  const [searchParams, setSearchParams] = useSearchParams();
   const [priceRange, setPriceRange] = useState([10, 50]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]);
-  const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || ""); // Estado para o filtro de cidade
+  const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || "");
+  const [filterPostcode, setFilterPostcode] = useState<string>(searchParams.get("postcode") || "");
 
-  // Atualizar o estado do filtro de cidade quando a URL mudar
   useEffect(() => {
     setFilterCity(searchParams.get("city") || "");
+    setFilterPostcode(searchParams.get("postcode") || "");
   }, [searchParams]);
 
   const handleServiceChange = (service: string) => {
-    setSelectedServices(prev => 
-      prev.includes(service) 
-        ? prev.filter(s => s !== service) 
+    setSelectedServices(prev =>
+      prev.includes(service)
+        ? prev.filter(s => s !== service)
         : [...prev, service]
     );
   };
@@ -177,11 +178,20 @@ const Zoeken = () => {
     setSearchParams(newSearchParams);
   };
 
+  const handlePostcodeFilterChange = (postcode: string) => {
+    setFilterPostcode(postcode);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (postcode) {
+      newSearchParams.set("postcode", postcode);
+    } else {
+      newSearchParams.delete("postcode");
+    }
+    setSearchParams(newSearchParams);
+  };
+
   const filteredSchoonmakers = useMemo(() => {
     const searchDateParam = searchParams.get("date");
     const searchTimeParam = searchParams.get("time");
-    const searchCityParam = searchParams.get("city");
-    const searchPostcodeParam = searchParams.get("postcode");
 
     let searchDate: Date | null = null;
     if (searchDateParam) {
@@ -192,16 +202,12 @@ const Zoeken = () => {
     return mockSchoonmakers.filter(schoonmaker => {
       const priceMatch = schoonmaker.hourlyRate >= priceRange[0] && schoonmaker.hourlyRate <= priceRange[1];
       const servicesMatch = selectedServices.length === 0 || selectedServices.every(service => schoonmaker.services.includes(service));
-      
-      const daysOfWeekMatch = selectedDaysOfWeek.length === 0 || 
+
+      const daysOfWeekMatch = selectedDaysOfWeek.length === 0 ||
                               (schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day)));
 
-      // Filtrar por cidade (se houver um parâmetro de busca ou um filtro selecionado)
-      const cityMatch = (!searchCityParam || schoonmaker.city.toLowerCase().includes(searchCityParam.toLowerCase())) &&
-                        (!filterCity || schoonmaker.city.toLowerCase() === filterCity.toLowerCase());
-
-      // Filtrar por código postal (simplesmente verifica se o código postal está no endereço)
-      const postcodeMatch = !searchPostcodeParam || schoonmaker.address.toLowerCase().includes(searchPostcodeParam.toLowerCase());
+      const cityMatch = !filterCity || schoonmaker.city.toLowerCase() === filterCity.toLowerCase();
+      const postcodeMatch = !filterPostcode || schoonmaker.address.toLowerCase().includes(filterPostcode.toLowerCase());
 
       let dateAndTimeMatch = true;
       if (searchDate) {
@@ -216,10 +222,10 @@ const Zoeken = () => {
 
       return priceMatch && servicesMatch && daysOfWeekMatch && cityMatch && postcodeMatch && dateAndTimeMatch;
     });
-  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams, filterCity]);
+  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams, filterCity, filterPostcode]);
 
-  const postcode = searchParams.get("postcode");
-  const city = searchParams.get("city");
+  const initialPostcode = searchParams.get("postcode");
+  const initialCity = searchParams.get("city");
 
   return (
     <div className="container py-8">
@@ -251,7 +257,7 @@ const Zoeken = () => {
                       <span>€{priceRange[1]}</span>
                   </div>
               </div>
-              <div> {/* Novo filtro de cidade */}
+              <div>
                   <Label htmlFor="filter-city">Stad</Label>
                   <Select onValueChange={handleCityFilterChange} value={filterCity}>
                     <SelectTrigger id="filter-city">
@@ -264,12 +270,23 @@ const Zoeken = () => {
                   </Select>
               </div>
               <div>
+                <Label htmlFor="filter-postcode">Postcode</Label>
+                <Input
+                  id="filter-postcode"
+                  type="text"
+                  placeholder="Voer postcode in"
+                  value={filterPostcode}
+                  onChange={(e) => handlePostcodeFilterChange(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
                   <Label>Diensten</Label>
                   <div className="space-y-2 mt-2 max-h-60 overflow-y-auto">
                       {allServices.map(service => (
                           <div key={service} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={service} 
+                              <Checkbox
+                                id={service}
                                 checked={selectedServices.includes(service)}
                                 onCheckedChange={() => handleServiceChange(service)}
                               />
@@ -283,8 +300,8 @@ const Zoeken = () => {
                   <div className="space-y-2 mt-2">
                       {daysOfWeek.map(day => (
                           <div key={day} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={`day-filter-${day}`} 
+                              <Checkbox
+                                id={`day-filter-${day}`}
                                 checked={selectedDaysOfWeek.includes(day)}
                                 onCheckedChange={() => handleDayOfWeekFilterChange(day)}
                               />
@@ -300,12 +317,16 @@ const Zoeken = () => {
         {/* Results */}
         <main className="md:col-span-3">
           <h1 className="text-3xl font-bold mb-4">
-            {city && postcode ? `Schoonmakers in ${city} (${postcode})` : city ? `Schoonmakers in ${city}` : postcode ? `Schoonmakers in de buurt van ${postcode}` : "Schoonmakers in jouw buurt"}
+            {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredSchoonmakers.map((schoonmaker) => (
-              <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} />
-            ))}
+            {filteredSchoonmakers.length > 0 ? (
+              filteredSchoonmakers.map((schoonmaker) => (
+                <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} />
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-full">Geen schoonmakers gevonden die aan je criteria voldoen.</p>
+            )}
           </div>
         </main>
       </div>
