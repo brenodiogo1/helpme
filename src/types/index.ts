@@ -64,5 +64,5 @@ export interface JobOffer {
       first_name: string;
       last_name: string;
     } | null;
-  };
+  } | null; // Permitir que bookings seja null
 }

@@ -71,13 +71,34 @@ const MijnTaken = () => {
       }
 
       // Mapear os dados para corresponder à interface JobOffer
-      const mappedJobOffers: JobOffer[] = data.map(item => ({
-        ...item,
-        bookings: {
-          ...item.bookings,
-          profiles: item.bookings.profiles && item.bookings.profiles.length > 0 ? item.bookings.profiles[0] : null,
-        },
-      }));
+      const mappedJobOffers: JobOffer[] = data.map((item: any) => {
+        const bookingData = item.bookings && item.bookings.length > 0 ? item.bookings[0] : null;
+        
+        let mappedBooking: JobOffer['bookings'] = null;
+        if (bookingData) {
+          const profileData = bookingData.profiles && bookingData.profiles.length > 0 ? bookingData.profiles[0] : null;
+          mappedBooking = {
+            id: bookingData.id,
+            customer_id: bookingData.customer_id,
+            booking_date: bookingData.booking_date,
+            booking_time: bookingData.booking_time,
+            duration_hours: bookingData.duration_hours,
+            total_price: bookingData.total_price,
+            status: bookingData.status,
+            profiles: profileData,
+          };
+        }
+
+        return {
+          id: item.id,
+          booking_id: item.booking_id,
+          cleaner_id: item.cleaner_id,
+          status: item.status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          bookings: mappedBooking,
+        };
+      });
 
       setJobOffers(mappedJobOffers);
     } catch (err: any) {
@@ -178,13 +199,13 @@ const MijnTaken = () => {
               {jobOffers.map((offer) => (
                 <TableRow key={offer.id}>
                   <TableCell className="font-medium">
-                    {offer.bookings.profiles ? `${offer.bookings.profiles.first_name} ${offer.bookings.profiles.last_name}` : 'Onbekende Klant'}
+                    {offer.bookings?.profiles ? `${offer.bookings.profiles.first_name} ${offer.bookings.profiles.last_name}` : 'Onbekende Klant'}
                   </TableCell>
                   <TableCell>
-                    {format(new Date(offer.bookings.booking_date), "eeee d MMMM yyyy", { locale: nl })} om {offer.bookings.booking_time}
+                    {offer.bookings ? format(new Date(offer.bookings.booking_date), "eeee d MMMM yyyy", { locale: nl }) : 'N/A'} om {offer.bookings?.booking_time || 'N/A'}
                   </TableCell>
-                  <TableCell>{offer.bookings.duration_hours} uur</TableCell>
-                  <TableCell>€{offer.bookings.total_price.toFixed(2)}</TableCell>
+                  <TableCell>{offer.bookings?.duration_hours ? `${offer.bookings.duration_hours} uur` : 'N/A'}</TableCell>
+                  <TableCell>€{offer.bookings?.total_price ? offer.bookings.total_price.toFixed(2) : 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={
                       offer.status === "pending" ? "secondary" :
@@ -195,10 +216,10 @@ const MijnTaken = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {offer.status === "pending" ? (
+                    {offer.status === "pending" && offer.bookings ? (
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleOfferResponse(offer.id, offer.bookings.id, 'accepted')}>Accepteren</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleOfferResponse(offer.id, offer.bookings.id, 'rejected')}>Weigeren</Button>
+                        <Button size="sm" onClick={() => handleOfferResponse(offer.id, offer.bookings!.id, 'accepted')}>Accepteren</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleOfferResponse(offer.id, offer.bookings!.id, 'rejected')}>Weigeren</Button>
                       </div>
                     ) : (
                       <Badge variant="outline">Beheerd</Badge>
