@@ -19,9 +19,7 @@ import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
-import QuickBookingCheckoutForm from "@/components/QuickBookingCheckoutForm"; // Importar o novo componente
+import { useNavigate } from "react-router-dom";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -47,15 +45,10 @@ const formSchema = z.object({
   selectedExtraServices: z.array(z.string()).optional(),
 });
 
-// Carregar o Stripe fora do componente para evitar recargas desnecessárias
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  : null;
-
 const PublicQuickBooking = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Renomeado para isSubmitting
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const navigate = useNavigate();
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -89,31 +82,6 @@ const PublicQuickBooking = () => {
   }, [selectedExtraServices]);
   const totalPrice = basePrice + extrasPrice;
 
-  useEffect(() => {
-    // Criar PaymentIntent quando o componente é montado ou o preço total muda
-    const createPaymentIntent = async () => {
-        if (!totalPrice || totalPrice <= 0) return;
-
-        try {
-            const response = await supabase.functions.invoke('create-payment-intent', {
-                body: JSON.stringify({ amount: totalPrice, currency: 'eur' }),
-            });
-
-            if (response.error) {
-                throw new Error(response.error.message);
-            }
-
-            const { clientSecret } = response.data as { clientSecret: string };
-            setClientSecret(clientSecret);
-        } catch (error: any) {
-            console.error("Error fetching client secret:", error);
-            showError("Falha ao inicializar o pagamento: " + error.message);
-        }
-    };
-
-    createPaymentIntent();
-  }, [totalPrice]);
-
   const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   };
@@ -139,26 +107,59 @@ const PublicQuickBooking = () => {
     }
   };
 
-  // A função onSubmit original será substituída pela lógica do QuickBookingCheckoutForm
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Esta função agora apenas valida o formulário e passa os dados para o componente de checkout
-    // O processamento real da reserva e pagamento ocorrerá no QuickBookingCheckoutForm
-    console.log("Formulário de reserva rápida validado:", values);
-    // O QuickBookingCheckoutForm será renderizado e lidará com a submissão do pagamento
-  };
+    setIsSubmitting(true);
+    const toastId = showLoading("Boekingsaanvraag verzenden...");
 
-  const options: StripeElementsOptions = {
-    clientSecret,
-    appearance: {
-        theme: 'stripe',
-        variables: {
-            colorPrimary: '#60a5fa', // Tailwind blue-400
-            colorText: '#334155', // Tailwind slate-700
-            colorBackground: '#ffffff',
-            colorDanger: '#ef4444', // Tailwind red-500
-            fontFamily: 'Inter, sans-serif',
-        },
-    },
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const customerId = user?.id || null; // Pode ser nulo se o usuário não estiver logado
+
+      const { data: bookingData, error: bookingError } = await supabase
+          .from('bookings')
+          .insert({
+              customer_id: customerId,
+              cleaner_id: null, // Nenhum limpador atribuído inicialmente
+              booking_date: format(values.bookingDate, "yyyy-MM-dd"),
+              booking_time: values.bookingTime,
+              duration_hours: values.durationHours,
+              total_price: totalPrice,
+              status: 'pending_assignment', // Status: aguardando atribuição/pagamento
+              address: values.address,
+              postcode: values.postcode,
+              phone_number: values.phoneNumber,
+              first_name: values.firstName,
+              last_name: values.lastName,
+              email: values.email,
+          })
+          .select()
+          .single();
+
+      if (bookingError || !bookingData) {
+          throw new Error(bookingError?.message || "Fout bij het aanmaken van de boekingsaanvraag.");
+      }
+
+      dismissToast(toastId);
+      showSuccess("Boekingsaanvraag succesvol verzonden! We nemen spoedig contact met u op via chat.");
+
+      const confirmationDetails = {
+          schoonmaker: { name: "Nog niet toegewezen" }, // Placeholder
+          date: values.bookingDate.toISOString(),
+          time: values.bookingTime,
+          hours: values.durationHours,
+          totalPrice,
+          status: 'pending_assignment',
+          bookingId: bookingData.id,
+      };
+      navigate("/bevestiging", { state: { bookingDetails: confirmationDetails } });
+
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message || "Er is een onverwachte fout opgetreden bij het verzenden van de aanvraag.");
+      console.error("Quick booking submission error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isLoaded) {
@@ -175,7 +176,7 @@ const PublicQuickBooking = () => {
         <CardHeader>
           <CardTitle>Snel een Schoonmaker Boeken</CardTitle>
           <CardDescription>
-            Vul je gegevens in en boek snel een schoonmaakafspraak. We vinden de beste schoonmaker voor jou!
+            Vul je gegevens in en vraag snel een schoonmaakafspraak aan. We vinden de beste schoonmaker voor jou!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -189,7 +190,7 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Voornaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jan" {...field} disabled={isProcessing} />
+                        <Input placeholder="Jan" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -202,7 +203,7 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Achternaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jansen" {...field} disabled={isProcessing} />
+                        <Input placeholder="Jansen" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -216,7 +217,7 @@ const PublicQuickBooking = () => {
                   <FormItem>
                     <FormLabel>E-mailadres</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="naam@voorbeeld.com" {...field} disabled={isProcessing} />
+                      <Input type="email" placeholder="naam@voorbeeld.com" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,7 +230,7 @@ const PublicQuickBooking = () => {
                   <FormItem>
                     <FormLabel>Telefoonnummer</FormLabel>
                     <FormControl>
-                      <Input placeholder="0612345678" {...field} disabled={isProcessing} />
+                      <Input placeholder="0612345678" {...field} disabled={isSubmitting} />
                     </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -251,10 +252,10 @@ const PublicQuickBooking = () => {
                               componentRestrictions: { country: "nl" }, // Restrict to Netherlands
                             }}
                           >
-                            <Input placeholder="Kerkstraat 12" {...field} disabled={isProcessing} />
+                            <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
                           </Autocomplete>
                         ) : (
-                          <Input placeholder="Kerkstraat 12" {...field} disabled={isProcessing} />
+                          <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
                         )}
                       </FormControl>
                       <FormMessage />
@@ -268,7 +269,7 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Postcode</FormLabel>
                       <FormControl>
-                        <Input placeholder="1012 AB" {...field} disabled={isProcessing} />
+                        <Input placeholder="1012 AB" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -289,7 +290,7 @@ const PublicQuickBooking = () => {
                             <Button
                               variant={"outline"}
                               className="w-full pl-3 text-left font-normal"
-                              disabled={isProcessing}
+                              disabled={isSubmitting}
                             >
                               {field.value ? (
                                 format(field.value, "PPP", { locale: nl })
@@ -321,7 +322,7 @@ const PublicQuickBooking = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tijd</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isProcessing}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Kies een tijd" />
@@ -344,7 +345,7 @@ const PublicQuickBooking = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => form.setValue("durationHours", Math.max(1, durationHours - 1))}
-                    disabled={isProcessing}
+                    disabled={isSubmitting}
                     type="button"
                   >
                     <Minus className="h-4 w-4" />
@@ -354,7 +355,7 @@ const PublicQuickBooking = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => form.setValue("durationHours", durationHours + 1)}
-                    disabled={isProcessing}
+                    disabled={isSubmitting}
                     type="button"
                   >
                     <Plus className="h-4 w-4" />
@@ -385,7 +386,7 @@ const PublicQuickBooking = () => {
                                       )
                                     );
                               }}
-                              disabled={isProcessing}
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormLabel className="flex justify-between w-full font-normal cursor-pointer">
@@ -425,30 +426,9 @@ const PublicQuickBooking = () => {
                 </div>
               </div>
 
-              {/* Stripe Payment Section */}
-              <Separator />
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
-                {stripePromise && clientSecret ? (
-                    <Elements stripe={stripePromise} options={options}>
-                        <QuickBookingCheckoutForm
-                            bookingDetails={form.getValues()} // Passar todos os dados do formulário
-                            totalPrice={totalPrice}
-                            setIsProcessing={setIsProcessing}
-                            isProcessing={isProcessing}
-                        />
-                    </Elements>
-                ) : (
-                    <div className="text-center text-muted-foreground">
-                        Carregando opções de pagamento...
-                        {!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && (
-                            <p className="text-red-500 text-sm mt-2">
-                                Erro: VITE_STRIPE_PUBLISHABLE_KEY não está configurada no .env
-                            </p>
-                        )}
-                    </div>
-                )}
-              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Verzenden..." : `Vraag aan voor €${totalPrice.toFixed(2)}`}
+              </Button>
             </form>
           </Form>
         </CardContent>
