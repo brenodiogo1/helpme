@@ -39,7 +39,7 @@ const Footer = () => {
         </div>
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <img src="/logo.png" alt="HelpMe Logo" className="h-8" />
+            <img src="/logo.png" alt="HelpMe Logo" className="h-10" /> {/* Aumentado de h-8 para h-10 */}
             <span>© {new Date().getFullYear()}. Alle rechten voorbehouden.</span>
           </div>
         </div>

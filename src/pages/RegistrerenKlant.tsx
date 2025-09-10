@@ -37,7 +37,7 @@ const RegistrerenKlant = () => {
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-12 mx-auto" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
           <CardTitle className="text-2xl mt-2">Account aanmaken (Klant)</CardTitle>
           <CardDescription>
             Voer je gegevens in om de beste schoonmakers te vinden.

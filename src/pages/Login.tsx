@@ -56,7 +56,7 @@ const Login = () => {
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-12 mx-auto" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
             Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.
