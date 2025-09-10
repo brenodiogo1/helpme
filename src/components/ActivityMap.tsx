@@ -24,9 +24,9 @@ const ActivityMap = () => {
       <CardContent>
         <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden bg-gray-200">
           <img 
-            src="https://cdn.openart.ai/stable_diffusion/236883a654406307f35941442d38333a73724230_2048x2048.webp" 
-            alt="Mapa da Holanda" 
-            className="w-full h-full object-cover opacity-50"
+            src="https://images.unsplash.com/photo-1569950243582-2c7032119146?q=80&w=1287&auto=format&fit=crop" 
+            alt="Mapa estilizado" 
+            className="w-full h-full object-cover opacity-60"
           />
           {cleaners.map((pos, i) => (
             <div key={`c-${i}`} className="absolute w-3 h-3 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-pulse" style={pos}>
