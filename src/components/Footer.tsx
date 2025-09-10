@@ -37,10 +37,13 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <img src="/logo.png" alt="HelpMe Logo" className="h-12" />
-            <span>© {new Date().getFullYear()}. Alle rechten voorbehouden.</span>
+        <div className="mt-8 pt-8 border-t flex flex-col sm:flex-row justify-between items-center text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="HelpMe Logo" className="h-16" />
+            <div>
+              <p className="font-semibold text-base text-foreground">HelpMe</p>
+              <p>© {new Date().getFullYear()}. Alle rechten voorbehouden.</p>
+            </div>
           </div>
         </div>
       </div>

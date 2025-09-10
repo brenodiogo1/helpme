@@ -12,7 +12,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ActivityMap from "@/components/ActivityMap";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
@@ -180,43 +179,38 @@ const Index = () => {
 
       {/* Why Choose Us Section */}
       <section className="py-16 lg:py-24">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor HelpMe?</h2>
-          <p className="text-muted-foreground mb-12">Jouw tevredenheid is onze prioriteit.</p>
-          <div className="grid md:grid-cols-3 gap-8 text-left">
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <ShieldCheck className="h-8 w-8 text-primary" />
-                <CardTitle>Betrouwbaar & Gescreend</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Elke schoonmaker op ons platform is zorgvuldig gescreend en beoordeeld.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <Star className="h-8 w-8 text-primary" />
-                <CardTitle>Topkwaliteit Gegarandeerd</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <Clock className="h-8 w-8 text-primary" />
-                <CardTitle>Flexibel & Eenvoudig</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.
-                </p>
-              </CardContent>
-            </Card>
+        <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <AspectRatio ratio={4/3} className="rounded-lg overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1558317374-067fb5f3da43?q=80&w=800&auto=format&fit=crop" alt="Clean living room" className="w-full h-full object-cover" />
+            </AspectRatio>
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Waarom kiezen voor HelpMe?</h2>
+            <p className="text-muted-foreground mb-8">Jouw tevredenheid is onze prioriteit. We bieden een naadloze ervaring van begin tot eind.</p>
+            <ul className="space-y-6">
+              <li className="flex items-start gap-4">
+                <ShieldCheck className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold">Betrouwbaar & Gescreend</h3>
+                  <p className="text-muted-foreground">Elke schoonmaker op ons platform is zorgvuldig gescreend en beoordeeld.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <Star className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold">Topkwaliteit Gegarandeerd</h3>
+                  <p className="text-muted-foreground">We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <Clock className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold">Flexibel & Eenvoudig</h3>
+                  <p className="text-muted-foreground">Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.</p>
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
       </section>
