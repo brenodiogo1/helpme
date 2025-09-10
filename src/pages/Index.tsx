@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar as CalendarIcon, Smile, ShieldCheck, Star, Clock } from "lucide-react";
@@ -19,7 +19,7 @@ const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
-  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1560223199-54b35157351a?auto=format&fit=crop&w=800&q=80" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1725980207-111111111111?q=80&w=1920&auto=format&fit=crop" }, // Imagem de Rotterdam atualizada
   { name: "Den Haag", image: "https://images.unsplash.com/photo-1618897554035-43c6f5665131?auto=format&fit=crop&w=800&q=80" },
   { name: "Utrecht", image: "https://images.unsplash.com/photo-1561371228-789c35549834?auto=format&fit=crop&w=800&q=80" },
   { name: "Eindhoven", image: "https://images.unsplash.com/photo-1579253498-243080170428?auto=format&fit=crop&w=800&q=80" },
