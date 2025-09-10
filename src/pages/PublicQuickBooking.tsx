@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form"; // Adicionado Controller
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ const PublicQuickBooking = () => {
     autocompleteRef.current = autocomplete;
   };
 
-  const onPlaceChanged = () => {
+  const onPlaceChanged = (onChange: (...event: any[]) => void) => {
     if (autocompleteRef.current !== null) {
       const place = autocompleteRef.current.getPlace();
       if (place.address_components) {
@@ -125,6 +125,7 @@ const PublicQuickBooking = () => {
         form.setValue("address", address.trim());
         form.setValue("postcode", postcode);
         form.trigger(["address", "postcode"]);
+        onChange(address.trim()); // Update react-hook-form's state
       }
     }
   };
@@ -326,17 +327,17 @@ const PublicQuickBooking = () => {
                   )}
                 />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
+                <Controller
                   control={form.control}
                   name="address"
-                  render={({ field }) => (
+                  render={({ field: { onChange, onBlur, value, name, ref } }) => (
                     <FormItem>
                       <FormLabel>Adres</FormLabel>
                       <FormControl>
                         {isLoaded ? (
                           <Autocomplete
                             onLoad={onLoad}
-                            onPlaceChanged={onPlaceChanged}
+                            onPlaceChanged={() => onPlaceChanged(onChange)} // Pass onChange to update form state
                             options={{
                               componentRestrictions: { country: "nl" }, // Restrict to Netherlands
                             }}
@@ -345,12 +346,16 @@ const PublicQuickBooking = () => {
                               type="text"
                               placeholder="Kerkstraat 12"
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" // Apply shadcn Input styling
-                              {...field}
+                              value={value}
+                              onChange={onChange} // Update form state as user types
+                              onBlur={onBlur}
+                              name={name}
+                              ref={ref}
                               disabled={isSubmitting}
                             />
                           </Autocomplete>
                         ) : (
-                          <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
+                          <Input placeholder="Kerkstraat 12" value={value} onChange={onChange} onBlur={onBlur} name={name} ref={ref} disabled={isSubmitting} />
                         )}
                       </FormControl>
                       <FormMessage />
