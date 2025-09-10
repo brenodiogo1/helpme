@@ -19,6 +19,9 @@ import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
+import QuickBookingCheckoutForm from "@/components/QuickBookingCheckoutForm"; // Importar o novo componente
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -44,8 +47,14 @@ const formSchema = z.object({
   selectedExtraServices: z.array(z.string()).optional(),
 });
 
+// Carregar o Stripe fora do componente para evitar recargas desnecessárias
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
+
 const PublicQuickBooking = () => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -80,6 +89,31 @@ const PublicQuickBooking = () => {
   }, [selectedExtraServices]);
   const totalPrice = basePrice + extrasPrice;
 
+  useEffect(() => {
+    // Criar PaymentIntent quando o componente é montado ou o preço total muda
+    const createPaymentIntent = async () => {
+        if (!totalPrice || totalPrice <= 0) return;
+
+        try {
+            const response = await supabase.functions.invoke('create-payment-intent', {
+                body: JSON.stringify({ amount: totalPrice, currency: 'eur' }),
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            const { clientSecret } = response.data as { clientSecret: string };
+            setClientSecret(clientSecret);
+        } catch (error: any) {
+            console.error("Error fetching client secret:", error);
+            showError("Falha ao inicializar o pagamento: " + error.message);
+        }
+    };
+
+    createPaymentIntent();
+  }, [totalPrice]);
+
   const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   };
@@ -105,50 +139,26 @@ const PublicQuickBooking = () => {
     }
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsProcessing(true);
-    const toastId = showLoading("Boeking aanmaken...");
+  // A função onSubmit original será substituída pela lógica do QuickBookingCheckoutForm
+  const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Esta função agora apenas valida o formulário e passa os dados para o componente de checkout
+    // O processamento real da reserva e pagamento ocorrerá no QuickBookingCheckoutForm
+    console.log("Formulário de reserva rápida validado:", values);
+    // O QuickBookingCheckoutForm será renderizado e lidará com a submissão do pagamento
+  };
 
-    try {
-      // Get current user ID if logged in, otherwise create booking without customer_id initially
-      const { data: { user } } = await supabase.auth.getUser();
-      const customerId = user?.id || null; // If user is not logged in, customer_id will be null
-
-      // 1. Create the booking entry with 'pending_assignment' status
-      const { data: bookingData, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          customer_id: customerId, // Can be null if not logged in
-          cleaner_id: null, // No cleaner assigned yet
-          booking_date: format(values.bookingDate, "yyyy-MM-dd"),
-          booking_time: values.bookingTime,
-          duration_hours: values.durationHours,
-          total_price: totalPrice,
-          status: 'pending_assignment', // New status for unassigned bookings
-          address: values.address,
-          postcode: values.postcode,
-          phone_number: values.phoneNumber,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          email: values.email,
-        })
-        .select()
-        .single();
-
-      if (bookingError || !bookingData) {
-        throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking.");
-      }
-
-      dismissToast(toastId);
-      showSuccess("Boeking succesvol aangevraagd! We zoeken een geschikte schoonmaker voor je.");
-      form.reset(); // Clear form after successful submission
-    } catch (error: any) {
-      dismissToast(toastId);
-      showError(error.message || "Er is een onverwachte fout opgetreden bij het aanmaken van de boeking.");
-      console.error("Quick booking error:", error);
-    } finally {
-      setIsProcessing(false);
-    }
+  const options: StripeElementsOptions = {
+    clientSecret,
+    appearance: {
+        theme: 'stripe',
+        variables: {
+            colorPrimary: '#60a5fa', // Tailwind blue-400
+            colorText: '#334155', // Tailwind slate-700
+            colorBackground: '#ffffff',
+            colorDanger: '#ef4444', // Tailwind red-500
+            fontFamily: 'Inter, sans-serif',
+        },
+    },
   };
 
   if (!isLoaded) {
@@ -170,7 +180,7 @@ const PublicQuickBooking = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="grid gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -221,10 +231,10 @@ const PublicQuickBooking = () => {
                     <FormControl>
                       <Input placeholder="0612345678" {...field} disabled={isProcessing} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -415,11 +425,30 @@ const PublicQuickBooking = () => {
                 </div>
               </div>
 
-              <CardFooter className="flex justify-end p-0 pt-4">
-                <Button type="submit" disabled={isProcessing}>
-                  {isProcessing ? "Aanmaken..." : "Boeking Aanvragen"}
-                </Button>
-              </CardFooter>
+              {/* Stripe Payment Section */}
+              <Separator />
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
+                {stripePromise && clientSecret ? (
+                    <Elements stripe={stripePromise} options={options}>
+                        <QuickBookingCheckoutForm
+                            bookingDetails={form.getValues()} // Passar todos os dados do formulário
+                            totalPrice={totalPrice}
+                            setIsProcessing={setIsProcessing}
+                            isProcessing={isProcessing}
+                        />
+                    </Elements>
+                ) : (
+                    <div className="text-center text-muted-foreground">
+                        Carregando opções de pagamento...
+                        {!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && (
+                            <p className="text-red-500 text-sm mt-2">
+                                Erro: VITE_STRIPE_PUBLISHABLE_KEY não está configurada no .env
+                            </p>
+                        )}
+                    </div>
+                )}
+              </div>
             </form>
           </Form>
         </CardContent>

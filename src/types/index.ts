@@ -32,7 +32,7 @@ export interface Booking {
   booking_time: string;
   duration_hours: number;
   total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment'; // Adicionado 'pending_assignment'
+  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment' | 'paid_pending_assignment'; // Adicionado 'paid_pending_assignment'
   created_at: string;
   updated_at: string;
   address?: string; // Novo campo
