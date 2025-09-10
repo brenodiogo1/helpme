@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, ClipboardList, Briefcase, LogIn, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -15,7 +15,7 @@ const Header = () => {
         {/* Left side: Logo and Desktop Nav */}
         <div className="flex items-center">
           <Link to="/" className="mr-6 flex items-center">
-            <img src="/logo.png" alt="HelpMe Logo" className="h-14" />
+            <img src="/logo.png" alt="HelpMe Logo" className="h-16" />
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
             <Link to="/#hoe-het-werkt">{t("header.howItWorks")}</Link>
@@ -53,24 +53,32 @@ const Header = () => {
                     <img
                       src="/logo.png"
                       alt="HelpMe Logo"
-                      className="h-14"
+                      className="h-16"
                     />
                   </Link>
-                  <div className="flex flex-col gap-4 text-lg">
-                    <Link to="/#hoe-het-werkt">
+                  <div className="flex flex-col gap-6 text-xl">
+                    <Link to="/#hoe-het-werkt" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
+                      <ClipboardList className="h-6 w-6" />
                       {t("header.howItWorks")}
                     </Link>
-                    <Link to="/voor-schoonmakers">
+                    <Link to="/voor-schoonmakers" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
+                      <Briefcase className="h-6 w-6" />
                       {t("header.forCleaners")}
                     </Link>
                   </div>
 
                   <div className="mt-auto">
                     <Separator className="my-4" />
-                    <div className="flex flex-col gap-4 text-lg">
-                      <Link to="/login">Inloggen</Link>
-                      <Button asChild>
-                        <Link to="/registreren">Aanmelden</Link>
+                    <div className="flex flex-col gap-6 text-xl">
+                      <Link to="/login" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
+                        <LogIn className="h-6 w-6" />
+                        Inloggen
+                      </Link>
+                      <Button asChild size="lg">
+                        <Link to="/registreren" className="flex items-center gap-4">
+                           <UserPlus className="h-6 w-6" />
+                           Aanmelden
+                        </Link>
                       </Button>
                     </div>
                     <div className="mt-6 flex justify-center">
