@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const { amount, currency } = await req.json();
 
+    console.log('Received request for payment intent:', { amount, currency });
+
     if (!amount || !currency) {
       console.error('Error: Amount and currency are required in the request body.');
       return new Response(JSON.stringify({ error: 'Amount and currency are required.' }), {
@@ -27,6 +29,7 @@ serve(async (req) => {
       console.error('Error: STRIPE_SECRET_KEY environment variable not found for Edge Function.');
       throw new Error('Stripe secret key not found in environment variables.');
     }
+    console.log('Stripe secret key found.');
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2024-06-20',
@@ -38,6 +41,8 @@ serve(async (req) => {
       currency: currency,
       payment_method_types: ['card'],
     });
+
+    console.log('Payment Intent created successfully:', paymentIntent.id);
 
     return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
       status: 200,

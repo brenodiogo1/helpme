@@ -19,6 +19,64 @@ const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
+  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1725980207-111111111111?q=80&w<dyad-problem-report summary="2 problems">
+<problem file="src/pages/Index.tsx" line="226" column="11" code="17002">Expected corresponding JSX closing tag for 'div'.</problem>
+<problem file="src/pages/Index.tsx" line="227" column="9" code="17002">Expected corresponding JSX closing tag for 'section'.</problem>
+</dyad-problem-report><think>**Reviewing Testimonial Section**
+
+I'm currently reviewing two TypeScript compile-time errors in `src/pages/Index.tsx` within the Testimonials Section. Both seem to stem from missing closing tags in that section's markup. The grid structure I'm building is likely the source of the issues, requiring a closer look at the syntax.
+
+
+**Debugging Structure Errors**
+
+I've identified the root cause of the TypeScript errors: redundant `<Card>` and `<CardContent>` tags enclosing the `ReviewCard` components. This is likely due to the `ReviewCard` component internally rendering a `Card`. The proposed fix involves removing the outer `<Card>` and `<CardContent>` and ensuring the `ReviewCard` components are rendered within the appropriate structure. I'm now testing this structural adjustment to resolve the compile-time issues.
+
+
+**Analyzing Tag Misplacements**
+
+I've determined the errors stem from misplaced closing tags.  The `ReviewCard` components likely encapsulate their own `Card` structure.  Therefore, extraneous `<Card>` and `<CardContent>` tags in the parent section are causing the errors. I'll test removing these redundant tags around the mapping of the `ReviewCard` components.
+
+
+**Refining Tag Placement**
+
+I'm now certain the extraneous `<CardContent>` and `<Card>` tags in `src/pages/Index.tsx` are the culprits. They're trying to close structures initiated *within* the `ReviewCard` components. I've re-examined the code and confirmed the `ReviewCard` likely renders its own internal card structure. I'll focus on removing those incorrect tags. Also, I'll delve into error logging for the Supabase Edge Function to diagnose payment initialization failures.
+
+
+**Fixing Markup and Logging**
+
+I've determined that the `</CardContent>` and `</Card>` tags in `Index.tsx` are redundant. Their removal is straightforward. Additionally, I'll enhance the logging within the Supabase Edge Function to diagnose payment initialization failures. I am confident that these changes will resolve the current issues.
+
+
+</think>Com certeza! Vamos corrigir os erros de compilação no `src/pages/Index.tsx` e adicionar mais detalhes para depurar a falha na Edge Function de pagamento.
+
+---
+
+**1. Correção dos Erros de Compilação em `src/pages/Index.tsx`**
+
+Os erros que você apontou (`TS17002`) indicam que há tags de fechamento `</CardContent>` e `</Card>` extras na seção de depoimentos (`Testimonials Section`). O componente `ReviewCard` já encapsula o conteúdo em seu próprio `Card`, então essas tags externas são redundantes e causam o erro. Vou removê-las.
+
+<dyad-write path="src/pages/Index.tsx" description="Corrigindo tags de fechamento extras na seção de depoimentos.">
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, MapPin, Calendar as CalendarIcon, Smile, ShieldCheck, Star, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import ReviewCard from "@/components/ReviewCard";
+import { Review } from "@/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import LiveActivityFeed from "@/components/LiveActivityFeed";
+// import QuickBooking from "@/pages/admin/QuickBooking"; // Remover importação
+
+const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
+
+const cities = [
+  { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
   { name: "Rotterdam", image: "https://images.unsplash.com/photo-1725980207-111111111111?q=80&w=1920&auto=format&fit=crop" }, // Imagem de Rotterdam atualizada
   { name: "Den Haag", image: "https://images.unsplash.com/photo-1618897554035-43c6f5665131?auto=format&fit=crop&w=800&q=80" },
   { name: "Utrecht", image: "https://images.unsplash.com/photo-1561371228-789c35549834?auto=format&fit=crop&w=800&q=80" },
@@ -223,8 +281,8 @@ const Index = () => {
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div> {/* Corrected: Removed extra </CardContent> and </Card> */}
+      </section>
 
       {/* Featured Cities Section */}
       <section className="py-16 lg:py-24">
