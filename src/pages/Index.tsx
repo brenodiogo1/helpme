@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ActivityMap from "@/components/ActivityMap";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -29,9 +30,12 @@ const mockReviews: Review[] = [
     { id: "r1", author: "Mark V.", rating: 5, comment: "Geweldige service! Anna was punctueel, professioneel en mijn huis is brandschoon. Zeker een aanrader.", date: "2023-10-20", avatarUrl: "https://i.pravatar.cc/150?img=1" },
     { id: "r2", author: "Linda de Groot", rating: 5, comment: "Ik ben zo blij met het werk van Ben. Hij is zeer grondig en vriendelijk. Ik boek hem zeker opnieuw.", date: "2023-10-18", avatarUrl: "https://i.pravatar.cc/150?img=2" },
     { id: "r3", author: "Sander Janssen", rating: 5, comment: "Topkwaliteit en zeer betrouwbaar. Carla heeft fantastisch werk geleverd na onze verbouwing.", date: "2023-10-15", avatarUrl: "https://i.pravatar.cc/150?img=3" },
-    { id: "r4", author: "Chantal Willems", rating: 4, comment: "Goede schoonmaak, communicatie kon iets beter. Maar het resultaat was prima.", date: "2023-10-12", avatarUrl: "https://i.pravatar.cc/150?img=4" },
-    { id: "r5", author: "Familie de Boer", rating: 5, comment: "Eva is een topper! Ze is geweldig met onze hond en het huis ruikt altijd heerlijk fris na haar bezoek.", date: "2023-10-10", avatarUrl: "https://i.pravatar.cc/150?img=5" },
-    { id: "r6", author: "Pieter van Dijk", rating: 5, comment: "Eindelijk iemand gevonden die echt weet wat schoonmaken is. Zeer tevreden over de dieptereiniging.", date: "2023-10-05", avatarUrl: "https://i.pravatar.cc/150?img=6" },
+];
+
+const supporters = [
+    { name: "TechSolutions" }, { name: "Innovate Inc." }, { name: "Venture Partners" },
+    { name: "GreenLiving" }, { name: "EcoClean" }, { name: "StartupHub NL" },
+    { name: "BrightCapital" }, { name: "NextGen Ventures" }
 ];
 
 const Index = () => {
@@ -146,10 +150,31 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Activity Map Section */}
+      {/* Supporters Carousel Section */}
       <section className="py-16 lg:py-24 bg-secondary">
-        <div className="container mx-auto">
-            <ActivityMap />
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-2">Ondersteund door Topbedrijven</h2>
+          <p className="text-muted-foreground mb-12">We zijn trots op de samenwerking met onze partners.</p>
+          <Carousel
+            opts={{ align: "start", loop: true }}
+            className="w-full max-w-4xl mx-auto"
+          >
+            <CarouselContent>
+              {supporters.map((supporter, index) => (
+                <CarouselItem key={index} className="md:basis-1/3 lg:basis-1/4">
+                  <div className="p-1">
+                    <Card>
+                      <CardContent className="flex aspect-video items-center justify-center p-6">
+                        <span className="text-xl font-semibold text-muted-foreground">{supporter.name}</span>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
         </div>
       </section>
 

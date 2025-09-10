@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showSuccess } from "@/utils/toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const mockBoekingen = [
     { id: "B001", klant: "Piet H.", schoonmaker: "Anna de Vries", datum: "2024-05-10", status: "Voltooid", bedrag: 55.50 },
@@ -18,29 +20,86 @@ const mockBoekingen = [
 ];
 
 const mockSchoonmakers = ["Anna de Vries", "Ben Janssen", "Carla Bakker"];
+const mockKlanten = ["Piet H.", "Janneke S.", "Klaas de Wit", "Eva de Jong"];
 
 const BoekingenBeheren = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isChangeCleanerDialogOpen, setIsChangeCleanerDialogOpen] = useState(false);
+  const [isManualOrderDialogOpen, setIsManualOrderDialogOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
   const handleOpenDialog = (bookingId: string) => {
     setSelectedBookingId(bookingId);
-    setIsDialogOpen(true);
+    setIsChangeCleanerDialogOpen(true);
   };
 
   const handleChangeCleaner = () => {
     showSuccess("Schoonmaker succesvol gewijzigd! (Simulatie)");
-    setIsDialogOpen(false);
+    setIsChangeCleanerDialogOpen(false);
+  };
+
+  const handleManualOrder = () => {
+    showSuccess("Nieuwe boeking succesvol aangemaakt! (Simulatie)");
+    setIsManualOrderDialogOpen(false);
   };
 
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Boekingen</CardTitle>
-          <CardDescription>
-            Bekijk en beheer alle boekingen.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Boekingen</CardTitle>
+            <CardDescription>
+              Bekijk en beheer alle boekingen.
+            </CardDescription>
+          </div>
+          <Dialog open={isManualOrderDialogOpen} onOpenChange={setIsManualOrderDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Nieuwe Boeking
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Handmatige Boeking Aanmaken</DialogTitle>
+                <DialogDescription>
+                  Maak hier een nieuwe boeking aan voor een klant.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="klant" className="text-right">Klant</Label>
+                  <Select>
+                    <SelectTrigger id="klant" className="col-span-3">
+                      <SelectValue placeholder="Selecteer een klant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockKlanten.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="schoonmaker" className="text-right">Schoonmaker</Label>
+                  <Select>
+                    <SelectTrigger id="schoonmaker" className="col-span-3">
+                      <SelectValue placeholder="Selecteer een schoonmaker" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockSchoonmakers.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="datum" className="text-right">Datum</Label>
+                  <Input id="datum" type="date" className="col-span-3" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsManualOrderDialogOpen(false)}>Annuleren</Button>
+                <Button onClick={handleManualOrder}>Boeking Aanmaken</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Table>
@@ -97,7 +156,7 @@ const BoekingenBeheren = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isChangeCleanerDialogOpen} onOpenChange={setIsChangeCleanerDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Schoonmaker Wijzigen</DialogTitle>
@@ -116,7 +175,7 @@ const BoekingenBeheren = () => {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Annuleren</Button>
+            <Button variant="outline" onClick={() => setIsChangeCleanerDialogOpen(false)}>Annuleren</Button>
             <Button onClick={handleChangeCleaner}>Opslaan</Button>
           </DialogFooter>
         </DialogContent>
