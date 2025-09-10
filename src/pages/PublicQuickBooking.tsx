@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, Minus, Plus } from "lucide-react";
-import { format } from "date-fns"; // <-- Correção aqui
+import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -341,7 +341,13 @@ const PublicQuickBooking = () => {
                               componentRestrictions: { country: "nl" }, // Restrict to Netherlands
                             }}
                           >
-                            <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
+                            <input
+                              type="text"
+                              placeholder="Kerkstraat 12"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" // Apply shadcn Input styling
+                              {...field}
+                              disabled={isSubmitting}
+                            />
                           </Autocomplete>
                         ) : (
                           <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
