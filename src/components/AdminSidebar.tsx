@@ -1,14 +1,12 @@
-import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet, MessageSquare } from "lucide-react";
+import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet, MessageSquare } from "lucide-react"; // Removido CalendarPlus
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
-import { useAuth } from "@/contexts/AuthContext";
 
 const AdminSidebar = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
@@ -49,6 +47,16 @@ const AdminSidebar = () => {
                 6
               </Badge>
             </Link>
+            {/* <Link
+              to="/admin/quick-booking" // Link removido
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/admin/quick-booking") && "bg-muted text-primary"
+              )}
+            >
+              <CalendarPlus className="h-4 w-4" />
+              Snelle Boeking
+            </Link> */}
             <Link
               to="/admin/schoonmakers"
               className={cn(
@@ -113,10 +121,10 @@ const AdminSidebar = () => {
         </div>
         <div className="mt-auto p-4">
           <Separator className="mb-4" />
-          <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-3" />
+          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+            <LogOut className="h-4 w-4" />
             Uitloggen
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

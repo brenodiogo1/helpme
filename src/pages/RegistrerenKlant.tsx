@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Link, useNavigate } from "react-router-dom";
-import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { showSuccess } from "@/utils/toast";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -19,7 +18,6 @@ const formSchema = z.object({
 });
 
 const RegistrerenKlant = () => {
-  const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -30,50 +28,16 @@ const RegistrerenKlant = () => {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            first_name: values.firstName,
-            last_name: values.lastName,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data.user) {
-        // Optionally, create a profile entry in public.profiles table
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          first_name: values.firstName,
-          last_name: values.lastName,
-        });
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError.message);
-          // Decide if you want to show this error to the user or just log it
-        }
-      }
-
-      showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor verificatie.");
-      navigate("/login");
-    } catch (error: any) {
-      showError(error.message);
-      console.error("Registratie fout:", error);
-    }
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+    showSuccess("Account succesvol aangemaakt! (Simulatie)");
   }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
           <CardTitle className="text-2xl mt-2">Account aanmaken (Klant)</CardTitle>
           <CardDescription>
             Voer je gegevens in om de beste schoonmakers te vinden.

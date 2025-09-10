@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,184 +7,31 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Booking, Schoonmaker } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { showSuccess } from "@/utils/toast";
+
+const mockBoekingen = [
+    { id: "B001", klant: "Piet H.", schoonmaker: "Anna de Vries", datum: "2024-05-10", status: "Voltooid", bedrag: 55.50 },
+    { id: "B002", klant: "Janneke S.", schoonmaker: "Anna de Vries", datum: "2024-05-12", status: "Voltooid", bedrag: 74.00 },
+    { id: "B003", klant: "Klaas de Wit", schoonmaker: "Ben Janssen", datum: "2024-05-15", status: "Geannuleerd", bedrag: 51.00 },
+    { id: "B004", klant: "Eva de Jong", schoonmaker: "Carla Bakker", datum: "2024-05-18", status: "Gepland", bedrag: 100.00 },
+    { id: "B005", klant: "Henk Groot", schoonmaker: "Anna de Vries", datum: "2024-05-20", status: "Gepland", bedrag: 55.50 },
+];
+
+const mockSchoonmakers = ["Anna de Vries", "Ben Janssen", "Carla Bakker"];
 
 const BoekingenBeheren = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const navigate = useNavigate();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [cleaners, setCleaners] = useState<Schoonmaker[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [newCleanerId, setNewCleanerId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAuthLoading && user) {
-      if (user.email !== "admin@helpme.com") {
-        showError("U heeft geen toegang tot deze pagina.");
-        navigate('/');
-        return;
-      }
-      fetchData();
-    } else if (!isAuthLoading && !user) {
-      showError("U moet ingelogd zijn om boekingen te beheren.");
-      navigate('/login');
-    }
-  }, [isAuthLoading, user, navigate]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Fetch bookings
-      const { data: bookingsData, error: bookingsError } = await supabase
-        .from('bookings')
-        .select(`
-          id,
-          customer_id,
-          cleaner_id,
-          booking_date,
-          booking_time,
-          duration_hours,
-          total_price,
-          status,
-          created_at,
-          updated_at,
-          profiles (first_name, last_name),
-          cleaners (id, name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (bookingsError) throw new Error(bookingsError.message);
-
-      const mappedBookings: Booking[] = bookingsData.map(item => ({
-        ...item,
-        profiles: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 ? item.profiles[0] : null,
-        cleaners: item.cleaners && Array.isArray(item.cleaners) && item.cleaners.length > 0 ? item.cleaners[0] : null,
-      })) as Booking[]; // Explicitly cast to Booking[]
-      setBookings(mappedBookings);
-
-      // Fetch cleaners
-      const { data: cleanersData, error: cleanersError } = await supabase
-        .from('cleaners')
-        .select('id, name');
-      if (cleanersError) throw new Error(cleanersError.message);
-      setCleaners(cleanersData as Schoonmaker[]);
-
-    } catch (err: any) {
-      setError(err.message);
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOpenDialog = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setNewCleanerId(booking.cleaner_id); // Pre-select current cleaner
+  const handleOpenDialog = (bookingId: string) => {
+    setSelectedBookingId(bookingId);
     setIsDialogOpen(true);
   };
 
-  const handleChangeCleaner = async () => {
-    if (!selectedBooking || !newCleanerId) return;
-
-    const toastId = showLoading("Schoonmaker wijzigen...");
-    try {
-      const { error: updateBookingError } = await supabase
-        .from('bookings')
-        .update({ cleaner_id: newCleanerId, status: 'pending_offer', updated_at: new Date().toISOString() })
-        .eq('id', selectedBooking.id);
-
-      if (updateBookingError) throw new Error(updateBookingError.message);
-
-      // Create a new job offer for the newly assigned cleaner
-      const { error: createOfferError } = await supabase
-        .from('job_offers')
-        .insert({
-          booking_id: selectedBooking.id,
-          cleaner_id: newCleanerId,
-          status: 'pending',
-        });
-
-      if (createOfferError) throw new Error(createOfferError.message);
-
-      dismissToast(toastId);
-      showSuccess("Schoonmaker succesvol gewijzigd en nieuwe aanbieding verzonden!");
-      setIsDialogOpen(false);
-      fetchData(); // Refresh the list
-    } catch (err: any) {
-      dismissToast(toastId);
-      showError(err.message);
-    }
+  const handleChangeCleaner = () => {
+    showSuccess("Schoonmaker succesvol gewijzigd! (Simulatie)");
+    setIsDialogOpen(false);
   };
-
-  const handleCancelBooking = async (bookingId: string) => {
-    const toastId = showLoading("Boeking annuleren...");
-    try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', bookingId);
-
-      if (error) throw new Error(error.message);
-
-      // Also update any related job offers to 'rejected' or delete them
-      await supabase
-        .from('job_offers')
-        .update({ status: 'rejected', updated_at: new Date().toISOString() })
-        .eq('booking_id', bookingId)
-        .in('status', ['pending', 'accepted']); // Only update pending/accepted offers
-
-      dismissToast(toastId);
-      showSuccess(`Boeking ${bookingId} succesvol geannuleerd.`);
-      fetchData();
-    } catch (err: any) {
-      dismissToast(toastId);
-      showError(err.message);
-    }
-  };
-
-  const getStatusBadgeVariant = (status: Booking['status']) => {
-    switch (status) {
-      case 'completed':
-      case 'accepted':
-        return 'default';
-      case 'pending_offer':
-      case 'executing':
-      case 'pending_assignment':
-      case 'paid_pending_assignment':
-        return 'secondary';
-      case 'cancelled':
-      case 'rejected':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-
-  if (isAuthLoading || loading) {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Boekingen</CardTitle></CardHeader>
-        <CardContent><p>Laden van boekingen...</p></CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Boekingen</CardTitle></CardHeader>
-        <CardContent><p className="text-red-500">Fout: {error}</p></CardContent>
-      </Card>
-    );
-  }
 
   return (
     <>
@@ -209,25 +56,21 @@ const BoekingenBeheren = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings.map((boeking) => (
+              {mockBoekingen.map((boeking) => (
                 <TableRow key={boeking.id}>
                   <TableCell className="font-medium">{boeking.id}</TableCell>
-                  <TableCell>{boeking.profiles ? `${boeking.profiles.first_name} ${boeking.profiles.last_name}` : 'Onbekende Klant'}</TableCell>
-                  <TableCell>{boeking.cleaners?.name || 'Nog niet toegewezen'}</TableCell>
-                  <TableCell>{boeking.booking_date}</TableCell>
+                  <TableCell>{boeking.klant}</TableCell>
+                  <TableCell>{boeking.schoonmaker}</TableCell>
+                  <TableCell>{boeking.datum}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(boeking.status)}>
-                      {boeking.status === 'pending_offer' ? 'In afwachting' :
-                       boeking.status === 'accepted' ? 'Geaccepteerd' :
-                       boeking.status === 'executing' ? 'Bezig' :
-                       boeking.status === 'completed' ? 'Voltooid' :
-                       boeking.status === 'cancelled' ? 'Geannuleerd' :
-                       boeking.status === 'rejected' ? 'Geweigerd' :
-                       boeking.status === 'pending_assignment' ? 'Wacht op toewijzing' :
-                       boeking.status === 'paid_pending_assignment' ? 'Betaald, wacht op toewijzing' : 'Onbekend'}
+                    <Badge variant={
+                      boeking.status === "Voltooid" ? "default" : 
+                      boeking.status === "Geannuleerd" ? "destructive" : "secondary"
+                    }>
+                      {boeking.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">€{boeking.total_price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">€{boeking.bedrag.toFixed(2)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -238,10 +81,10 @@ const BoekingenBeheren = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acties</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleOpenDialog(boeking)}>
+                        <DropdownMenuItem onClick={() => handleOpenDialog(boeking.id)}>
                           Schoonmaker wijzigen
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleCancelBooking(boeking.id)}>
+                        <DropdownMenuItem onClick={() => showSuccess(`Boeking ${boeking.id} geannuleerd.`)}>
                           Annuleren
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -259,16 +102,16 @@ const BoekingenBeheren = () => {
           <DialogHeader>
             <DialogTitle>Schoonmaker Wijzigen</DialogTitle>
             <DialogDescription>
-              Wijs een nieuwe schoonmaker toe aan boeking #{selectedBooking?.id}.
+              Wijs een nieuwe schoonmaker toe aan boeking #{selectedBookingId}.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Select onValueChange={(value) => setNewCleanerId(value)} value={newCleanerId || ""}>
+            <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Kies een nieuwe schoonmaker" />
               </SelectTrigger>
               <SelectContent>
-                {cleaners.map(cleaner => <SelectItem key={cleaner.id} value={cleaner.id}>{cleaner.name}</SelectItem>)}
+                {mockSchoonmakers.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

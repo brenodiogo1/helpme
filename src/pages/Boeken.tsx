@@ -13,7 +13,6 @@ import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -37,9 +36,10 @@ const extraServices = [
     { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
 ];
 
-const MIN_SERVICES_FOR_DISCOUNT = 2;
-const DISCOUNT_PERCENTAGE = 0.10;
+const MIN_SERVICES_FOR_DISCOUNT = 2; // Mínimo de serviços para aplicar desconto
+const DISCOUNT_PERCENTAGE = 0.10; // 10% de desconto
 
+// Carregar o Stripe fora do componente para evitar recargas desnecessárias
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   : null;
@@ -48,15 +48,13 @@ const Boeken = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, isLoading: isAuthLoading } = useAuth();
-
     const { date, time } = location.state || {};
 
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [isLoadingStripe, setIsLoadingStripe] = useState(true);
     const [stripeError, setStripeError] = useState<string | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
+    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe'); // Novo estado para método de pagamento
     const checkoutRef = useRef<HTMLDivElement>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
@@ -77,13 +75,6 @@ const Boeken = () => {
 
     const totalPrice = basePrice + extrasPrice - discountAmount;
 
-    useEffect(() => {
-      if (!isAuthLoading && !user) {
-        showError("U moet ingelogd zijn om een boeking te maken.");
-        navigate('/login', { state: { from: location.pathname, cleanerId: id, date, time } });
-      }
-    }, [isAuthLoading, user, navigate, location.pathname, id, date, time]);
-
     const handleServiceChange = (serviceId: string) => {
         setSelectedServices(prev =>
             prev.includes(serviceId)
@@ -93,16 +84,16 @@ const Boeken = () => {
     };
 
     useEffect(() => {
-        if (paymentMethod === 'stripe' && user) { // Only initialize Stripe if user is logged in
+        if (paymentMethod === 'stripe') {
             const initializeStripeCheckout = async () => {
                 if (!date || !time) {
-                    setStripeError("Data en tijd van de boeking niet opgegeven.");
+                    setStripeError("Data e hora da reserva não fornecidas.");
                     setIsLoadingStripe(false);
                     return;
                 }
 
                 if (!stripePromise) {
-                    setStripeError("Stripe is niet geconfigureerd. Controleer VITE_STRIPE_PUBLISHABLE_KEY.");
+                    setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
                     setIsLoadingStripe(false);
                     return;
                 }
@@ -110,7 +101,7 @@ const Boeken = () => {
                 try {
                     const stripe = await stripePromise;
                     if (!stripe) {
-                        throw new Error("Fout bij het laden van Stripe.");
+                        throw new Error("Falha ao carregar o Stripe.");
                     }
 
                     const returnUrl = `${window.location.origin}/bevestiging`;
@@ -136,8 +127,8 @@ const Boeken = () => {
                         checkout.mount(checkoutRef.current);
                     }
                 } catch (err: any) {
-                    console.error("Stripe Checkout initialisatiefout:", err);
-                    setStripeError(err.message || "Fout bij het initialiseren van de betaling.");
+                    console.error("Stripe Checkout initialization error:", err);
+                    setStripeError(err.message || "Erro ao inicializar o pagamento.");
                 } finally {
                     setIsLoadingStripe(false);
                 }
@@ -145,22 +136,21 @@ const Boeken = () => {
 
             initializeStripeCheckout();
         } else {
-            setIsLoadingStripe(false);
+            setIsLoadingStripe(false); // No Stripe loading for cash payments
             setStripeError(null);
         }
-    }, [date, time, totalPrice, id, paymentMethod, user]);
+    }, [date, time, totalPrice, id, paymentMethod]); // Recarregar se o método de pagamento mudar
 
     const handleCashBooking = async () => {
-        if (!user) {
-          showError("U moet ingelogd zijn om een boeking te maken.");
-          navigate('/login', { state: { from: location.pathname, cleanerId: id, date, time } });
-          return;
-        }
-
-        setIsLoadingStripe(true);
+        setIsLoadingStripe(true); // Usar isLoadingStripe para indicar processamento geral
         const toastId = showLoading("Boekingsaanvraag verzenden...");
 
         try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error("Gebruiker niet ingelogd.");
+            }
+
             const { data: bookingData, error: bookingError } = await supabase
                 .from('bookings')
                 .insert({
@@ -170,8 +160,7 @@ const Boeken = () => {
                     booking_time: time,
                     duration_hours: hours,
                     total_price: totalPrice,
-                    status: 'pending_offer',
-                    extra_services: selectedServices,
+                    status: 'pending_offer', // Status para pagamento em dinheiro, aguardando aceitação do limpador
                 })
                 .select()
                 .single();
@@ -180,12 +169,13 @@ const Boeken = () => {
                 throw new Error(bookingError?.message || "Fout bij het aanmaken van de boekingsaanvraag.");
             }
 
+            // Create a job offer for the cleaner
             const { error: offerError } = await supabase
                 .from('job_offers')
                 .insert({
                     booking_id: bookingData.id,
                     cleaner_id: schoonmaker.id,
-                    status: 'pending',
+                    status: 'pending', // Oferta pendente para o limpador
                 });
 
             if (offerError) {
@@ -201,9 +191,8 @@ const Boeken = () => {
                 time,
                 hours,
                 totalPrice,
-                status: 'pending_offer',
+                status: 'pending_offer', // Status para a página de confirmação
                 bookingId: bookingData.id,
-                extra_services: selectedServices,
             };
             navigate("/bevestiging", { state: { bookingDetails: confirmationDetails } });
 
@@ -215,15 +204,6 @@ const Boeken = () => {
             setIsLoadingStripe(false);
         }
     };
-
-    if (isAuthLoading || !user) {
-      return (
-        <div className="container text-center py-20">
-          <h1 className="text-2xl font-bold">Laden...</h1>
-          <p className="text-muted-foreground">Controleren van authenticatiestatus.</p>
-        </div>
-      );
-    }
 
     if (!date || !time) {
         return (
@@ -339,7 +319,7 @@ const Boeken = () => {
                                 </div>
                             ) : stripeError ? (
                                 <div className="text-red-500 text-center p-4 border border-red-300 rounded-md mt-4">
-                                    <p>Fout: {stripeError}</p>
+                                    <p>Erro: {stripeError}</p>
                                     <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
                                 </div>
                             ) : (

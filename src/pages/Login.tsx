@@ -9,9 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -20,8 +17,6 @@ const formSchema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -30,58 +25,38 @@ const Login = () => {
     },
   });
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      // Redirect based on user role (mocked for now, replace with actual role check)
-      if (user.email === "admin@helpme.com") {
-        navigate("/admin");
-      } else if (user.email === "schoonmaker@helpme.com") {
-        navigate("/dashboard");
-      } else {
-        navigate("/account");
-      }
-    }
-  }, [user, isLoading, navigate]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password } = values;
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      showSuccess("Succesvol ingelogd!");
-      // Redirection handled by useEffect after auth state changes
-    } catch (error: any) {
-      showError(error.message);
-      console.error("Login error:", error);
+    // Admin user
+    if (email === "admin@helpme.com" && password === "admin123") {
+      showSuccess("Succesvol ingelogd als admin!");
+      navigate("/admin");
+      return;
     }
-  }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
-        <Card className="mx-auto max-w-sm w-full">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl mt-2">Laden...</CardTitle>
-            <CardDescription>Controleren van authenticatiestatus.</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+    // Cleaner user
+    if (email === "schoonmaker@helpme.com" && password === "schoonmaker123") {
+      showSuccess("Succesvol ingelogd als schoonmaker!");
+      navigate("/dashboard");
+      return;
+    }
+
+    // Customer user
+    if (email === "klant@helpme.com" && password === "klant123") {
+      showSuccess("Succesvol ingelogd!");
+      navigate("/account");
+      return;
+    }
+
+    showError("Ongeldige e-mail of wachtwoord.");
   }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
             Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.

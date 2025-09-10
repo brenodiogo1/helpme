@@ -1,95 +1,38 @@
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Schoonmaker } from "@/types";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { showError } from "@/utils/toast";
-import { useAuth } from "@/contexts/AuthContext";
+
+// Mock data - em um app real, isso viria do estado do usuário
+const mockFavoriteSchoonmakers: Schoonmaker[] = [
+  {
+    id: "1",
+    name: "Anna de Vries",
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.9,
+    ratingCount: 128,
+    hourlyRate: 18.50,
+    bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis...",
+    services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
+    city: "Amsterdam",
+    address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
+    phoneNumber: "+31612345678" // Adicionado
+  },
+  {
+    id: "3",
+    name: "Carla Bakker",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 5.0,
+    ratingCount: 210,
+    hourlyRate: 20.00,
+    bio: "Perfectie is mijn standaard...",
+    services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
+    city: "Rotterdam",
+    address: "Coolsingel 1, 3011 AA Rotterdam", // Adicionado
+    phoneNumber: "+31634567890" // Adicionado
+  },
+];
 
 const FavoriteCleaners = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const [favoriteCleaners, setFavoriteCleaners] = useState<Schoonmaker[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isAuthLoading && user) {
-      fetchFavoriteCleaners(user.id);
-    } else if (!isAuthLoading && !user) {
-      setLoading(false);
-      setError("U moet ingelogd zijn om uw favoriete schoonmakers te bekijken.");
-    }
-  }, [isAuthLoading, user]);
-
-  const fetchFavoriteCleaners = async (userId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Assuming a 'favorite_cleaners' table that links customer_id to cleaner_id
-      const { data, error } = await supabase
-        .from('favorite_cleaners')
-        .select(`
-          cleaners (
-            id,
-            name,
-            photo_url,
-            rating_avg,
-            rating_count,
-            hourly_rate,
-            bio,
-            services,
-            city,
-            address,
-            phone_number
-          )
-        `)
-        .eq('customer_id', userId);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      const mappedCleaners: Schoonmaker[] = data.map((item: any) => ({
-        id: item.cleaners.id,
-        name: item.cleaners.name,
-        photoUrl: item.cleaners.photo_url,
-        ratingAvg: item.cleaners.rating_avg,
-        ratingCount: item.cleaners.rating_count,
-        hourlyRate: item.cleaners.hourly_rate,
-        bio: item.cleaners.bio,
-        services: item.cleaners.services || [],
-        city: item.cleaners.city,
-        address: item.cleaners.address,
-        phoneNumber: item.cleaners.phone_number,
-      }));
-
-      setFavoriteCleaners(mappedCleaners);
-    } catch (err: any) {
-      setError(err.message);
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (isAuthLoading || loading) {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Mijn Favoriete Schoonmakers</CardTitle></CardHeader>
-        <CardContent><p>Laden van favoriete schoonmakers...</p></CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Mijn Favoriete Schoonmakers</CardTitle></CardHeader>
-        <CardContent><p className="text-red-500">Fout: {error}</p></CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -99,9 +42,9 @@ const FavoriteCleaners = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {favoriteCleaners.length > 0 ? (
+        {mockFavoriteSchoonmakers.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {favoriteCleaners.map((schoonmaker) => (
+            {mockFavoriteSchoonmakers.map((schoonmaker) => (
               <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} />
             ))}
           </div>

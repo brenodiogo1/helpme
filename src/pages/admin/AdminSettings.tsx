@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { showSuccess, showError } from "@/utils/toast"; // Added showError import
+import { showSuccess } from "@/utils/toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Link } from "react-router-dom";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   googleMapsApiKey: z.string().optional(),
@@ -24,7 +23,6 @@ const formSchema = z.object({
 
 const AdminSettings = () => {
   const { settings, updateSetting } = useSettings();
-  const { user, isLoading: isAuthLoading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,37 +47,14 @@ const AdminSettings = () => {
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || user.email !== "admin@helpme.com") { // Basic admin check
-      showError("U heeft geen toestemming om deze instellingen op te slaan.");
-      return;
-    }
-
     updateSetting("googleMapsApiKey", values.googleMapsApiKey || "");
     updateSetting("twilioAccountSid", values.twilioAccountSid || "");
     updateSetting("twilioAuthToken", values.twilioAuthToken || "");
     updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
     updateSetting("sendGridApiKey", values.sendGridApiKey || "");
 
-    console.log("Configuraties opgeslagen (simulatie):", values);
+    console.log("Configurações salvas (simulação):", values);
     showSuccess("Instellingen opgeslagen! (Simulatie)");
-  }
-
-  if (isAuthLoading) {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Instellingen</CardTitle></CardHeader>
-        <CardContent><p>Laden van instellingen...</p></CardContent>
-      </Card>
-    );
-  }
-
-  if (!user || user.email !== "admin@helpme.com") {
-    return (
-      <Card>
-        <CardHeader><CardTitle>Instellingen</CardTitle></CardHeader>
-        <CardContent><p className="text-red-500">U heeft geen toegang tot deze pagina.</p></CardContent>
-      </Card>
-    );
   }
 
   return (
@@ -129,13 +104,14 @@ const AdminSettings = () => {
                 />
               </div>
               <Separator />
+              {/* Informações sobre o Stripe foram removidas da UI do AdminSettings */}
               <div className="space-y-2">
                 <h3 className="font-semibold">Stripe (Pagamentos)</h3>
                 <p className="text-muted-foreground text-sm">
-                  De publicabele sleutel van Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">VITE_STRIPE_PUBLISHABLE_KEY</code>) is geconfigureerd in het <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> bestand van de applicatie.
+                  A chave publicável do Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">VITE_STRIPE_PUBLISHABLE_KEY</code>) é configurada no arquivo <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> da aplicação.
                 </p>
                 <p className="text-muted-foreground text-sm">
-                  De geheime sleutel van Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">STRIPE_SECRET_KEY</code>) is geconfigureerd als een omgevingsgeheim in de sectie <Link to="https://supabase.com/dashboard/project/_/functions" target="_blank" rel="noopener noreferrer" className="text-primary underline">Edge Functions</Link> van uw Supabase-dashboard.
+                  A chave secreta do Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">STRIPE_SECRET_KEY</code>) é configurada como um segredo de ambiente na seção <Link to="https://supabase.com/dashboard/project/_/functions" target="_blank" rel="noopener noreferrer" className="text-primary underline">Edge Functions</Link> do seu painel Supabase.
                 </p>
               </div>
               <Separator />
@@ -177,7 +153,7 @@ const AdminSettings = () => {
                         <Input id="twilio-phone-number" placeholder="+1234567890" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Het Twilio-telefoonnummer dat wordt gebruikt om sms-berichten te verzenden.
+                        O número de telefone Twilio que será usado para enviar SMS.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -197,7 +173,7 @@ const AdminSettings = () => {
                         <Input id="sendgrid-api-key" placeholder="SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Obtenha uw API-sleutel in het {" "}
+                        Obtenha sua chave de API no {" "}
                         <Link to="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary underline">
                           SendGrid Dashboard
                         </Link>

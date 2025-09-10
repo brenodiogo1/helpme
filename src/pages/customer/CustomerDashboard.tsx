@@ -8,10 +8,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Booking } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
 
 const CustomerDashboard = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
   const [customerName, setCustomerName] = useState<string>("Gebruiker");
   const [totalBookings, setTotalBookings] = useState<number>(0);
@@ -20,24 +18,23 @@ const CustomerDashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthLoading && user) {
-      fetchDashboardData(user.id);
-    } else if (!isAuthLoading && !user) {
-      // Handle unauthenticated state, e.g., redirect to login or show a message
-      setLoading(false);
-      setError("U moet ingelogd zijn om uw dashboard te bekijken.");
-    }
-  }, [isAuthLoading, user]);
+    fetchDashboardData();
+  }, []);
 
-  const fetchDashboardData = async (userId: string) => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     setError(null);
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Gebruiker niet ingelogd.");
+      }
+
       // Fetch customer profile to get the name
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
 
       if (profileError && profileError.code !== 'PGRST116') {
@@ -63,8 +60,8 @@ const CustomerDashboard = () => {
           updated_at,
           cleaners (name)
         `)
-        .eq('customer_id', userId)
-        .in('status', ['pending_offer', 'accepted', 'executing', 'paid_pending_assignment', 'pending_assignment'])
+        .eq('customer_id', user.id)
+        .in('status', ['pending_offer', 'accepted', 'executing', 'paid_pending_assignment'])
         .order('booking_date', { ascending: true })
         .limit(1)
         .single();
@@ -76,8 +73,9 @@ const CustomerDashboard = () => {
       if (upcomingData) {
         const mappedBooking: Booking = {
           ...upcomingData,
-          cleaners: upcomingData.cleaners && Array.isArray(upcomingData.cleaners) && upcomingData.cleaners.length > 0
-                      ? upcomingData.cleaners[0]
+          // Ensure cleaners is a single object or null, not an array
+          cleaners: upcomingData.cleaners && Array.isArray(upcomingData.cleaners) && upcomingData.cleaners.length > 0 
+                      ? upcomingData.cleaners[0] 
                       : null,
           profiles: null,
         };
@@ -90,7 +88,7 @@ const CustomerDashboard = () => {
       const { data: allBookingsData, error: allBookingsError } = await supabase
         .from('bookings')
         .select('id, total_price, status')
-        .eq('customer_id', userId);
+        .eq('customer_id', user.id);
 
       if (allBookingsError) {
         throw new Error(allBookingsError.message);
@@ -98,6 +96,7 @@ const CustomerDashboard = () => {
 
       setTotalBookings(allBookingsData.length);
       const totalAmount = allBookingsData.reduce((sum, booking) => {
+        // Only sum completed or accepted bookings for total spent
         if (booking.status === 'completed' || booking.status === 'accepted' || booking.status === 'paid_pending_assignment') {
           return sum + booking.total_price;
         }
@@ -113,7 +112,7 @@ const CustomerDashboard = () => {
     }
   };
 
-  if (isAuthLoading || loading) {
+  if (loading) {
     return (
       <div>
         <h1 className="text-3xl font-bold mb-6">Welkom terug!</h1>
@@ -175,7 +174,7 @@ const CustomerDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3 uur</div>
+            <div className="text-2xl font-bold">3 uur</div> {/* Mock data for average duration */}
             <p className="text-xs text-muted-foreground">Per boeking</p>
           </CardContent>
         </Card>

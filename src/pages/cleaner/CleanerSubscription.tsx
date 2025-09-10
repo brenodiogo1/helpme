@@ -9,16 +9,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from "@/integrations/supabase/client";
-import { Link, useNavigate } from "react-router-dom"; // Added Link import
-import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   : null;
 
 const CleanerSubscription = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const [paymentOption, setPaymentOption] = useState("direct");
+  const [paymentOption, setPaymentOption] = useState("direct"); // 'direct' or 'earnings'
   const [isLoadingStripe, setIsLoadingStripe] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const checkoutRef = useRef<HTMLDivElement>(null);
@@ -27,21 +25,13 @@ const CleanerSubscription = () => {
   const proPlanPriceId = import.meta.env.VITE_STRIPE_PRO_PLAN_PRICE_ID;
 
   useEffect(() => {
-    if (isAuthLoading) return;
-
-    if (!user) {
-      showError("U moet ingelogd zijn om uw abonnement te beheren.");
-      navigate('/login', { state: { from: '/dashboard/abonnement' } });
-      return;
-    }
-
     if (paymentOption === 'direct' && proPlanPriceId) {
       const initializeStripeCheckout = async () => {
         setIsLoadingStripe(true);
         setStripeError(null);
 
         if (!stripePromise) {
-          setStripeError("Stripe is niet geconfigureerd. Controleer VITE_STRIPE_PUBLISHABLE_KEY.");
+          setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
           setIsLoadingStripe(false);
           return;
         }
@@ -49,10 +39,15 @@ const CleanerSubscription = () => {
         try {
           const stripe = await stripePromise;
           if (!stripe) {
-            throw new Error("Fout bij het laden van Stripe.");
+            throw new Error("Falha ao carregar o Stripe.");
           }
 
-          const returnUrl = `${window.location.origin}/dashboard/abonnement`;
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            throw new Error("Usuário não autenticado. Por favor, faça login novamente.");
+          }
+
+          const returnUrl = `${window.location.origin}/dashboard/abonnement`; // Return to this page after checkout
 
           const { data, error } = await supabase.functions.invoke('create-subscription-checkout-session', {
             body: JSON.stringify({
@@ -75,8 +70,8 @@ const CleanerSubscription = () => {
             checkout.mount(checkoutRef.current);
           }
         } catch (err: any) {
-          console.error("Stripe Checkout initialisatiefout:", err);
-          setStripeError(err.message || "Fout bij het initialiseren van de betaling.");
+          console.error("Stripe Checkout initialization error:", err);
+          setStripeError(err.message || "Erro ao inicializar o pagamento.");
         } finally {
           setIsLoadingStripe(false);
         }
@@ -87,58 +82,30 @@ const CleanerSubscription = () => {
       setIsLoadingStripe(false);
       setStripeError(null);
     }
-  }, [paymentOption, proPlanPriceId, user, isAuthLoading, navigate]);
+  }, [paymentOption, proPlanPriceId]);
 
   const handleUpgrade = async () => {
-    if (!user) {
-      showError("U moet ingelogd zijn om uw abonnement te beheren.");
-      navigate('/login', { state: { from: '/dashboard/abonnement' } });
-      return;
-    }
-
     if (paymentOption === "earnings") {
-      const toastId = showLoading("Processando uw abonnement...");
+      const toastId = showLoading("Processando sua assinatura...");
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Simulate backend logic for deducting from earnings
+        // In a real app, this would involve updating the cleaner's subscription status in your DB
+        // and setting up a recurring deduction from their payouts.
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
 
         dismissToast(toastId);
         showSuccess("Gefeliciteerd! Je bent nu een Pro Schoonmaker. De kosten worden verrekend met je toekomstige inkomsten.");
-        navigate("/dashboard");
+        navigate("/dashboard"); // Redirect to dashboard after successful subscription
       } catch (error: any) {
         dismissToast(toastId);
-        showError(error.message || "Er is een fout opgetreden bij het verwerken van uw abonnement.");
+        showError(error.message || "Er is een fout opgetreden bij het verwerken van je abonnement.");
       }
     } else if (paymentOption === 'direct') {
+        // Stripe Embedded Checkout handles the submission for 'direct' payment
+        // The user will interact with the Stripe form mounted in checkoutRef
         showSuccess("Voltooi de betaling via het Stripe-formulier hieronder.");
     }
   };
-
-  if (isAuthLoading) {
-    return (
-      <Card className="max-w-lg mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl mt-2">Laden...</CardTitle>
-          <CardDescription>Controleren van authenticatiestatus.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Card className="max-w-lg mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl mt-2">Niet geauthenticeerd</CardTitle>
-          <CardDescription>U moet ingelogd zijn om uw abonnement te beheren.</CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-          <Button asChild>
-            <Link to="/login">Inloggen</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="max-w-lg mx-auto">
@@ -192,7 +159,7 @@ const CleanerSubscription = () => {
             </div>
           ) : stripeError ? (
             <div className="text-red-500 text-center p-4 border border-red-300 rounded-md mt-4">
-              <p>Fout: {stripeError}</p>
+              <p>Erro: {stripeError}</p>
               <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
             </div>
           ) : (

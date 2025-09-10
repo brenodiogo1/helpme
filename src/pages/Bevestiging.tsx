@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 import { loadStripe } from '@stripe/stripe-js';
-import { useAuth } from "@/contexts/AuthContext";
+// Removido import { Schoonmaker } from "@/types";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -16,30 +16,27 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 
 const Bevestiging = () => {
   const location = useLocation();
-  const { user, isLoading: isAuthLoading } = useAuth();
   const [paymentStatus, setPaymentStatus] = useState<'loading' | 'succeeded' | 'failed' | 'pending'>('loading');
   const [bookingCreated, setBookingCreated] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(location.state?.bookingDetails || null);
 
   useEffect(() => {
     const confirmPaymentAndCreateBooking = async () => {
-      if (isAuthLoading) return; // Wait for auth to load
-
       const params = new URLSearchParams(location.search);
       const sessionId = params.get('session_id');
 
       if (!sessionId) {
         // If no session_id, it means it's a quick booking or direct navigation
-        if (bookingDetails?.status === 'pending_assignment' || bookingDetails?.status === 'pending_offer') {
+        if (bookingDetails?.status === 'pending_assignment') {
           setPaymentStatus('pending');
         } else {
-          setPaymentStatus('failed');
+          setPaymentStatus('failed'); // Or handle as a direct confirmation without payment
         }
         return;
       }
 
       if (!stripePromise) {
-        showError("Stripe is niet geconfigureerd. Controleer VITE_STRIPE_PUBLISHABLE_KEY.");
+        showError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
         setPaymentStatus('failed');
         return;
       }
@@ -47,7 +44,7 @@ const Bevestiging = () => {
       try {
         const stripe = await stripePromise;
         if (!stripe) {
-          throw new Error("Fout bij het laden van Stripe.");
+          throw new Error("Falha ao carregar o Stripe.");
         }
 
         const { data, error } = await supabase.functions.invoke('get-checkout-session-status', {
@@ -63,20 +60,26 @@ const Bevestiging = () => {
         if (status === 'complete' && payment_status === 'paid') {
           setPaymentStatus('succeeded');
 
-          const { schoonmaker, date, time, hours, totalPrice, extra_services } = bookingDetails;
+          // Retrieve booking details from location state
+          const { schoonmaker, date, time, hours, totalPrice } = bookingDetails; // Removido selectedServices
 
-          if (!bookingCreated && bookingDetails && user) { // Ensure user is authenticated
+          if (!bookingCreated && bookingDetails) {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error("Gebruiker niet ingelogd.");
+            }
+
+            // Create the booking in Supabase
             const { data: newBookingData, error: bookingError } = await supabase
                 .from('bookings')
                 .insert({
-                    customer_id: user.id, // Use authenticated user ID
-                    cleaner_id: schoonmaker?.id || null,
+                    customer_id: user.id,
+                    cleaner_id: schoonmaker.id,
                     booking_date: format(new Date(date), "yyyy-MM-dd"),
                     booking_time: time,
                     duration_hours: hours,
                     total_price: totalPrice,
-                    status: 'accepted',
-                    extra_services: extra_services,
+                    status: 'accepted', // Status 'accepted' após pagamento bem-sucedido
                 })
                 .select()
                 .single();
@@ -85,12 +88,13 @@ const Bevestiging = () => {
                 throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
             }
 
+            // Create the job offer for the cleaner
             const { error: offerError } = await supabase
                 .from('job_offers')
                 .insert({
                     booking_id: newBookingData.id,
-                    cleaner_id: schoonmaker?.id || null, // Can be null for quick bookings
-                    status: schoonmaker?.id ? 'pending' : 'accepted', // If cleaner is assigned, it's pending for them, else accepted
+                    cleaner_id: schoonmaker.id,
+                    status: 'accepted', // Oferta aceita automaticamente se o pagamento foi feito
                 });
 
             if (offerError) {
@@ -106,23 +110,14 @@ const Bevestiging = () => {
           showError("Betaling mislukt of niet voltooid.");
         }
       } catch (error: any) {
-        console.error("Fout bij het bevestigen van de betaling:", error);
+        console.error("Error confirming payment:", error);
         setPaymentStatus('failed');
         showError(error.message || "Er is een onverwachte fout opgetreden bij het verwerken van de betaling.");
       }
     };
 
     confirmPaymentAndCreateBooking();
-  }, [location.search, bookingDetails, bookingCreated, user, isAuthLoading]);
-
-  if (isAuthLoading) {
-    return (
-      <div className="container text-center py-20">
-        <h1 className="text-2xl font-bold">Laden...</h1>
-        <p className="text-muted-foreground">Controleren van authenticatiestatus.</p>
-      </div>
-    );
-  }
+  }, [location.search, bookingDetails, bookingCreated]);
 
   if (!bookingDetails) {
     return (
@@ -136,7 +131,7 @@ const Bevestiging = () => {
     );
   }
 
-  const { schoonmaker, date, time, hours, totalPrice, extra_services } = bookingDetails;
+  const { schoonmaker, date, time, hours, totalPrice } = bookingDetails;
 
   const renderContent = () => {
     switch (paymentStatus) {
@@ -170,9 +165,6 @@ const Bevestiging = () => {
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>
                 <p><strong>Tijd:</strong> {time}</p>
                 <p><strong>Duur:</strong> {hours} uur</p>
-                {extra_services && extra_services.length > 0 && (
-                  <p><strong>Extra Diensten:</strong> {extra_services.join(', ')}</p>
-                )}
                 <p className="font-semibold"><strong>Totaalprijs:</strong> €{totalPrice.toFixed(2)}</p>
               </div>
               <Button asChild className="mt-6">
@@ -181,7 +173,7 @@ const Bevestiging = () => {
             </CardContent>
           </>
         );
-      case 'pending':
+      case 'pending': // For quick bookings without immediate payment
         return (
           <>
             <div className="mx-auto bg-blue-100 rounded-full h-16 w-16 flex items-center justify-center">
@@ -197,9 +189,6 @@ const Bevestiging = () => {
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>
                 <p><strong>Tijd:</strong> {time}</p>
                 <p><strong>Duur:</strong> {hours} uur</p>
-                {extra_services && extra_services.length > 0 && (
-                  <p><strong>Extra Diensten:</strong> {extra_services.join(', ')}</p>
-                )}
                 <p className="font-semibold"><strong>Totaalprijs:</strong> €{totalPrice.toFixed(2)}</p>
               </div>
               <Button asChild className="mt-6">

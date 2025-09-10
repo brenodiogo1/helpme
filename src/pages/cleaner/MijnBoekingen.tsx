@@ -11,33 +11,31 @@ import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Booking } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
 
 const MijnBoekingen = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthLoading && user) {
-      fetchBookings(user.id);
-    } else if (!isAuthLoading && !user) {
-      setLoading(false);
-      setError("U moet ingelogd zijn om uw boekingen te bekijken.");
-    }
-  }, [isAuthLoading, user]);
+    fetchBookings();
+  }, []);
 
-  const fetchBookings = async (userId: string) => {
+  const fetchBookings = async () => {
     setLoading(true);
     setError(null);
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Gebruiker niet ingelogd.");
+      }
+
       // Fetch cleaner ID associated with the current user
       const { data: cleanerData, error: cleanerError } = await supabase
         .from('cleaners')
         .select('id')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .single();
 
       if (cleanerError || !cleanerData) {
@@ -62,17 +60,18 @@ const MijnBoekingen = () => {
           profiles (first_name, last_name)
         `)
         .eq('cleaner_id', cleanerId)
-        .in('status', ['accepted', 'executing', 'completed', 'cancelled'])
+        .in('status', ['accepted', 'executing', 'completed', 'cancelled']) // Only show relevant statuses for cleaner's bookings
         .order('booking_date', { ascending: true });
 
       if (error) {
         throw new Error(error.message);
       }
 
+      // Mapear os dados para corresponder à interface Booking
       const mappedBookings: Booking[] = data.map(item => ({
         ...item,
-        profiles: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 ? item.profiles[0] : null,
-        cleaners: null,
+        profiles: item.profiles && item.profiles.length > 0 ? item.profiles[0] : null,
+        cleaners: null, // Cleaners data is not selected here, so set to null
       }));
 
       setBookings(mappedBookings);
@@ -98,7 +97,7 @@ const MijnBoekingen = () => {
 
       dismissToast(toastId);
       showSuccess(`Boekingsstatus succesvol bijgewerkt naar '${newStatus}'!`);
-      if (user) fetchBookings(user.id);
+      fetchBookings(); // Refresh the list
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message);
@@ -112,7 +111,7 @@ const MijnBoekingen = () => {
       case 'executing':
         return 'secondary';
       case 'completed':
-        return 'default';
+        return 'default'; // Alterado de 'success' para 'default'
       case 'cancelled':
       case 'rejected':
         return 'destructive';
@@ -121,7 +120,7 @@ const MijnBoekingen = () => {
     }
   };
 
-  if (isAuthLoading || loading) {
+  if (loading) {
     return (
       <Card>
         <CardHeader><CardTitle>Mijn Boekingen</CardTitle></CardHeader>

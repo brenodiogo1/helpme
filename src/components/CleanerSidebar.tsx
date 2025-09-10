@@ -1,13 +1,10 @@
-import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays, LogOut, MessageSquare, Briefcase, ListTodo } from "lucide-react";
+import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays, LogOut, MessageSquare, Briefcase, ListTodo } from "lucide-react"; // Adicionado ListTodo
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
-import { Button } from "@/components/ui/button"; // Added Button import
-import { useAuth } from "@/contexts/AuthContext";
 
 const CleanerSidebar = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
@@ -31,7 +28,7 @@ const CleanerSidebar = () => {
               Overzicht
             </Link>
             <Link
-              to="/dashboard/taken"
+              to="/dashboard/taken" // Nova rota para ofertas de trabalho
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 isActive("/dashboard/taken") && "bg-muted text-primary"
@@ -144,10 +141,10 @@ const CleanerSidebar = () => {
         </div>
         <div className="mt-auto p-4">
           <Separator className="mb-4" />
-          <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-3" />
+          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+            <LogOut className="h-4 w-4" />
             Uitloggen
-          </Button>
+          </Link>
         </div>
       </div>
     </div>
