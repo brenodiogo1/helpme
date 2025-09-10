@@ -2,10 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Schoonmaker } from "@/types";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, PlusCircle, ShieldCheck, UserX } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
+import { showSuccess } from "@/utils/toast";
 
 const mockSchoonmakers: Schoonmaker[] = [
     { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam" },
@@ -71,7 +72,15 @@ const SchoonmakersBeheren = () => {
                       <DropdownMenuItem asChild>
                         <Link to={`/admin/schoonmakers/bewerken/${schoonmaker.id}`}>Bewerken</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>Verwijderen</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => showSuccess(`${schoonmaker.name} geverifieerd!`)}>
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        Verifiëren
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => showSuccess(`${schoonmaker.name} geschorst.`)}>
+                        <UserX className="mr-2 h-4 w-4" />
+                        Schorsen
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
