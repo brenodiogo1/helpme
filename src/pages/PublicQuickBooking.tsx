@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, Minus, Plus } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "date-fns"; // <-- Correção aqui
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,7 @@ import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label"; // <-- Importação adicionada aqui
+import { Label } from "@/components/ui/label";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -131,6 +131,13 @@ const PublicQuickBooking = () => {
 
   useEffect(() => {
     if (paymentMethod === 'stripe') {
+        // Only initialize Stripe if total price is positive
+        if (totalPrice <= 0) {
+            setStripeError("Het totaalbedrag moet positief zijn om online te betalen.");
+            setIsLoadingStripe(false);
+            return;
+        }
+
         const initializeStripeCheckout = async () => {
             // Ensure all required form fields are valid before initializing Stripe
             const isValid = await form.trigger();
@@ -525,7 +532,7 @@ const PublicQuickBooking = () => {
                 <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
                 <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cash') => setPaymentMethod(value)} className="grid grid-cols-1 gap-4">
                     <div className="flex items-center space-x-2 rounded-md border p-3">
-                        <RadioGroupItem value="stripe" id="payment-stripe" disabled={isSubmitting} />
+                        <RadioGroupItem value="stripe" id="payment-stripe" disabled={isSubmitting || totalPrice <= 0} />
                         <Label htmlFor="payment-stripe" className="flex-grow cursor-pointer">
                             Online betalen (iDEAL, Creditcard, etc.)
                             <p className="text-xs text-muted-foreground">Veilig en direct via Stripe.</p>
@@ -536,6 +543,9 @@ const PublicQuickBooking = () => {
                         <Label htmlFor="payment-cash" className="flex-grow cursor-pointer">
                             Contant betalen
                             <p className="text-xs text-muted-foreground">Betaal de schoonmaker direct na de service.</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Klik op "Vraag aan" hieronder om uw boeking te bevestigen en contant te betalen.
+                            </p>
                         </Label>
                     </div>
                 </RadioGroup>
@@ -551,7 +561,12 @@ const PublicQuickBooking = () => {
                             <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
                         </div>
                     ) : (
-                        <div ref={checkoutRef} id="checkout" className="mt-4" />
+                        <>
+                            <p className="text-sm text-muted-foreground mt-2 mb-4">
+                                Vul uw betaalgegevens in het onderstaande formulier in om de boeking te voltooien.
+                            </p>
+                            <div ref={checkoutRef} id="checkout" className="mt-4" />
+                        </>
                     )
                 )}
 
