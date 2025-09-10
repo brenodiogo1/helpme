@@ -18,4 +18,6 @@ export interface Schoonmaker {
   services: string[];
   city: string;
   reviews?: Review[];
+  availableDaysOfWeek?: string[]; // Novo campo: dias da semana disponíveis (ex: ["Monday", "Wednesday"])
+  unavailableDates?: string[]; // Novo campo: datas específicas indisponíveis (formato ISO string)
 }

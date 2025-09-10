@@ -6,11 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, MapPin, CheckCircle } from "lucide-react";
+import { Star, MapPin, CheckCircle, CalendarDays } from "lucide-react"; // Adicionado CalendarDays
 import ReviewCard from "@/components/ReviewCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format, isSameDay, isBefore, addDays } from "date-fns";
+import { nl } from "date-fns/locale";
 
-// Mock data for a single cleaner, including reviews
+// Mock data for a single cleaner, including reviews and new availability fields
 const mockSchoonmaker: Schoonmaker = {
     id: "1",
     name: "Anna de Vries",
@@ -25,7 +27,9 @@ const mockSchoonmaker: Schoonmaker = {
         { id: "r1", author: "Piet H.", rating: 5, comment: "Anna is fantastisch! Ons huis was nog nooit zo schoon.", date: "2023-10-15" },
         { id: "r2", author: "Janneke S.", rating: 5, comment: "Zeer professioneel en vriendelijk. Een echte aanrader.", date: "2023-10-10" },
         { id: "r3", author: "Klaas de Wit", rating: 4, comment: "Goed werk geleverd, was alleen 10 minuten te laat.", date: "2023-09-28" },
-    ]
+    ],
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"], // Exemplo de disponibilidade semanal
+    unavailableDates: [format(addDays(new Date(), 10), "yyyy-MM-dd")], // Exemplo de data específica indisponível
 };
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
@@ -37,6 +41,31 @@ const SchoonmakerProfiel = () => {
   const [time, setTime] = useState<string | undefined>();
 
   const schoonmaker = mockSchoonmaker;
+
+  // Função para verificar se uma data está disponível
+  const isDateAvailable = (day: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for comparison
+
+    // Disable past dates
+    if (isBefore(day, today)) {
+      return false;
+    }
+
+    // Check specific unavailable dates
+    const formattedUnavailableDates = schoonmaker.unavailableDates?.map(d => format(new Date(d), "yyyy-MM-dd")) || [];
+    if (formattedUnavailableDates.includes(format(day, "yyyy-MM-dd"))) {
+      return false;
+    }
+
+    // Check general available days of week
+    const dayName = format(day, "eeee", { locale: nl }); // Get day name in Dutch
+    if (!schoonmaker.availableDaysOfWeek?.includes(dayName)) {
+      return false;
+    }
+
+    return true;
+  };
 
   const handleBooking = () => {
     if (date && time) {
@@ -75,6 +104,33 @@ const SchoonmakerProfiel = () => {
               <p className="mt-4">{schoonmaker.bio}</p>
             </div>
           </div>
+
+          {/* Availability */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Beschikbaarheid</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                <span className="font-semibold mr-2">Beschikbaar op:</span>
+                {schoonmaker.availableDaysOfWeek && schoonmaker.availableDaysOfWeek.length > 0 ? (
+                  schoonmaker.availableDaysOfWeek.map(day => (
+                    <Badge key={day} variant="secondary" className="flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" />
+                      {day}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">Geen wekelijkse beschikbaarheid ingesteld.</p>
+                )}
+              </div>
+              {schoonmaker.unavailableDates && schoonmaker.unavailableDates.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Niet beschikbaar op: {schoonmaker.unavailableDates.map(d => format(new Date(d), "dd-MM-yyyy")).join(", ")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Services */}
           <Card>
@@ -119,7 +175,7 @@ const SchoonmakerProfiel = () => {
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+                    disabled={(day) => !isDateAvailable(day)} // Usar a função de disponibilidade
                     className="rounded-md border"
                 />
                 <Select onValueChange={setTime} value={time}>

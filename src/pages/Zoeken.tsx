@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Schoonmaker } from "@/types";
+import { format, getDay } from "date-fns";
+import { nl } from "date-fns/locale"; // Importar 'nl'
 
 const mockSchoonmakers: Schoonmaker[] = [
   {
@@ -18,7 +20,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 18.50,
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers.",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
-    city: "Amsterdam"
+    city: "Amsterdam",
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
+    unavailableDates: ["2025-09-15"], // Exemplo: Anna não está disponível em 15 de setembro de 2025
   },
   {
     id: "2",
@@ -29,7 +33,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 17.00,
     bio: "Flexibele en hardwerkende schoonmaker beschikbaar voor wekelijkse klussen. Ik gebruik milieuvriendelijke producten en laat uw huis stralen.",
     services: ["Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk"],
-    city: "Utrecht"
+    city: "Utrecht",
+    availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
+    unavailableDates: [],
   },
   {
     id: "3",
@@ -38,9 +44,11 @@ const mockSchoonmakers: Schoonmaker[] = [
     ratingAvg: 5.0,
     ratingCount: 210,
     hourlyRate: 20.00,
-    bio: "Perfectie is mijn standaard. Ik ben gespecialiseerd in grote schoonmaakklussen en het organiseren van ruimtes. Uw tevredenheid is gegarandeerd.",
+    bio: "Perfectie is mijn standaard. Ik ben gespecializado em grandes schoonmaakklussen en het organiseren van ruimtes. Uw tevredenheid is gegarandeerd.",
     services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
-    city: "Rotterdam"
+    city: "Rotterdam",
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag", "Zaterdag", "Zondag"],
+    unavailableDates: ["2025-09-20"],
   },
   {
     id: "4",
@@ -51,7 +59,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 17.50,
     bio: "Student die met veel enthousiasme en precisie uw huis schoonmaakt. Beschikbaar in de weekenden en avonduren.",
     services: ["Reguliere schoonmaak", "Boodschappen doen", "Student"],
-    city: "Amsterdam"
+    city: "Amsterdam",
+    availableDaysOfWeek: ["Zaterdag", "Zondag"],
+    unavailableDates: [],
   },
   {
     id: "5",
@@ -62,7 +72,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 19.00,
     bio: "Ervaren schoonmaakster met oog voor detail. Ik ben pas tevreden als uw huis weer blinkt. Zeer betrouwbaar en discreet.",
     services: ["Dieptereiniging", "Kantoor schoonmaak", "Ramen wassen"],
-    city: "Den Haag"
+    city: "Den Haag",
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
+    unavailableDates: [],
   },
   {
     id: "6",
@@ -73,7 +85,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 16.50,
     bio: "Hardwerkende en betrouwbare hulp. Ik help u graag met de wekelijkse schoonmaak en kleine klusjes in huis.",
     services: ["Reguliere schoonmaak", "Kleine klusjes", "Tuinonderhoud"],
-    city: "Utrecht"
+    city: "Utrecht",
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
+    unavailableDates: [],
   },
   {
     id: "7",
@@ -84,7 +98,9 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 21.00,
     bio: "Professionele schoonmaakster met meer dan 10 jaar ervaring. Gespecialiseerd in huishoudens met allergieën.",
     services: ["Anti-allergeen", "Dieptereiniging", "Milieuvriendelijk"],
-    city: "Eindhoven"
+    city: "Eindhoven",
+    availableDaysOfWeek: ["Dinsdag", "Donderdag"],
+    unavailableDates: [],
   },
   {
     id: "8",
@@ -95,16 +111,20 @@ const mockSchoonmakers: Schoonmaker[] = [
     hourlyRate: 18.00,
     bio: "Efficiënt en grondig. Ik zorg ervoor dat uw kantoor of huis er weer representatief uitziet. Ook voor eenmalige klussen.",
     services: ["Kantoor schoonmaak", "Grote schoonmaak", "Reguliere schoonmaak"],
-    city: "Rotterdam"
+    city: "Rotterdam",
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
+    unavailableDates: [],
   },
 ];
 
 const allServices = [...new Set(mockSchoonmakers.flatMap(s => s.services))].sort();
+const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]; // Ordem para getDay()
 
 const Zoeken = () => {
   const [searchParams] = useSearchParams();
   const [priceRange, setPriceRange] = useState([10, 50]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]); // Novo estado para dias da semana
 
   const handleServiceChange = (service: string) => {
     setSelectedServices(prev => 
@@ -114,13 +134,47 @@ const Zoeken = () => {
     );
   };
 
+  const handleDayOfWeekFilterChange = (day: string) => {
+    setSelectedDaysOfWeek(prev =>
+      prev.includes(day)
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
   const filteredSchoonmakers = useMemo(() => {
+    const searchDateParam = searchParams.get("date");
+    const searchTimeParam = searchParams.get("time");
+    let searchDate: Date | null = null;
+    if (searchDateParam) {
+      searchDate = new Date(searchDateParam);
+      searchDate.setHours(0, 0, 0, 0); // Reset time for comparison
+    }
+
     return mockSchoonmakers.filter(schoonmaker => {
       const priceMatch = schoonmaker.hourlyRate >= priceRange[0] && schoonmaker.hourlyRate <= priceRange[1];
       const servicesMatch = selectedServices.every(service => schoonmaker.services.includes(service));
-      return priceMatch && servicesMatch;
+      
+      // Filter by selected days of week
+      const daysOfWeekMatch = selectedDaysOfWeek.length === 0 || 
+                              (schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day)));
+
+      // Filter by specific search date and time
+      let dateAndTimeMatch = true;
+      if (searchDate) {
+        const dayName = format(searchDate, "eeee", { locale: nl }); // Get day name in Dutch
+        const isWeeklyAvailable = schoonmaker.availableDaysOfWeek?.includes(dayName);
+        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(format(searchDate, "yyyy-MM-dd"));
+
+        if (!isWeeklyAvailable || isSpecificallyUnavailable) {
+          dateAndTimeMatch = false;
+        }
+        // Further logic for time slots could be added here if needed
+      }
+
+      return priceMatch && servicesMatch && daysOfWeekMatch && dateAndTimeMatch;
     });
-  }, [priceRange, selectedServices]);
+  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams]);
 
   const postcode = searchParams.get("postcode");
 
@@ -165,6 +219,21 @@ const Zoeken = () => {
                                 onCheckedChange={() => handleServiceChange(service)}
                               />
                               <Label htmlFor={service} className="font-normal">{service}</Label>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+              <div>
+                  <Label>Beschikbaar op dagen</Label>
+                  <div className="space-y-2 mt-2">
+                      {daysOfWeek.map(day => (
+                          <div key={day} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`day-filter-${day}`} 
+                                checked={selectedDaysOfWeek.includes(day)}
+                                onCheckedChange={() => handleDayOfWeekFilterChange(day)}
+                              />
+                              <Label htmlFor={`day-filter-${day}`} className="font-normal">{day}</Label>
                           </div>
                       ))}
                   </div>
