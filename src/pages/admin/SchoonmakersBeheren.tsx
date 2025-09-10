@@ -9,9 +9,9 @@ import { Link } from "react-router-dom";
 import { showSuccess } from "@/utils/toast";
 
 const mockSchoonmakers: Schoonmaker[] = [
-    { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam" },
-    { id: "2", name: "Ben Janssen", photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.8, ratingCount: 92, hourlyRate: 17.00, bio: "...", services: [], city: "Utrecht" },
-    { id: "3", name: "Carla Bakker", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", ratingAvg: 5.0, ratingCount: 210, hourlyRate: 20.00, bio: "...", services: [], city: "Rotterdam" },
+    { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam", address: "Kerkstraat 12, 1012 AB Amsterdam", phoneNumber: "+31612345678" },
+    { id: "2", name: "Ben Janssen", photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.8, ratingCount: 92, hourlyRate: 17.00, bio: "...", services: [], city: "Utrecht", address: "Plein 4, 3511 HT Utrecht", phoneNumber: "+31623456789" },
+    { id: "3", name: "Carla Bakker", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", ratingAvg: 5.0, ratingCount: 210, hourlyRate: 20.00, bio: "...", services: [], city: "Rotterdam", address: "Coolsingel 1, 3011 AA Rotterdam", phoneNumber: "+31634567890" },
 ];
 
 const SchoonmakersBeheren = () => {

@@ -13,7 +13,9 @@ const mockFavoriteSchoonmakers: Schoonmaker[] = [
     hourlyRate: 18.50,
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis...",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
-    city: "Amsterdam"
+    city: "Amsterdam",
+    address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
+    phoneNumber: "+31612345678" // Adicionado
   },
   {
     id: "3",
@@ -24,7 +26,9 @@ const mockFavoriteSchoonmakers: Schoonmaker[] = [
     hourlyRate: 20.00,
     bio: "Perfectie is mijn standaard...",
     services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
-    city: "Rotterdam"
+    city: "Rotterdam",
+    address: "Coolsingel 1, 3011 AA Rotterdam", // Adicionado
+    phoneNumber: "+31634567890" // Adicionado
   },
 ];
 

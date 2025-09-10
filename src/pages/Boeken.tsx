@@ -22,6 +22,8 @@ const mockSchoonmaker: Schoonmaker = {
     bio: "Bio",
     services: [],
     city: "Amsterdam",
+    address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
+    phoneNumber: "+31612345678", // Adicionado
 };
 
 const extraServices = [

@@ -38,12 +38,14 @@ const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [postcode, setPostcode] = useState("");
+  const [city, setCity] = useState(""); // Novo estado para a cidade
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string | undefined>();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (postcode) params.append("postcode", postcode);
+    if (city) params.append("city", city); // Adicionar cidade aos parâmetros
     if (date) params.append("date", date.toISOString().split('T')[0]);
     if (time) params.append("time", time);
     navigate(`/zoeken?${params.toString()}`);
@@ -67,13 +69,20 @@ const Index = () => {
               {t('hero.subtitle')}
             </p>
             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-center"> {/* Ajustado para 4 colunas */}
                 <Input
                   type="text"
                   placeholder={t('hero.postalCodePlaceholder')}
                   className="text-black"
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
+                />
+                <Input // Novo campo para a cidade
+                  type="text"
+                  placeholder="Voer je stad in (bijv. Amsterdam)"
+                  className="text-black"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
                 />
                 <Popover>
                   <PopoverTrigger asChild>

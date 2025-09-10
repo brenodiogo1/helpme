@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, MapPin, CheckCircle, CalendarDays } from "lucide-react"; // Adicionado CalendarDays
+import { Star, MapPin, CheckCircle, CalendarDays, Phone } from "lucide-react"; // Adicionado CalendarDays e Phone
 import ReviewCard from "@/components/ReviewCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isSameDay, isBefore, addDays } from "date-fns";
@@ -23,6 +23,8 @@ const mockSchoonmaker: Schoonmaker = {
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers. Ik ben flexibel inzetbaar en neem mijn eigen, milieuvriendelijke schoonmaakmiddelen mee. Ik kijk ernaar uit om ook uw huis te laten stralen!",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging"],
     city: "Amsterdam",
+    address: "Kerkstraat 12, 1012 AB Amsterdam", // Novo campo
+    phoneNumber: "+31612345678", // Novo campo
     reviews: [
         { id: "r1", author: "Piet H.", rating: 5, comment: "Anna is fantastisch! Ons huis was nog nooit zo schoon.", date: "2023-10-15" },
         { id: "r2", author: "Janneke S.", rating: 5, comment: "Zeer professioneel en vriendelijk. Een echte aanrader.", date: "2023-10-10" },
@@ -100,10 +102,25 @@ const SchoonmakerProfiel = () => {
                     <MapPin className="h-5 w-5" />
                     <span>{schoonmaker.city}</span>
                 </div>
+                <div className="flex items-center gap-1">
+                    <Phone className="h-5 w-5" />
+                    <span>{schoonmaker.phoneNumber}</span>
+                </div>
               </div>
               <p className="mt-4">{schoonmaker.bio}</p>
             </div>
           </div>
+
+          {/* Address */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Adres</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="h-5 w-5" />
+                <span>{schoonmaker.address}</span>
+            </CardContent>
+          </Card>
 
           {/* Availability */}
           <Card>

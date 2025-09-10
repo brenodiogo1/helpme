@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react"; // Adicionado useEffect
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Schoonmaker } from "@/types";
 import { format, getDay } from "date-fns";
 import { nl } from "date-fns/locale"; // Importar 'nl'
+import { Input } from "@/components/ui/input"; // Importar Input
 
 const mockSchoonmakers: Schoonmaker[] = [
   {
@@ -21,6 +22,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers.",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
     city: "Amsterdam",
+    address: "Kerkstraat 12, 1012 AB Amsterdam",
+    phoneNumber: "+31612345678",
     availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
     unavailableDates: ["2025-09-15"], // Exemplo: Anna não está disponível em 15 de setembro de 2025
   },
@@ -34,6 +37,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Flexibele en hardwerkende schoonmaker beschikbaar voor wekelijkse klussen. Ik gebruik milieuvriendelijke producten en laat uw huis stralen.",
     services: ["Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk"],
     city: "Utrecht",
+    address: "Plein 4, 3511 HT Utrecht",
+    phoneNumber: "+31623456789",
     availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
     unavailableDates: [],
   },
@@ -47,6 +52,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Perfectie is mijn standaard. Ik ben gespecializado em grandes schoonmaakklussen en het organiseren van ruimtes. Uw tevredenheid is gegarandeerd.",
     services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
     city: "Rotterdam",
+    address: "Coolsingel 1, 3011 AA Rotterdam",
+    phoneNumber: "+31634567890",
     availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag", "Zaterdag", "Zondag"],
     unavailableDates: ["2025-09-20"],
   },
@@ -60,6 +67,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Student die met veel enthousiasme en precisie uw huis schoonmaakt. Beschikbaar in de weekenden en avonduren.",
     services: ["Reguliere schoonmaak", "Boodschappen doen", "Student"],
     city: "Amsterdam",
+    address: "Nieuwmarkt 20, 1011 JP Amsterdam",
+    phoneNumber: "+31645678901",
     availableDaysOfWeek: ["Zaterdag", "Zondag"],
     unavailableDates: [],
   },
@@ -73,6 +82,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Ervaren schoonmaakster met oog voor detail. Ik ben pas tevreden als uw huis weer blinkt. Zeer betrouwbaar en discreet.",
     services: ["Dieptereiniging", "Kantoor schoonmaak", "Ramen wassen"],
     city: "Den Haag",
+    address: "Laan van Meerdervoort 50, 2517 AN Den Haag",
+    phoneNumber: "+31656789012",
     availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
     unavailableDates: [],
   },
@@ -86,6 +97,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Hardwerkende en betrouwbare hulp. Ik help u graag met de wekelijkse schoonmaak en kleine klusjes in huis.",
     services: ["Reguliere schoonmaak", "Kleine klusjes", "Tuinonderhoud"],
     city: "Utrecht",
+    address: "Oudegracht 100, 3511 AW Utrecht",
+    phoneNumber: "+31667890123",
     availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
     unavailableDates: [],
   },
@@ -99,6 +112,8 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Professionele schoonmaakster met meer dan 10 jaar ervaring. Gespecialiseerd in huishoudens met allergieën.",
     services: ["Anti-allergeen", "Dieptereiniging", "Milieuvriendelijk"],
     city: "Eindhoven",
+    address: "Demer 25, 5611 AS Eindhoven",
+    phoneNumber: "+31678901234",
     availableDaysOfWeek: ["Dinsdag", "Donderdag"],
     unavailableDates: [],
   },
@@ -112,19 +127,28 @@ const mockSchoonmakers: Schoonmaker[] = [
     bio: "Efficiënt en grondig. Ik zorg ervoor dat uw kantoor of huis er weer representatief uitziet. Ook voor eenmalige klussen.",
     services: ["Kantoor schoonmaak", "Grote schoonmaak", "Reguliere schoonmaak"],
     city: "Rotterdam",
-    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
+    address: "Weena 700, 3013 AL Rotterdam",
+    phoneNumber: "+31689012345",
+    availableDaysOfWeek: ["Maandag", "Quarta-feira", "Vrijdag"],
     unavailableDates: [],
   },
 ];
 
 const allServices = [...new Set(mockSchoonmakers.flatMap(s => s.services))].sort();
+const allCities = [...new Set(mockSchoonmakers.map(s => s.city))].sort(); // Obter todas as cidades únicas
 const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]; // Ordem para getDay()
 
 const Zoeken = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams(); // Usar setSearchParams para atualizar a URL
   const [priceRange, setPriceRange] = useState([10, 50]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]); // Novo estado para dias da semana
+  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]);
+  const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || ""); // Estado para o filtro de cidade
+
+  // Atualizar o estado do filtro de cidade quando a URL mudar
+  useEffect(() => {
+    setFilterCity(searchParams.get("city") || "");
+  }, [searchParams]);
 
   const handleServiceChange = (service: string) => {
     setSelectedServices(prev => 
@@ -142,41 +166,60 @@ const Zoeken = () => {
     );
   };
 
+  const handleCityFilterChange = (city: string) => {
+    setFilterCity(city);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (city) {
+      newSearchParams.set("city", city);
+    } else {
+      newSearchParams.delete("city");
+    }
+    setSearchParams(newSearchParams);
+  };
+
   const filteredSchoonmakers = useMemo(() => {
     const searchDateParam = searchParams.get("date");
     const searchTimeParam = searchParams.get("time");
+    const searchCityParam = searchParams.get("city");
+    const searchPostcodeParam = searchParams.get("postcode");
+
     let searchDate: Date | null = null;
     if (searchDateParam) {
       searchDate = new Date(searchDateParam);
-      searchDate.setHours(0, 0, 0, 0); // Reset time for comparison
+      searchDate.setHours(0, 0, 0, 0);
     }
 
     return mockSchoonmakers.filter(schoonmaker => {
       const priceMatch = schoonmaker.hourlyRate >= priceRange[0] && schoonmaker.hourlyRate <= priceRange[1];
-      const servicesMatch = selectedServices.every(service => schoonmaker.services.includes(service));
+      const servicesMatch = selectedServices.length === 0 || selectedServices.every(service => schoonmaker.services.includes(service));
       
-      // Filter by selected days of week
       const daysOfWeekMatch = selectedDaysOfWeek.length === 0 || 
                               (schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day)));
 
-      // Filter by specific search date and time
+      // Filtrar por cidade (se houver um parâmetro de busca ou um filtro selecionado)
+      const cityMatch = (!searchCityParam || schoonmaker.city.toLowerCase().includes(searchCityParam.toLowerCase())) &&
+                        (!filterCity || schoonmaker.city.toLowerCase() === filterCity.toLowerCase());
+
+      // Filtrar por código postal (simplesmente verifica se o código postal está no endereço)
+      const postcodeMatch = !searchPostcodeParam || schoonmaker.address.toLowerCase().includes(searchPostcodeParam.toLowerCase());
+
       let dateAndTimeMatch = true;
       if (searchDate) {
-        const dayName = format(searchDate, "eeee", { locale: nl }); // Get day name in Dutch
+        const dayName = format(searchDate, "eeee", { locale: nl });
         const isWeeklyAvailable = schoonmaker.availableDaysOfWeek?.includes(dayName);
         const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(format(searchDate, "yyyy-MM-dd"));
 
         if (!isWeeklyAvailable || isSpecificallyUnavailable) {
           dateAndTimeMatch = false;
         }
-        // Further logic for time slots could be added here if needed
       }
 
-      return priceMatch && servicesMatch && daysOfWeekMatch && dateAndTimeMatch;
+      return priceMatch && servicesMatch && daysOfWeekMatch && cityMatch && postcodeMatch && dateAndTimeMatch;
     });
-  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams]);
+  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams, filterCity]);
 
   const postcode = searchParams.get("postcode");
+  const city = searchParams.get("city");
 
   return (
     <div className="container py-8">
@@ -207,6 +250,18 @@ const Zoeken = () => {
                       <span>€{priceRange[0]}</span>
                       <span>€{priceRange[1]}</span>
                   </div>
+              </div>
+              <div> {/* Novo filtro de cidade */}
+                  <Label htmlFor="filter-city">Stad</Label>
+                  <Select onValueChange={handleCityFilterChange} value={filterCity}>
+                    <SelectTrigger id="filter-city">
+                      <SelectValue placeholder="Alle steden" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Alle steden</SelectItem>
+                      {allCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
               </div>
               <div>
                   <Label>Diensten</Label>
@@ -245,7 +300,7 @@ const Zoeken = () => {
         {/* Results */}
         <main className="md:col-span-3">
           <h1 className="text-3xl font-bold mb-4">
-            {postcode ? `Schoonmakers in ${postcode}` : "Schoonmakers in jouw buurt"}
+            {city && postcode ? `Schoonmakers in ${city} (${postcode})` : city ? `Schoonmakers in ${city}` : postcode ? `Schoonmakers in de buurt van ${postcode}` : "Schoonmakers in jouw buurt"}
           </h1>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredSchoonmakers.map((schoonmaker) => (
