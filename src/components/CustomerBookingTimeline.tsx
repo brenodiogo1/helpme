@@ -13,12 +13,13 @@ interface BookingTimelineProps {
     booking_time: string;
     duration_hours: number;
     total_price: number;
-    status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment';
+    status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment' | 'paid_pending_assignment';
   };
 }
 
 const statusSteps = [
   { status: 'pending_offer', label: 'Aanvraag verzonden', icon: Hourglass, color: 'text-blue-500' },
+  { status: 'paid_pending_assignment', label: 'Betaald, wacht op toewijzing', icon: Hourglass, color: 'text-indigo-500' }, // Novo status
   { status: 'accepted', label: 'Aanvraag geaccepteerd', icon: CalendarCheck, color: 'text-green-500' },
   { status: 'executing', label: 'Schoonmaak bezig', icon: Clock, color: 'text-yellow-500' },
   { status: 'completed', label: 'Schoonmaak voltooid', icon: CheckCircle, color: 'text-green-600' },
@@ -56,6 +57,10 @@ const CustomerBookingTimeline: React.FC<BookingTimelineProps> = ({ booking }) =>
             if (step.status === 'accepted' && isRejectedOrCancelled && !isCurrent) {
                 return null;
             }
+            // Don't show 'paid_pending_assignment' if rejected/cancelled and it's not the current status
+            if (step.status === 'paid_pending_assignment' && isRejectedOrCancelled && !isCurrent) {
+                return null;
+            }
 
 
             return (
@@ -77,6 +82,7 @@ const CustomerBookingTimeline: React.FC<BookingTimelineProps> = ({ booking }) =>
                   {isCurrent && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {booking.status === 'pending_offer' && "De schoonmaker bekijkt je aanvraag."}
+                      {booking.status === 'paid_pending_assignment' && "Je boeking is betaald en we zoeken een geschikte schoonmaker."}
                       {booking.status === 'accepted' && "Je boeking is bevestigd! De schoonmaker komt op de afgesproken tijd."}
                       {booking.status === 'executing' && "De schoonmaak is momenteel bezig."}
                       {booking.status === 'completed' && "De schoonmaak is voltooid. Geniet van je schone huis!"}

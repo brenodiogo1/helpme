@@ -199,6 +199,7 @@ const Boeken = () => {
                                     totalPrice={totalPrice}
                                     selectedServices={selectedServices}
                                     setIsProcessing={setIsProcessing}
+                                    isProcessing={isProcessing}
                                 />
                             </Elements>
                         ) : (
