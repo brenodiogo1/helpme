@@ -187,6 +187,7 @@ const PublicQuickBooking = () => {
               first_name: values.firstName,
               last_name: values.lastName,
               email: values.email,
+              extra_services: values.selectedExtraServices, // Passar serviços extras
           })
           .select()
           .single();

@@ -11,7 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { showError, showLoading, showSuccess, dismissToast } from "@/utils/toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
+import { Booking } from "@/types";
+import { PlusCircle } from "lucide-react";
 
 const CustomerBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -46,6 +47,7 @@ const CustomerBookings = () => {
           status,
           created_at,
           updated_at,
+          extra_services,
           cleaners (name, photo_url)
         `)
         .eq('customer_id', user.id)
@@ -55,11 +57,13 @@ const CustomerBookings = () => {
         throw new Error(error.message);
       }
 
-      // Mapear os dados para corresponder à interface Booking
       const mappedBookings: Booking[] = data.map(item => ({
         ...item,
-        cleaners: item.cleaners && item.cleaners.length > 0 ? item.cleaners[0] : null,
-        profiles: null, // Profiles data is not selected here, so set to null
+        // Ensure cleaners is a single object or null, not an array
+        cleaners: item.cleaners && Array.isArray(item.cleaners) && item.cleaners.length > 0 
+                    ? item.cleaners[0] 
+                    : null,
+        profiles: null,
       }));
 
       setBookings(mappedBookings);
@@ -104,6 +108,8 @@ const CustomerBookings = () => {
         return 'default';
       case 'pending_offer':
       case 'executing':
+      case 'paid_pending_assignment':
+      case 'pending_assignment':
         return 'secondary';
       case 'cancelled':
       case 'rejected':
@@ -134,11 +140,19 @@ const CustomerBookings = () => {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Mijn Boekingen</CardTitle>
-          <CardDescription>
-            Bekijk hier je boekingsgeschiedenis en aankomende afspraken.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Mijn Boekingen</CardTitle>
+            <CardDescription>
+              Bekijk hier je boekingsgeschiedenis en aankomende afspraken.
+            </CardDescription>
+          </div>
+          <Button asChild>
+            <Link to="/zoeken">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nieuwe Boeking Maken
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           {bookings.length === 0 ? (
@@ -150,6 +164,7 @@ const CustomerBookings = () => {
                   <TableHead>Schoonmaker</TableHead>
                   <TableHead>Datum & Tijd</TableHead>
                   <TableHead>Duur</TableHead>
+                  <TableHead>Extra Diensten</TableHead> {/* Nova coluna */}
                   <TableHead className="text-right">Bedrag</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Acties</TableHead>
@@ -163,6 +178,17 @@ const CustomerBookings = () => {
                       {format(new Date(boeking.booking_date), "eeee d MMMM yyyy", { locale: nl })} om {boeking.booking_time}
                     </TableCell>
                     <TableCell>{boeking.duration_hours} uur</TableCell>
+                    <TableCell>
+                      {boeking.extra_services && boeking.extra_services.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {boeking.extra_services.map(service => (
+                            <Badge key={service} variant="outline">{service}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Geen</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">€{boeking.total_price.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(boeking.status)}>
@@ -171,7 +197,9 @@ const CustomerBookings = () => {
                          boeking.status === 'executing' ? 'Bezig' :
                          boeking.status === 'completed' ? 'Voltooid' :
                          boeking.status === 'cancelled' ? 'Geannuleerd' :
-                         boeking.status === 'rejected' ? 'Geweigerd' : 'Onbekend'}
+                         boeking.status === 'rejected' ? 'Geweigerd' :
+                         boeking.status === 'pending_assignment' ? 'Wacht op toewijzing' :
+                         boeking.status === 'paid_pending_assignment' ? 'Betaald, wacht op toewijzing' : 'Onbekend'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right flex gap-2 justify-end">
@@ -184,7 +212,7 @@ const CustomerBookings = () => {
                             Beoordeling schrijven
                           </Button>
                         )}
-                        {(boeking.status === "pending_offer" || boeking.status === "accepted") && (
+                        {(boeking.status === "pending_offer" || boeking.status === "accepted" || boeking.status === "pending_assignment" || boeking.status === "paid_pending_assignment") && (
                           <Button variant="destructive" size="sm" onClick={() => handleCancelBooking(boeking.id)}>
                               Annuleren
                           </Button>
