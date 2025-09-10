@@ -6,11 +6,13 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { useRef } from "react";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -18,8 +20,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
   phone: z.string().min(10, { message: "Voer een geldig telefoonnummer in." }),
   password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }),
-  address: z.string().min(1, { message: "Adres is verplicht." }),
-  houseNumber: z.string().min(1, { message: "Huisnummer is verplicht." }),
+  address: z.string().min(1, { message: "Adres is verplicht." }), // Agora inclui rua e número
   postcode: z.string().min(4, { message: "Postcode is verplicht." }),
   city: z.string().min(1, { message: "Stad is verplicht." }),
   canWorkInNL: z.boolean().refine(val => val === true, { message: "U moet bevestigen dat u in Nederland kunt werken." }),
@@ -28,6 +29,13 @@ const formSchema = z.object({
 
 const RegistrerenSchoonmaker = () => {
   const navigate = useNavigate();
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['places'],
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,13 +45,44 @@ const RegistrerenSchoonmaker = () => {
       phone: "",
       password: "",
       address: "",
-      houseNumber: "",
       postcode: "",
       city: "",
       canWorkInNL: false,
       hasResidencePermitOrEU: false,
     },
   });
+
+  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = autocomplete;
+  };
+
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.address_components) {
+        let streetName = "";
+        let streetNumber = "";
+        let postcode = "";
+        let city = "";
+
+        for (const component of place.address_components) {
+          if (component.types.includes("street_number")) {
+            streetNumber = component.long_name;
+          } else if (component.types.includes("route")) {
+            streetName = component.long_name;
+          } else if (component.types.includes("postal_code")) {
+            postcode = component.long_name;
+          } else if (component.types.includes("locality")) {
+            city = component.long_name;
+          }
+        }
+        form.setValue("address", `${streetName} ${streetNumber}`.trim());
+        form.setValue("postcode", postcode);
+        form.setValue("city", city);
+        form.trigger(["address", "postcode", "city"]); // Validar os campos após preenchimento
+      }
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -74,7 +113,7 @@ const RegistrerenSchoonmaker = () => {
         city: values.city,
         hourly_rate: 0, // Pode ser definido posteriormente
         bio: "", // Pode ser definido posteriormente
-        address: `${values.address} ${values.houseNumber}`,
+        address: values.address, // Agora é o endereço completo
         postcode: values.postcode,
         phone_number: values.phone,
         can_work_in_nl: values.canWorkInNL,
@@ -99,6 +138,19 @@ const RegistrerenSchoonmaker = () => {
       showError(error.message);
       console.error("Registratie fout:", error);
     }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
+        <Card className="mx-auto max-w-lg w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl mt-2">Laden...</CardTitle>
+            <CardDescription>Google Maps wordt geladen voor adresvalidatie.</CardDescription>
+          </CardHeader>
+        </Card>
+      </Card>
+    );
   }
 
   return (
@@ -185,34 +237,30 @@ const RegistrerenSchoonmaker = () => {
               <Separator className="my-4" />
               <h3 className="font-semibold text-lg">Adresgegevens</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Straatnaam</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Kerkstraat" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="houseNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Huisnummer</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adres (straatnaam en huisnummer)</FormLabel>
+                    <FormControl>
+                      <Autocomplete
+                        onLoad={onLoad}
+                        onPlaceChanged={onPlaceChanged}
+                        options={{
+                          componentRestrictions: { country: "nl" }, // Restringir à Holanda
+                        }}
+                      >
+                        <Input placeholder="Kerkstraat 12" {...field} />
+                      </Autocomplete>
+                    </FormControl>
+                    <FormDescription>
+                      Begin met typen en selecteer seu endereço na lista.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
