@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
-import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
+import { showSuccess, showError } from "@/utils/toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -26,66 +25,38 @@ const Login = () => {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const toastId = showLoading("Inloggen...");
-    try {
-      // Admin user (still hardcoded for simplicity, can be managed with roles in DB)
-      if (values.email === "admin@helpme.com" && values.password === "admin123") {
-        dismissToast(toastId);
-        showSuccess("Succesvol ingelogd als admin!");
-        navigate("/admin");
-        return;
-      }
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const { email, password } = values;
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+    // Admin user
+    if (email === "admin@helpme.com" && password === "admin123") {
+      showSuccess("Succesvol ingelogd als admin!");
+      navigate("/admin");
+      return;
+    }
 
-      if (signInError) {
-        throw new Error(signInError.message);
-      }
+    // Cleaner user
+    if (email === "schoonmaker@helpme.com" && password === "schoonmaker123") {
+      showSuccess("Succesvol ingelogd als schoonmaker!");
+      navigate("/dashboard");
+      return;
+    }
 
-      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-      if (getUserError || !user) {
-        throw new Error(getUserError?.message || "Fout bij het ophalen van gebruikersinformatie.");
-      }
-
-      // Check if cleaner
-      const { data: cleanerProfile, error: cleanerError } = await supabase
-        .from('cleaners')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (cleanerError && cleanerError.code !== 'PGRST116') { // PGRST116 means "no rows found"
-        throw new Error(cleanerError.message);
-      }
-
-      if (cleanerProfile) {
-        dismissToast(toastId);
-        showSuccess("Succesvol ingelogd als schoonmaker!");
-        navigate("/dashboard");
-        return;
-      }
-
-      // Default to customer
-      dismissToast(toastId);
+    // Customer user
+    if (email === "klant@helpme.com" && password === "klant123") {
       showSuccess("Succesvol ingelogd!");
       navigate("/account");
-
-    } catch (error: any) {
-      dismissToast(toastId);
-      showError(error.message || "Ongeldige e-mail of wachtwoord.");
-      console.error("Login error:", error);
+      return;
     }
+
+    showError("Ongeldige e-mail of wachtwoord.");
   }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
             Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.
