@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus } from "lucide-react"; // Adicionado CalendarPlus
+import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -20,8 +20,8 @@ const Header = () => {
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
             <Link to="/#hoe-het-werkt">{t("header.howItWorks")}</Link>
             <Link to="/voor-schoonmakers">{t("header.forCleaners")}</Link>
-            <Link to="/quick-booking" className="text-primary hover:text-primary/80"> {/* Novo link desktop */}
-              Agendamento Rápido
+            <Link to="/quick-booking" className="text-primary hover:text-primary/80">
+              {t("header.quickBooking")}
             </Link>
           </nav>
         </div>
@@ -68,9 +68,9 @@ const Header = () => {
                       <Briefcase className="h-6 w-6" />
                       {t("header.forCleaners")}
                     </Link>
-                    <Link to="/quick-booking" className="flex items-center gap-4 rounded-lg px-3 py-2 text-primary transition-all hover:text-primary hover:bg-muted"> {/* Novo link mobile */}
+                    <Link to="/quick-booking" className="flex items-center gap-4 rounded-lg px-3 py-2 text-primary transition-all hover:text-primary hover:bg-muted">
                       <CalendarPlus className="h-6 w-6" />
-                      Agendamento Rápido
+                      {t("header.quickBooking")}
                     </Link>
                   </div>
 
