@@ -8,12 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
-import { showSuccess, showError } from "@/utils/toast";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useRef } from "react";
-import { Separator } from "@/components/ui/separator"; // Import adicionado
+import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -21,7 +21,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
   phone: z.string().min(10, { message: "Voer een geldig telefoonnummer in." }),
   password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }),
-  address: z.string().min(1, { message: "Adres is verplicht." }), // Agora inclui rua e número
+  address: z.string().min(1, { message: "Adres is verplicht." }),
   postcode: z.string().min(4, { message: "Postcode is verplicht." }),
   city: z.string().min(1, { message: "Stad is verplicht." }),
   canWorkInNL: z.boolean().refine(val => val === true, { message: "U moet bevestigen dat u in Nederland kunt werken." }),
@@ -86,8 +86,9 @@ const RegistrerenSchoonmaker = () => {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const toastId = showLoading("Account aanmaken...");
     try {
-      // 1. Registrar o usuário no Supabase Auth
+      // 1. Register the user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -107,14 +108,14 @@ const RegistrerenSchoonmaker = () => {
         throw new Error("Gebruiker kon niet worden aangemaakt.");
       }
 
-      // 2. Criar o perfil do limpador na tabela 'cleaners'
+      // 2. Create the cleaner profile in the 'cleaners' table
       const { error: cleanerError } = await supabase.from('cleaners').insert({
         user_id: authData.user.id,
         name: `${values.firstName} ${values.lastName}`,
         city: values.city,
-        hourly_rate: 0, // Pode ser definido posteriormente
-        bio: "", // Pode ser definido posteriormente
-        address: values.address, // Agora é o endereço completo
+        hourly_rate: 0, // Can be set later
+        bio: "", // Can be set later
+        address: values.address,
         postcode: values.postcode,
         phone_number: values.phone,
         can_work_in_nl: values.canWorkInNL,
@@ -125,17 +126,11 @@ const RegistrerenSchoonmaker = () => {
         throw new Error(cleanerError.message);
       }
 
-      // Lógica condicional para verificação por e-mail (simulada)
-      if (values.canWorkInNL && values.hasResidencePermitOrEU) {
-        showSuccess("Account succesvol aangemaakt! Een verificatielink is naar uw e-mailadres gestuurd. (Simulatie)");
-        // Em um cenário real, você enviaria um e-mail de verificação aqui.
-        // Ex: await supabase.auth.signInWithOtp({ email: values.email, options: { emailRedirectTo: 'YOUR_VERIFICATION_URL' } });
-      } else {
-        showSuccess("Account succesvol aangemaakt! Uw aanvraag wordt beoordeeld. (Simulatie)");
-      }
-
-      navigate("/login"); // Redirecionar para a página de login após o registro
+      dismissToast(toastId);
+      showSuccess("Account succesvol aangemaakt! Controleer je e-mail voor verificatie.");
+      navigate("/login"); // Redirect to login page after registration
     } catch (error: any) {
+      dismissToast(toastId);
       showError(error.message);
       console.error("Registratie fout:", error);
     }
@@ -250,7 +245,7 @@ const RegistrerenSchoonmaker = () => {
                           onLoad={onLoad}
                           onPlaceChanged={onPlaceChanged}
                           options={{
-                            componentRestrictions: { country: "nl" }, // Restringir à Holanda
+                            componentRestrictions: { country: "nl" }, // Restrict to Netherlands
                           }}
                         >
                           <Input placeholder="Kerkstraat 12" {...field} />
@@ -260,7 +255,7 @@ const RegistrerenSchoonmaker = () => {
                       )}
                     </FormControl>
                     <FormDescription>
-                      Comece a digitar e selecione seu endereço na lista.
+                      Begin met typen en selecteer uw adres uit de lijst.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

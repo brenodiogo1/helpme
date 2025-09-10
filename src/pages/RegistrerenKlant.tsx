@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Link } from "react-router-dom";
-import { showSuccess } from "@/utils/toast";
+import { Link, useNavigate } from "react-router-dom";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -18,6 +19,7 @@ const formSchema = z.object({
 });
 
 const RegistrerenKlant = () => {
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -28,16 +30,47 @@ const RegistrerenKlant = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    showSuccess("Account succesvol aangemaakt! (Simulatie)");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const toastId = showLoading("Account aanmaken...");
+    try {
+      // 1. Register user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+          },
+        },
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error("Gebruiker kon niet worden aangemaakt.");
+      }
+
+      // The `handle_new_user` function in Supabase will automatically create a profile entry.
+      // So, no explicit insert into `public.profiles` is needed here.
+
+      dismissToast(toastId);
+      showSuccess("Account succesvol aangemaakt! Controleer je e-mail voor verificatie.");
+      navigate("/login"); // Redirect to login page after registration
+    } catch (error: any) {
+      dismissToast(toastId);
+      showError(error.message);
+      console.error("Registratie fout:", error);
+    }
   }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
           <CardTitle className="text-2xl mt-2">Account aanmaken (Klant)</CardTitle>
           <CardDescription>
             Voer je gegevens in om de beste schoonmakers te vinden.
