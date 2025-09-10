@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useParams, useLocation, Link } from "react-router-dom"; // Removido useNavigate
+import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-// Removido: import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
+import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from '@stripe/stripe-js';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -43,13 +44,14 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const Boeken = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
-    // Removido: const navigate = useNavigate();
+    const navigate = useNavigate();
     const { date, time } = location.state || {};
 
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [isLoadingStripe, setIsLoadingStripe] = useState(true);
     const [stripeError, setStripeError] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe'); // Novo estado para método de pagamento
     const checkoutRef = useRef<HTMLDivElement>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
@@ -71,57 +73,126 @@ const Boeken = () => {
     };
 
     useEffect(() => {
-        const initializeStripeCheckout = async () => {
-            if (!date || !time) {
-                setStripeError("Data e hora da reserva não fornecidas.");
-                setIsLoadingStripe(false);
-                return;
-            }
-
-            if (!stripePromise) {
-                setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
-                setIsLoadingStripe(false);
-                return;
-            }
-
-            try {
-                const stripe = await stripePromise;
-                if (!stripe) {
-                    throw new Error("Falha ao carregar o Stripe.");
+        if (paymentMethod === 'stripe') {
+            const initializeStripeCheckout = async () => {
+                if (!date || !time) {
+                    setStripeError("Data e hora da reserva não fornecidas.");
+                    setIsLoadingStripe(false);
+                    return;
                 }
 
-                const returnUrl = `${window.location.origin}/bevestiging`;
+                if (!stripePromise) {
+                    setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
+                    setIsLoadingStripe(false);
+                    return;
+                }
 
-                const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-                    body: JSON.stringify({
-                        amount: totalPrice,
-                        currency: 'eur',
-                        return_url: returnUrl,
-                    }),
+                try {
+                    const stripe = await stripePromise;
+                    if (!stripe) {
+                        throw new Error("Falha ao carregar o Stripe.");
+                    }
+
+                    const returnUrl = `${window.location.origin}/bevestiging`;
+
+                    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                        body: JSON.stringify({
+                            amount: totalPrice,
+                            currency: 'eur',
+                            return_url: returnUrl,
+                        }),
+                    });
+
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+
+                    const { clientSecret } = data as { clientSecret: string };
+
+                    if (checkoutRef.current) {
+                        const checkout = await stripe.initEmbeddedCheckout({
+                            clientSecret,
+                        });
+                        checkout.mount(checkoutRef.current);
+                    }
+                } catch (err: any) {
+                    console.error("Stripe Checkout initialization error:", err);
+                    setStripeError(err.message || "Erro ao inicializar o pagamento.");
+                } finally {
+                    setIsLoadingStripe(false);
+                }
+            };
+
+            initializeStripeCheckout();
+        } else {
+            setIsLoadingStripe(false); // No Stripe loading for cash payments
+            setStripeError(null);
+        }
+    }, [date, time, totalPrice, id, paymentMethod]); // Recarregar se o método de pagamento mudar
+
+    const handleCashBooking = async () => {
+        setIsLoadingStripe(true); // Usar isLoadingStripe para indicar processamento geral
+        const toastId = showLoading("Boekingsaanvraag verzenden...");
+
+        try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error("Gebruiker niet ingelogd.");
+            }
+
+            const { data: bookingData, error: bookingError } = await supabase
+                .from('bookings')
+                .insert({
+                    customer_id: user.id,
+                    cleaner_id: schoonmaker.id,
+                    booking_date: format(new Date(date), "yyyy-MM-dd"),
+                    booking_time: time,
+                    duration_hours: hours,
+                    total_price: totalPrice,
+                    status: 'pending_offer', // Status para pagamento em dinheiro, aguardando aceitação do limpador
+                })
+                .select()
+                .single();
+
+            if (bookingError || !bookingData) {
+                throw new Error(bookingError?.message || "Fout bij het aanmaken van de boekingsaanvraag.");
+            }
+
+            // Create a job offer for the cleaner
+            const { error: offerError } = await supabase
+                .from('job_offers')
+                .insert({
+                    booking_id: bookingData.id,
+                    cleaner_id: schoonmaker.id,
+                    status: 'pending', // Oferta pendente para o limpador
                 });
 
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                const { clientSecret } = data as { clientSecret: string };
-
-                if (checkoutRef.current) {
-                    const checkout = await stripe.initEmbeddedCheckout({
-                        clientSecret,
-                    });
-                    checkout.mount(checkoutRef.current);
-                }
-            } catch (err: any) {
-                console.error("Stripe Checkout initialization error:", err);
-                setStripeError(err.message || "Erro ao inicializar o pagamento.");
-            } finally {
-                setIsLoadingStripe(false);
+            if (offerError) {
+                throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding.");
             }
-        };
 
-        initializeStripeCheckout();
-    }, [date, time, totalPrice, id]); // Recarregar se a data, hora, preço total ou ID do limpador mudar
+            dismissToast(toastId);
+            showSuccess("Boekingsaanvraag succesvol verzonden! De schoonmaker zal uw aanvraag beoordelen.");
+
+            const confirmationDetails = {
+                schoonmaker,
+                date: date.toISOString(),
+                time,
+                hours,
+                totalPrice,
+                status: 'pending_offer', // Status para a página de confirmação
+                bookingId: bookingData.id,
+            };
+            navigate("/bevestiging", { state: { bookingDetails: confirmationDetails } });
+
+        } catch (error: any) {
+            dismissToast(toastId);
+            showError(error.message || "Er is een onverwachte fout opgetreden bij het verzenden van de aanvraag.");
+            console.error("Cash booking submission error:", error);
+        } finally {
+            setIsLoadingStripe(false);
+        }
+    };
 
     if (!date || !time) {
         return (
@@ -202,17 +273,42 @@ const Boeken = () => {
                     <Separator />
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
-                        {isLoadingStripe ? (
-                            <div className="flex items-center justify-center h-32">
-                                <p>Laden van betaalformulier...</p>
+                        <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cash') => setPaymentMethod(value)} className="grid grid-cols-1 gap-4">
+                            <div className="flex items-center space-x-2 rounded-md border p-3">
+                                <RadioGroupItem value="stripe" id="payment-stripe" />
+                                <Label htmlFor="payment-stripe" className="flex-grow cursor-pointer">
+                                    Online betalen (iDEAL, Creditcard, etc.)
+                                    <p className="text-xs text-muted-foreground">Veilig en direct via Stripe.</p>
+                                </Label>
                             </div>
-                        ) : stripeError ? (
-                            <div className="text-red-500 text-center p-4 border border-red-300 rounded-md">
-                                <p>Erro: {stripeError}</p>
-                                <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
+                            <div className="flex items-center space-x-2 rounded-md border p-3">
+                                <RadioGroupItem value="cash" id="payment-cash" />
+                                <Label htmlFor="payment-cash" className="flex-grow cursor-pointer">
+                                    Contant betalen
+                                    <p className="text-xs text-muted-foreground">Betaal de schoonmaker direct na de service.</p>
+                                </Label>
                             </div>
-                        ) : (
-                            <div ref={checkoutRef} id="checkout" />
+                        </RadioGroup>
+
+                        {paymentMethod === 'stripe' && (
+                            isLoadingStripe ? (
+                                <div className="flex items-center justify-center h-32 mt-4">
+                                    <p>Laden van betaalformulier...</p>
+                                </div>
+                            ) : stripeError ? (
+                                <div className="text-red-500 text-center p-4 border border-red-300 rounded-md mt-4">
+                                    <p>Erro: {stripeError}</p>
+                                    <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
+                                </div>
+                            ) : (
+                                <div ref={checkoutRef} id="checkout" className="mt-4" />
+                            )
+                        )}
+
+                        {paymentMethod === 'cash' && (
+                            <Button size="lg" className="w-full mt-6" onClick={handleCashBooking} disabled={isLoadingStripe}>
+                                {isLoadingStripe ? "Verwerken..." : `Bevestig boeking (Betaal €${totalPrice.toFixed(2)} contant)`}
+                            </Button>
                         )}
                     </div>
                 </CardContent>

@@ -27,8 +27,8 @@ const Bevestiging = () => {
 
       if (!sessionId) {
         // If no session_id, it means it's a quick booking or direct navigation
-        if (bookingDetails?.status === 'pending_assignment') {
-          setPaymentStatus('pending');
+        if (bookingDetails?.status === 'pending_offer') { // Check for cash payment status
+          setPaymentStatus('pending'); // Treat cash payment as pending confirmation
         } else {
           setPaymentStatus('failed'); // Or handle as a direct confirmation without payment
         }
@@ -173,7 +173,7 @@ const Bevestiging = () => {
             </CardContent>
           </>
         );
-      case 'pending': // For quick bookings without immediate payment
+      case 'pending': // For cash bookings
         return (
           <>
             <div className="mx-auto bg-blue-100 rounded-full h-16 w-16 flex items-center justify-center">
@@ -182,7 +182,8 @@ const Bevestiging = () => {
             <CardTitle className="text-2xl mt-4">Je boekingsaanvraag is verzonden!</CardTitle>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                We hebben je aanvraag ontvangen en zoeken een geschikte schoonmaker. Je ontvangt spoedig een update via e-mail en chat.
+                We hebben je aanvraag ontvangen. De schoonmaker zal deze beoordelen en je ontvangt een bevestiging via e-mail en chat.
+                O pagamento será feito em dinheiro diretamente ao limpador após a conclusão do serviço.
               </p>
               <div className="text-left border rounded-lg p-4 space-y-2 bg-secondary/50">
                 <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
