@@ -19,7 +19,6 @@ const formSchema = z.object({
   twilioAuthToken: z.string().optional(),
   twilioPhoneNumber: z.string().optional(),
   sendGridApiKey: z.string().optional(),
-  stripePublishableKey: z.string().optional(), // Manter para exibição, mas será read-only
 });
 
 const AdminSettings = () => {
@@ -33,7 +32,6 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
-      stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
     },
   });
 
@@ -44,7 +42,6 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
-      stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
     });
   }, [settings, form]);
 
@@ -55,9 +52,6 @@ const AdminSettings = () => {
     updateSetting("twilioAuthToken", values.twilioAuthToken || "");
     updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
     updateSetting("sendGridApiKey", values.sendGridApiKey || "");
-
-    // A chave publicável do Stripe é carregada do .env e não é salva aqui.
-    // A chave secreta do Stripe é um segredo do Supabase e não é gerenciada aqui.
 
     console.log("Configurações salvas (simulação):", values);
     showSuccess("Instellingen opgeslagen! (Simulatie)");
@@ -110,35 +104,15 @@ const AdminSettings = () => {
                 />
               </div>
               <Separator />
+              {/* Informações sobre o Stripe foram removidas da UI do AdminSettings */}
               <div className="space-y-2">
-                <h3 className="font-semibold">Betalingsgateways (Stripe)</h3>
-                {/* Campo para Stripe Secret Key - Renderizado diretamente, não via FormField */}
-                <FormItem>
-                  <FormLabel>Stripe Secret Key</FormLabel>
-                  <FormControl>
-                    <Input id="stripe-key" placeholder="sk_test_..." value="********************" disabled />
-                  </FormControl>
-                  <FormDescription>
-                    A chave secreta do Stripe deve ser configurada como um segredo de ambiente no Supabase para a Edge Function `create-payment-intent`.
-                    Nome do segredo: <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">STRIPE_SECRET_KEY</code>.
-                  </FormDescription>
-                </FormItem>
-                <FormField
-                  control={form.control}
-                  name="stripePublishableKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stripe Publishable Key</FormLabel>
-                      <FormControl>
-                        <Input id="stripe-publishable-key" placeholder="pk_test_..." {...field} readOnly /> {/* Campo somente leitura */}
-                      </FormControl>
-                      <FormDescription>
-                        Esta chave é usada no frontend. Para alterá-la, atualize a variável de ambiente <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">VITE_STRIPE_PUBLISHABLE_KEY</code> em seu arquivo <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> (para desenvolvimento) ou nas configurações de ambiente da sua plataforma de hospedagem (para produção).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <h3 className="font-semibold">Stripe (Pagamentos)</h3>
+                <p className="text-muted-foreground text-sm">
+                  A chave publicável do Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">VITE_STRIPE_PUBLISHABLE_KEY</code>) é configurada no arquivo <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> da aplicação.
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  A chave secreta do Stripe (<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">STRIPE_SECRET_KEY</code>) é configurada como um segredo de ambiente na seção <Link to="https://supabase.com/dashboard/project/_/functions" target="_blank" rel="noopener noreferrer" className="text-primary underline">Edge Functions</Link> do seu painel Supabase.
+                </p>
               </div>
               <Separator />
               <div className="space-y-2">
