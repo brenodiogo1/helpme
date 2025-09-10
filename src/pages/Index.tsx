@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ActivityMap from "@/components/ActivityMap";
+import LiveActivityFeed from "@/components/LiveActivityFeed"; // Importar o novo componente
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -146,10 +146,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Activity Map Section */}
+      {/* Activity Feed Section */}
       <section className="py-16 lg:py-24 bg-secondary">
         <div className="container mx-auto">
-            <ActivityMap />
+            <LiveActivityFeed />
         </div>
       </section>
 

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CalendarCheck, Clock, Star, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import ActivityMap from "@/components/ActivityMap";
+import LiveActivityFeed from "@/components/LiveActivityFeed"; // Importar o novo componente
 
 const mockUpcomingBooking = {
     customer: "Familie de Jong",
@@ -73,7 +73,7 @@ const CleanerDashboard = () => {
                 </Button>
             </CardContent>
         </Card>
-        <ActivityMap />
+        <LiveActivityFeed /> {/* Substituído ActivityMap por LiveActivityFeed */}
       </div>
     </div>
   );

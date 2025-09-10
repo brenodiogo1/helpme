@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CalendarCheck, DollarSign, TrendingUp, Wallet } from "lucide-react";
 import { RevenueChart } from "@/components/RevenueChart";
 import { RecentBookings } from "@/components/RecentBookings";
-import ActivityMap from "@/components/ActivityMap";
+import LiveActivityFeed from "@/components/LiveActivityFeed"; // Importar o novo componente
 
 const Dashboard = () => {
   return (
@@ -63,7 +63,7 @@ const Dashboard = () => {
         </Card>
       </div>
       <div className="mb-8">
-        <ActivityMap />
+        <LiveActivityFeed /> {/* Substituído ActivityMap por LiveActivityFeed */}
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">
