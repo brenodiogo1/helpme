@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react"; // Removido useEffect
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"; // Removido CardFooter
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"; // Removido FormDescription
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,6 +20,9 @@ import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useNavigate } from "react-router-dom";
+import { loadStripe } from '@stripe/stripe-js';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label"; // Adicionado importação de Label
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -31,6 +34,12 @@ const extraServices = [
 ];
 
 const defaultHourlyRate = 20.00; // Taxa horária padrão, já que nenhum limpador é selecionado
+const MIN_SERVICES_FOR_DISCOUNT = 2; // Mínimo de serviços para aplicar desconto
+const DISCOUNT_PERCENTAGE = 0.10; // 10% de desconto
+
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -46,8 +55,12 @@ const formSchema = z.object({
 });
 
 const PublicQuickBooking = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false); // Renomeado para isSubmitting
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingStripe, setIsLoadingStripe] = useState(true);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const checkoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const { isLoaded } = useJsApiLoader({
@@ -80,7 +93,15 @@ const PublicQuickBooking = () => {
       .filter(service => selectedExtraServices.includes(service.id))
       .reduce((total, service) => total + service.price, 0);
   }, [selectedExtraServices]);
-  const totalPrice = basePrice + extrasPrice;
+
+  const discountAmount = useMemo(() => {
+    if (selectedExtraServices.length >= MIN_SERVICES_FOR_DISCOUNT) {
+      return extrasPrice * DISCOUNT_PERCENTAGE;
+    }
+    return 0;
+  }, [selectedExtraServices, extrasPrice]);
+
+  const totalPrice = basePrice + extrasPrice - discountAmount;
 
   const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
@@ -103,17 +124,78 @@ const PublicQuickBooking = () => {
         }
         form.setValue("address", address.trim());
         form.setValue("postcode", postcode);
+        form.trigger(["address", "postcode"]);
       }
     }
   };
+
+  useEffect(() => {
+    if (paymentMethod === 'stripe') {
+        const initializeStripeCheckout = async () => {
+            // Ensure all required form fields are valid before initializing Stripe
+            const isValid = await form.trigger();
+            if (!isValid) {
+                setStripeError("Vul alstublieft alle verplichte velden in.");
+                setIsLoadingStripe(false);
+                return;
+            }
+
+            if (!stripePromise) {
+                setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
+                setIsLoadingStripe(false);
+                return;
+            }
+
+            try {
+                const stripe = await stripePromise;
+                if (!stripe) {
+                    throw new Error("Falha ao carregar o Stripe.");
+                }
+
+                const returnUrl = `${window.location.origin}/bevestiging`;
+
+                const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                    body: JSON.stringify({
+                        amount: totalPrice,
+                        currency: 'eur',
+                        return_url: returnUrl,
+                    }),
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                const { clientSecret } = data as { clientSecret: string };
+
+                if (checkoutRef.current) {
+                    const checkout = await stripe.initEmbeddedCheckout({
+                        clientSecret,
+                    });
+                    checkout.mount(checkoutRef.current);
+                }
+            } catch (err: any) {
+                console.error("Stripe Checkout initialization error:", err);
+                setStripeError(err.message || "Erro ao inicializar o pagamento.");
+            } finally {
+                setIsLoadingStripe(false);
+            }
+        };
+
+        initializeStripeCheckout();
+    } else {
+        setIsLoadingStripe(false); // No Stripe loading for cash payments
+        setStripeError(null);
+    }
+  }, [paymentMethod, totalPrice, form.formState.isValid]); // Recarregar se o método de pagamento ou preço total mudar, ou validade do formulário
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     const toastId = showLoading("Boekingsaanvraag verzenden...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser(); // Removido userError
-      const customerId = user?.id || null; // Pode ser nulo se o usuário não estiver logado
+      const { data: { user } } = await supabase.auth.getUser();
+      const customerId = user?.id || null;
 
       const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
@@ -143,7 +225,7 @@ const PublicQuickBooking = () => {
       showSuccess("Boekingsaanvraag succesvol verzonden! We nemen spoedig contact met u op via chat.");
 
       const confirmationDetails = {
-          schoonmaker: { name: "Nog niet toegewezen" }, // Placeholder
+          schoonmaker: { name: "Nog niet toegeweid" }, // Placeholder
           date: values.bookingDate.toISOString(),
           time: values.bookingTime,
           hours: values.durationHours,
@@ -389,15 +471,20 @@ const PublicQuickBooking = () => {
                               disabled={isSubmitting}
                             />
                           </FormControl>
-                          <FormLabel className="flex justify-between w-full font-normal cursor-pointer">
+                          <Label className="flex justify-between w-full font-normal cursor-pointer">
                             <span>{service.label}</span>
                             <span>€{service.price.toFixed(2)}</span>
-                          </FormLabel>
+                          </Label>
                         </FormItem>
                       )}
                     />
                   ))}
                 </div>
+                {selectedExtraServices.length >= MIN_SERVICES_FOR_DISCOUNT && (
+                    <p className="text-sm text-green-600 mt-2">
+                        Je krijgt {DISCOUNT_PERCENTAGE * 100}% korting op extra diensten!
+                    </p>
+                )}
               </div>
 
               <Separator />
@@ -418,6 +505,12 @@ const PublicQuickBooking = () => {
                       </div>
                     );
                   })}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Korting</span>
+                      <span>-€{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <Separator className="my-2" />
                   <div className="flex justify-between font-bold text-foreground">
                     <span>Totaal</span>
@@ -426,9 +519,48 @@ const PublicQuickBooking = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Verzenden..." : `Vraag aan voor €${totalPrice.toFixed(2)}`}
-              </Button>
+              <Separator />
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
+                <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cash') => setPaymentMethod(value)} className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center space-x-2 rounded-md border p-3">
+                        <RadioGroupItem value="stripe" id="payment-stripe" disabled={isSubmitting} />
+                        <Label htmlFor="payment-stripe" className="flex-grow cursor-pointer">
+                            Online betalen (iDEAL, Creditcard, etc.)
+                            <p className="text-xs text-muted-foreground">Veilig en direct via Stripe.</p>
+                        </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 rounded-md border p-3">
+                        <RadioGroupItem value="cash" id="payment-cash" disabled={isSubmitting} />
+                        <Label htmlFor="payment-cash" className="flex-grow cursor-pointer">
+                            Contant betalen
+                            <p className="text-xs text-muted-foreground">Betaal de schoonmaker direct na de service.</p>
+                        </Label>
+                    </div>
+                </RadioGroup>
+
+                {paymentMethod === 'stripe' && (
+                    isLoadingStripe ? (
+                        <div className="flex items-center justify-center h-32 mt-4">
+                            <p>Laden van betaalformulier...</p>
+                        </div>
+                    ) : stripeError ? (
+                        <div className="text-red-500 text-center p-4 border border-red-300 rounded-md mt-4">
+                            <p>Erro: {stripeError}</p>
+                            <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
+                        </div>
+                    ) : (
+                        <div ref={checkoutRef} id="checkout" className="mt-4" />
+                    )
+                )}
+
+                {paymentMethod === 'cash' && (
+                    <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
+                        {isSubmitting ? "Verwerken..." : `Vraag aan voor €${totalPrice.toFixed(2)} (Betaal contant)`}
+                    </Button>
+                )}
+              </div>
             </form>
           </Form>
         </CardContent>

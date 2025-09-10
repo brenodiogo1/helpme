@@ -36,6 +36,9 @@ const extraServices = [
     { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
 ];
 
+const MIN_SERVICES_FOR_DISCOUNT = 2; // Mínimo de serviços para aplicar desconto
+const DISCOUNT_PERCENTAGE = 0.10; // 10% de desconto
+
 // Carregar o Stripe fora do componente para evitar recargas desnecessárias
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -62,7 +65,15 @@ const Boeken = () => {
             .filter(service => selectedServices.includes(service.id))
             .reduce((total, service) => total + service.price, 0);
     }, [selectedServices]);
-    const totalPrice = basePrice + extrasPrice;
+
+    const discountAmount = useMemo(() => {
+        if (selectedServices.length >= MIN_SERVICES_FOR_DISCOUNT) {
+          return extrasPrice * DISCOUNT_PERCENTAGE;
+        }
+        return 0;
+    }, [selectedServices, extrasPrice]);
+
+    const totalPrice = basePrice + extrasPrice - discountAmount;
 
     const handleServiceChange = (serviceId: string) => {
         setSelectedServices(prev =>
@@ -245,6 +256,11 @@ const Boeken = () => {
                                 </div>
                             ))}
                         </div>
+                        {selectedServices.length >= MIN_SERVICES_FOR_DISCOUNT && (
+                            <p className="text-sm text-green-600 mt-2">
+                                Je krijgt {DISCOUNT_PERCENTAGE * 100}% korting op extra diensten!
+                            </p>
+                        )}
                     </div>
                     <Separator />
                     <div>
@@ -263,6 +279,12 @@ const Boeken = () => {
                                     </div>
                                 );
                             })}
+                            {discountAmount > 0 && (
+                                <div className="flex justify-between text-green-600">
+                                  <span>Korting</span>
+                                  <span>-€{discountAmount.toFixed(2)}</span>
+                                </div>
+                            )}
                             <Separator className="my-2" />
                             <div className="flex justify-between font-bold text-foreground">
                                 <span>Totaal</span>
@@ -275,14 +297,14 @@ const Boeken = () => {
                         <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
                         <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cash') => setPaymentMethod(value)} className="grid grid-cols-1 gap-4">
                             <div className="flex items-center space-x-2 rounded-md border p-3">
-                                <RadioGroupItem value="stripe" id="payment-stripe" />
+                                <RadioGroupItem value="stripe" id="payment-stripe" disabled={isLoadingStripe} />
                                 <Label htmlFor="payment-stripe" className="flex-grow cursor-pointer">
                                     Online betalen (iDEAL, Creditcard, etc.)
                                     <p className="text-xs text-muted-foreground">Veilig en direct via Stripe.</p>
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2 rounded-md border p-3">
-                                <RadioGroupItem value="cash" id="payment-cash" />
+                                <RadioGroupItem value="cash" id="payment-cash" disabled={isLoadingStripe} />
                                 <Label htmlFor="payment-cash" className="flex-grow cursor-pointer">
                                     Contant betalen
                                     <p className="text-xs text-muted-foreground">Betaal de schoonmaker direct na de service.</p>
