@@ -198,16 +198,8 @@ const PublicQuickBooking = () => {
       dismissToast(toastId);
       showSuccess("Boekingsaanvraag succesvol verzonden! We nemen spoedig contact met u op via chat.");
 
-      const confirmationDetails = {
-          schoonmaker: { name: "Nog niet toegeweid" }, // Placeholder
-          date: values.bookingDate.toISOString(),
-          time: values.bookingTime,
-          hours: values.durationHours,
-          totalPrice,
-          status: 'pending_assignment',
-          bookingId: bookingData.id,
-      };
-      navigate("/bevestiging", { state: { bookingDetails: confirmationDetails } });
+      // Redirecionar para o painel do cliente após a reserva em dinheiro
+      navigate("/account");
 
     } catch (error: any) {
       dismissToast(toastId);
