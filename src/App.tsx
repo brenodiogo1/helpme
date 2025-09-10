@@ -58,7 +58,7 @@ import CleanerProvider from "./pages/cleaner/CleanerProvider";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { useEffect } from "react";
 import MijnTaken from "./pages/cleaner/MijnTaken";
-import QuickBooking from "./pages/admin/QuickBooking"; // Importar a nova página
+import PublicQuickBooking from "./pages/PublicQuickBooking"; // Importar do novo caminho
 
 const queryClient = new QueryClient();
 
@@ -101,7 +101,7 @@ const App = () => {
                 <Route path="/registreren" element={<Registreren />} />
                 <Route path="/registreren/klant" element={<RegistrerenKlant />} />
                 <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
-                <Route path="/quick-booking" element={<QuickBooking />} /> {/* Nova rota pública */}
+                <Route path="/quick-booking" element={<PublicQuickBooking />} /> {/* Usar o novo nome do componente */}
                 {/* Legal Pages */}
                 <Route path="/over-ons" element={<OverOns />} />
                 <Route path="/pers" element={<Pers />} />
@@ -154,7 +154,6 @@ const App = () => {
                 <Route path="abonnementen" element={<SubscriptionsBeheren />} />
                 <Route path="instellingen" element={<AdminSettings />} />
                 <Route path="chat" element={<AdminChat />} />
-                {/* <Route path="quick-booking" element={<QuickBooking />} /> */} {/* Rota removida */}
               </Route>
 
               {/* Catch-all Route */}

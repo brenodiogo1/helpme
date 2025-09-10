@@ -27,19 +27,25 @@ export interface Schoonmaker {
 export interface Booking {
   id: string;
   customer_id: string;
-  cleaner_id: string;
+  cleaner_id: string | null; // Permitir que cleaner_id seja nulo
   booking_date: string;
   booking_time: string;
   duration_hours: number;
   total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled';
-  created_at: string; // Adicionado
-  updated_at: string; // Adicionado
-  cleaners: { // Ajustado para um único objeto ou null
+  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment'; // Adicionado 'pending_assignment'
+  created_at: string;
+  updated_at: string;
+  address?: string; // Novo campo
+  postcode?: string; // Novo campo
+  phone_number?: string; // Novo campo
+  first_name?: string; // Novo campo
+  last_name?: string; // Novo campo
+  email?: string; // Novo campo
+  cleaners: {
     name: string;
-    photo_url?: string; // Usar photo_url para corresponder ao Supabase
+    photo_url?: string;
   } | null;
-  profiles?: { // Ajustado para um único objeto ou null
+  profiles?: {
     first_name: string;
     last_name: string;
   } | null;
@@ -51,8 +57,8 @@ export interface JobOffer {
   cleaner_id: string;
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
-  updated_at: string; // Adicionado
-  bookings: { // Ajustado para um único objeto ou null
+  updated_at: string;
+  bookings: {
     id: string;
     customer_id: string;
     booking_date: string;
@@ -60,9 +66,9 @@ export interface JobOffer {
     duration_hours: number;
     total_price: number;
     status: string;
-    profiles: { // Ajustado para um único objeto ou null
+    profiles: {
       first_name: string;
       last_name: string;
     } | null;
-  } | null; // Permitir que bookings seja null
+  } | null;
 }

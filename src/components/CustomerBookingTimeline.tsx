@@ -13,7 +13,7 @@ interface BookingTimelineProps {
     booking_time: string;
     duration_hours: number;
     total_price: number;
-    status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled';
+    status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment';
   };
 }
 
@@ -82,6 +82,7 @@ const CustomerBookingTimeline: React.FC<BookingTimelineProps> = ({ booking }) =>
                       {booking.status === 'completed' && "De schoonmaak is voltooid. Geniet van je schone huis!"}
                       {booking.status === 'rejected' && "Helaas heeft de schoonmaker je aanvraag geweigerd. Probeer een andere schoonmaker."}
                       {booking.status === 'cancelled' && "Je boeking is geannuleerd."}
+                      {booking.status === 'pending_assignment' && "We zoeken een geschikte schoonmaker voor je boeking."}
                     </p>
                   )}
                 </div>
