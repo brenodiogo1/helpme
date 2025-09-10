@@ -9,27 +9,7 @@ import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-
-interface JobOffer {
-  id: string;
-  booking_id: string;
-  cleaner_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  created_at: string;
-  bookings: {
-    id: string;
-    customer_id: string;
-    booking_date: string;
-    booking_time: string;
-    duration_hours: number;
-    total_price: number;
-    status: string;
-    customers: { // Assuming a 'profiles' table for customer names
-      first_name: string;
-      last_name: string;
-    } | null;
-  };
-}
+import { JobOffer } from "@/types"; // Importar a interface JobOffer do types/index.ts
 
 const MijnTaken = () => {
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
@@ -70,6 +50,7 @@ const MijnTaken = () => {
           cleaner_id,
           status,
           created_at,
+          updated_at,
           bookings (
             id,
             customer_id,
@@ -89,7 +70,16 @@ const MijnTaken = () => {
         throw new Error(error.message);
       }
 
-      setJobOffers(data as JobOffer[]);
+      // Mapear os dados para corresponder à interface JobOffer
+      const mappedJobOffers: JobOffer[] = data.map(item => ({
+        ...item,
+        bookings: {
+          ...item.bookings,
+          profiles: item.bookings.profiles && item.bookings.profiles.length > 0 ? item.bookings.profiles[0] : null,
+        },
+      }));
+
+      setJobOffers(mappedJobOffers);
     } catch (err: any) {
       setError(err.message);
       showError(err.message);

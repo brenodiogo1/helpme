@@ -3,25 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CalendarPlus } from "lucide-react";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
-import CustomerBookingTimeline from "@/components/CustomerBookingTimeline"; // Importar o novo componente
+import CustomerBookingTimeline from "@/components/CustomerBookingTimeline";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-
-interface Booking {
-  id: string;
-  cleaner_id: string;
-  booking_date: string;
-  booking_time: string;
-  duration_hours: number;
-  total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled';
-  cleaners: {
-    name: string;
-  } | null;
-}
+import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
 
 const CustomerDashboard = () => {
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
@@ -45,12 +33,15 @@ const CustomerDashboard = () => {
         .from('bookings')
         .select(`
           id,
+          customer_id,
           cleaner_id,
           booking_date,
           booking_time,
           duration_hours,
           total_price,
           status,
+          created_at,
+          updated_at,
           cleaners (name)
         `)
         .eq('customer_id', user.id)
@@ -64,7 +55,13 @@ const CustomerDashboard = () => {
       }
 
       if (data) {
-        setUpcomingBooking(data as Booking);
+        // Mapear os dados para corresponder à interface Booking
+        const mappedBooking: Booking = {
+          ...data,
+          cleaners: data.cleaners && data.cleaners.length > 0 ? data.cleaners[0] : null,
+          profiles: null, // Profiles data is not selected here, so set to null
+        };
+        setUpcomingBooking(mappedBooking);
       } else {
         setUpcomingBooking(null);
       }

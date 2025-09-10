@@ -11,20 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { showError, showLoading, showSuccess, dismissToast } from "@/utils/toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-
-interface Booking {
-  id: string;
-  cleaner_id: string;
-  booking_date: string;
-  booking_time: string;
-  duration_hours: number;
-  total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled';
-  cleaners: {
-    name: string;
-    photoUrl: string;
-  } | null;
-}
+import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
 
 const CustomerBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -50,12 +37,15 @@ const CustomerBookings = () => {
         .from('bookings')
         .select(`
           id,
+          customer_id,
           cleaner_id,
           booking_date,
           booking_time,
           duration_hours,
           total_price,
           status,
+          created_at,
+          updated_at,
           cleaners (name, photo_url)
         `)
         .eq('customer_id', user.id)
@@ -65,7 +55,14 @@ const CustomerBookings = () => {
         throw new Error(error.message);
       }
 
-      setBookings(data as Booking[]);
+      // Mapear os dados para corresponder à interface Booking
+      const mappedBookings: Booking[] = data.map(item => ({
+        ...item,
+        cleaners: item.cleaners && item.cleaners.length > 0 ? item.cleaners[0] : null,
+        profiles: null, // Profiles data is not selected here, so set to null
+      }));
+
+      setBookings(mappedBookings);
     } catch (err: any) {
       setError(err.message);
       showError(err.message);
@@ -192,9 +189,9 @@ const CustomerBookings = () => {
                               Annuleren
                           </Button>
                         )}
-                        {boeking.status !== "completed" && boeking.status !== "cancelled" && boeking.status !== "rejected" && boeking.cleaners?.name && boeking.cleaners?.photoUrl && (
+                        {boeking.status !== "completed" && boeking.status !== "cancelled" && boeking.status !== "rejected" && boeking.cleaners?.name && boeking.cleaners?.photo_url && (
                           <Button asChild variant="secondary" size="sm">
-                              <Link to="/account/chat" state={{ cleanerName: boeking.cleaners.name, cleanerAvatar: boeking.cleaners.photoUrl }}>
+                              <Link to="/account/chat" state={{ cleanerName: boeking.cleaners.name, cleanerAvatar: boeking.cleaners.photo_url }}>
                                   Chat
                               </Link>
                           </Button>

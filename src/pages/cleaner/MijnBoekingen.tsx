@@ -11,22 +11,7 @@ import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-
-interface Booking {
-  id: string;
-  customer_id: string;
-  cleaner_id: string;
-  booking_date: string;
-  booking_time: string;
-  duration_hours: number;
-  total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled';
-  created_at: string;
-  profiles: { // Assuming a 'profiles' table for customer names
-    first_name: string;
-    last_name: string;
-  } | null;
-}
+import { Booking } from "@/types"; // Importar a interface Booking do types/index.ts
 
 const MijnBoekingen = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -70,6 +55,8 @@ const MijnBoekingen = () => {
           duration_hours,
           total_price,
           status,
+          created_at,
+          updated_at,
           profiles (first_name, last_name)
         `)
         .eq('cleaner_id', cleanerId)
@@ -80,7 +67,14 @@ const MijnBoekingen = () => {
         throw new Error(error.message);
       }
 
-      setBookings(data as Booking[]);
+      // Mapear os dados para corresponder à interface Booking
+      const mappedBookings: Booking[] = data.map(item => ({
+        ...item,
+        profiles: item.profiles && item.profiles.length > 0 ? item.profiles[0] : null,
+        cleaners: null, // Cleaners data is not selected here, so set to null
+      }));
+
+      setBookings(mappedBookings);
     } catch (err: any) {
       setError(err.message);
       showError(err.message);
@@ -117,7 +111,7 @@ const MijnBoekingen = () => {
       case 'executing':
         return 'secondary';
       case 'completed':
-        return 'success'; // Assuming 'success' variant exists or using 'default'
+        return 'default'; // Alterado de 'success' para 'default'
       case 'cancelled':
       case 'rejected':
         return 'destructive';
