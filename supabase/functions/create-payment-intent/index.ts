@@ -15,6 +15,7 @@ serve(async (req) => {
     const { amount, currency } = await req.json();
 
     if (!amount || !currency) {
+      console.error('Error: Amount and currency are required in the request body.');
       return new Response(JSON.stringify({ error: 'Amount and currency are required.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -23,6 +24,7 @@ serve(async (req) => {
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
+      console.error('Error: STRIPE_SECRET_KEY environment variable not found for Edge Function.');
       throw new Error('Stripe secret key not found in environment variables.');
     }
 
