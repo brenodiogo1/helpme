@@ -1,11 +1,17 @@
 import AdminSidebar from "@/components/AdminSidebar";
+import DashboardHeader from "@/components/DashboardHeader";
 import { Outlet } from "react-router-dom";
 
 const AdminLayout = () => {
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <AdminSidebar />
+      <div className="hidden md:block">
+        <AdminSidebar />
+      </div>
       <div className="flex flex-col">
+        <DashboardHeader>
+          <AdminSidebar />
+        </DashboardHeader>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           <Outlet />
         </main>
