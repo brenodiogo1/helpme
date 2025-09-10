@@ -3,29 +3,69 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Users, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface Dot {
+interface MovingDot {
   id: number;
   type: 'cleaner' | 'booking';
-  top: string;
-  left: string;
+  from: { top: string; left: string };
+  to: { top: string; left: string };
   text: string;
 }
 
-const generateRandomDot = (id: number): Dot => {
-  const type = Math.random() > 0.4 ? 'cleaner' : 'booking';
+const generateRandomPosition = () => ({
+  top: `${Math.random() * 85 + 7.5}%`,
+  left: `${Math.random() * 85 + 7.5}%`,
+});
+
+const generateRandomDot = (id: number): MovingDot => {
+  const type = Math.random() > 0.5 ? 'cleaner' : 'booking';
   return {
     id,
     type,
-    top: `${Math.random() * 80 + 10}%`,
-    left: `${Math.random() * 80 + 10}%`,
+    from: generateRandomPosition(),
+    to: generateRandomPosition(),
     text: type === 'cleaner' 
-      ? `Cleaner online em ${['Amsterdam', 'Utrecht', 'Rotterdam'][Math.floor(Math.random() * 3)]}`
+      ? `Limpador a caminho em ${['Amsterdam', 'Utrecht', 'Rotterdam'][Math.floor(Math.random() * 3)]}`
       : `Novo agendamento em ${['Den Haag', 'Eindhoven', 'Groningen'][Math.floor(Math.random() * 3)]}`
   };
 };
 
+const DotComponent = ({ dot }: { dot: MovingDot }) => {
+  const [position, setPosition] = useState(dot.from);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setPosition(dot.to), 100); // Start moving shortly after render
+    return () => clearTimeout(timeout);
+  }, [dot.to]);
+
+  const isCleaner = dot.type === 'cleaner';
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all ease-linear"
+          style={{ ...position, transitionDuration: isCleaner ? '8000ms' : '0ms' }}
+        >
+          {isCleaner ? (
+            <div className="p-1 bg-blue-500 rounded-full shadow-lg animate-pulse">
+              <Users className="h-4 w-4 text-white" />
+            </div>
+          ) : (
+            <div className="p-1 bg-green-500 rounded-full shadow-lg">
+              <MapPin className="h-4 w-4 text-white" />
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{dot.text}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 const ActivityMap = () => {
-  const [dots, setDots] = useState<Dot[]>(() => Array.from({ length: 12 }, (_, i) => generateRandomDot(i)));
+  const [dots, setDots] = useState<MovingDot[]>(() => Array.from({ length: 8 }, (_, i) => generateRandomDot(i)));
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,7 +74,7 @@ const ActivityMap = () => {
         newDots.push(generateRandomDot(Date.now()));
         return newDots;
       });
-    }, 2000); // A cada 2 segundos, um ponto antigo some e um novo aparece
+    }, 4000); // A cada 4 segundos, um novo evento acontece
 
     return () => clearInterval(interval);
   }, []);
@@ -49,26 +89,12 @@ const ActivityMap = () => {
         <TooltipProvider>
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden bg-gray-200">
             <img 
-              src="https://images.unsplash.com/photo-1569950243582-2c7032119146?q=80&w=1287&auto=format&fit=crop" 
-              alt="Mapa estilizado" 
-              className="w-full h-full object-cover opacity-60"
+              src="https://images.unsplash.com/photo-1596934361360-2422d0cf29b9?q=80&w=1364&auto=format&fit=crop" 
+              alt="Mapa da Holanda" 
+              className="w-full h-full object-cover"
             />
             {dots.map((dot) => (
-              <Tooltip key={dot.id}>
-                <TooltipTrigger asChild>
-                  <div 
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-1000 ${
-                      dot.type === 'cleaner' ? 'w-3 h-3 bg-blue-500 animate-pulse' : 'w-2 h-2 bg-green-500'
-                    }`}
-                    style={{ top: dot.top, left: dot.left }}
-                  >
-                    <span className="sr-only">{dot.text}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{dot.text}</p>
-                </TooltipContent>
-              </Tooltip>
+              <DotComponent key={dot.id} dot={dot} />
             ))}
           </div>
         </TooltipProvider>
