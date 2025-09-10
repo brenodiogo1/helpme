@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form"; // Adicionado Controller
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+// Removido: import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -59,14 +59,11 @@ const PublicQuickBooking = () => {
   const [isLoadingStripe, setIsLoadingStripe] = useState(true);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  // Removido: const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const checkoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ['places'],
-  });
+  // Removido: const { isLoaded } = useJsApiLoader(...)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -103,32 +100,8 @@ const PublicQuickBooking = () => {
 
   const totalPrice = basePrice + extrasPrice - discountAmount;
 
-  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
-    autocompleteRef.current = autocomplete;
-  };
-
-  const onPlaceChanged = (onChange: (...event: any[]) => void) => {
-    if (autocompleteRef.current !== null) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.address_components) {
-        let address = "";
-        let postcode = "";
-        for (const component of place.address_components) {
-          if (component.types.includes("street_number")) {
-            address = component.long_name + " " + address;
-          } else if (component.types.includes("route")) {
-            address += component.long_name;
-          } else if (component.types.includes("postal_code")) {
-            postcode = component.long_name;
-          }
-        }
-        form.setValue("address", address.trim());
-        form.setValue("postcode", postcode);
-        form.trigger(["address", "postcode"]);
-        onChange(address.trim()); // Update react-hook-form's state
-      }
-    }
-  };
+  // Removido: const onLoad = (...)
+  // Removido: const onPlaceChanged = (...)
 
   useEffect(() => {
     if (paymentMethod === 'stripe') {
@@ -252,13 +225,7 @@ const PublicQuickBooking = () => {
     }
   };
 
-  if (!isLoaded) {
-    return (
-      <div className="container py-8 max-w-3xl mx-auto text-center">
-        <p>Laden van Google Maps...</p>
-      </div>
-    );
-  }
+  // Removido: if (!isLoaded) { ... }
 
   return (
     <div className="container py-8 max-w-3xl mx-auto">
@@ -327,36 +294,14 @@ const PublicQuickBooking = () => {
                   )}
                 />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Controller
+                <FormField
                   control={form.control}
                   name="address"
-                  render={({ field: { onChange, onBlur, value, name, ref } }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Adres</FormLabel>
                       <FormControl>
-                        {isLoaded ? (
-                          <Autocomplete
-                            onLoad={onLoad}
-                            onPlaceChanged={() => onPlaceChanged(onChange)} // Pass onChange to update form state
-                            options={{
-                              componentRestrictions: { country: "nl" }, // Restrict to Netherlands
-                            }}
-                          >
-                            <input
-                              type="text"
-                              placeholder="Kerkstraat 12"
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" // Apply shadcn Input styling
-                              value={value}
-                              onChange={onChange} // Update form state as user types
-                              onBlur={onBlur}
-                              name={name}
-                              ref={ref}
-                              disabled={isSubmitting}
-                            />
-                          </Autocomplete>
-                        ) : (
-                          <Input placeholder="Kerkstraat 12" value={value} onChange={onChange} onBlur={onBlur} name={name} ref={ref} disabled={isSubmitting} />
-                        )}
+                        <Input placeholder="Kerkstraat 12" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
