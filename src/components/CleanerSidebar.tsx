@@ -98,13 +98,13 @@ const CleanerSidebar = () => {
               Pro Abonnement
             </Link>
             <Link
-              to="/dashboard/provedor" {/* Novo item de menu */}
+              to="/dashboard/provedor"
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 isActive("/dashboard/provedor") && "bg-muted text-primary"
               )}
             >
-              <Briefcase className="h-4 w-4" /> {/* Ícone para Provedor */}
+              <Briefcase className="h-4 w-4" />
               Provedor
             </Link>
             <Link
