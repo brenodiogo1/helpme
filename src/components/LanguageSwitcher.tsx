@@ -9,14 +9,14 @@ import {
 import { Globe } from "lucide-react";
 
 const languages = [
-  { code: 'nl', name: 'Nederlands' },
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
-  { code: 'pt', name: 'Português' },
-  { code: 'pl', name: 'Polski' },
-  { code: 'hi', name: 'हिन्दी' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'fr', name: 'Français' },
+  { code: 'nl', name: 'Nederlands', emoji: '🇳🇱' },
+  { code: 'en', name: 'English', emoji: '🇬🇧' },
+  { code: 'es', name: 'Español', emoji: '🇪🇸' },
+  { code: 'pt', name: 'Português', emoji: '🇵🇹' },
+  { code: 'pl', name: 'Polski', emoji: '🇵🇱' },
+  { code: 'hi', name: 'हिन्दी', emoji: '🇮🇳' },
+  { code: 'it', name: 'Italiano', emoji: '🇮🇹' },
+  { code: 'fr', name: 'Français', emoji: '🇫🇷' },
 ];
 
 const LanguageSwitcher = () => {
@@ -37,7 +37,7 @@ const LanguageSwitcher = () => {
       <DropdownMenuContent align="end">
         {languages.map((lang) => (
           <DropdownMenuItem key={lang.code} onClick={() => changeLanguage(lang.code)}>
-            {lang.name}
+            <span className="mr-2">{lang.emoji}</span> {lang.name}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

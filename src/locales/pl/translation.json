@@ -1,1 +1,13 @@
-{}
+{
+  "header": {
+    "howItWorks": "Jak to działa",
+    "forCleaners": "Dla sprzątaczy",
+    "quickBooking": "Szybka rezerwacja"
+  },
+  "hero": {
+    "title": "Znajdź najlepszych sprzątaczy w Twojej okolicy",
+    "subtitle": "Zarezerwuj niezawodnego, sprawdzonego sprzątacza w zaledwie 60 sekund.",
+    "postalCodePlaceholder": "Wprowadź swój kod pocztowy (np. 1012 AB)",
+    "findCleaners": "Znajdź sprzątaczy"
+  }
+}

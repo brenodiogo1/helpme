@@ -1,1 +1,13 @@
-{}
+{
+  "header": {
+    "howItWorks": "Come funziona",
+    "forCleaners": "Per i pulitori",
+    "quickBooking": "Prenotazione rapida"
+  },
+  "hero": {
+    "title": "Trova i migliori addetti alle pulizie nella tua zona",
+    "subtitle": "Prenota un addetto alle pulizie affidabile e verificato in soli 60 secondi.",
+    "postalCodePlaceholder": "Inserisci il tuo codice postale (es. 1012 AB)",
+    "findCleaners": "Trova addetti alle pulizie"
+  }
+}

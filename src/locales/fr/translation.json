@@ -1,1 +1,13 @@
-{}
+{
+  "header": {
+    "howItWorks": "Comment ça marche",
+    "forCleaners": "Pour les nettoyeurs",
+    "quickBooking": "Réservation rapide"
+  },
+  "hero": {
+    "title": "Trouvez les meilleurs nettoyeurs dans votre région",
+    "subtitle": "Réservez un nettoyeur fiable et vérifié en seulement 60 secondes.",
+    "postalCodePlaceholder": "Entrez votre code postal (ex. 1012 AB)",
+    "findCleaners": "Trouver des nettoyeurs"
+  }
+}

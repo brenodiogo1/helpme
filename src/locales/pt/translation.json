@@ -1,1 +1,13 @@
-{}
+{
+  "header": {
+    "howItWorks": "Como funciona",
+    "forCleaners": "Para limpadores",
+    "quickBooking": "Reserva rápida"
+  },
+  "hero": {
+    "title": "Encontre os melhores limpadores na sua área",
+    "subtitle": "Reserve um limpador confiável e verificado em apenas 60 segundos.",
+    "postalCodePlaceholder": "Digite seu código postal (ex. 1012 AB)",
+    "findCleaners": "Encontrar limpadores"
+  }
+}
