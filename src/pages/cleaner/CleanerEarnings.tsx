@@ -1,14 +1,113 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Wallet, Calendar, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { showError } from "@/utils/toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { format, subWeeks, isAfter } from "date-fns";
 
-const mockPayouts = [
-    { id: "P001", date: "2024-05-15", amount: 185.50, status: "Betaald" },
-    { id: "P002", date: "2024-05-08", amount: 210.00, status: "Betaald" },
-    { id: "P003", date: "2024-05-01", amount: 175.00, status: "Betaald" },
-];
+interface Payout {
+    id: string;
+    date: string;
+    amount: number;
+    status: string;
+}
 
 const CleanerEarnings = () => {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [totalEarned, setTotalEarned] = useState<number>(0);
+  const [thisMonthEarnings, setThisMonthEarnings] = useState<number>(0);
+  const [nextPayoutAmount, setNextPayoutAmount] = useState<number>(0);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthLoading && user) {
+      fetchEarningsData(user.id);
+    } else if (!isAuthLoading && !user) {
+      setLoading(false);
+      setError("U moet ingelogd zijn om uw inkomsten te bekijken.");
+    }
+  }, [isAuthLoading, user]);
+
+  const fetchEarningsData = async (userId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: cleanerData, error: cleanerError } = await supabase
+        .from('cleaners')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (cleanerError || !cleanerData) {
+        throw new Error(cleanerError?.message || "Geen schoonmakerprofiel gevonden voor deze gebruiker.");
+      }
+
+      const cleanerId = cleanerData.id;
+
+      // Fetch all completed bookings for this cleaner
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('total_price, created_at, updated_at')
+        .eq('cleaner_id', cleanerId)
+        .eq('status', 'completed');
+
+      if (bookingsError) {
+        throw new Error(bookingsError.message);
+      }
+
+      let total = 0;
+      let monthEarnings = 0;
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      bookingsData.forEach(booking => {
+        total += booking.total_price;
+        if (isAfter(new Date(booking.updated_at), startOfMonth)) {
+          monthEarnings += booking.total_price;
+        }
+      });
+
+      setTotalEarned(total);
+      setThisMonthEarnings(monthEarnings);
+
+      // Mock next payout and payout history for now
+      setNextPayoutAmount(120.00); // This would be calculated based on pending earnings
+      setPayouts([
+        { id: "P001", date: format(subWeeks(now, 1), "yyyy-MM-dd"), amount: 185.50, status: "Betaald" },
+        { id: "P002", date: format(subWeeks(now, 2), "yyyy-MM-dd"), amount: 210.00, status: "Betaald" },
+        { id: "P003", date: format(subWeeks(now, 3), "yyyy-MM-dd"), amount: 175.00, status: "Betaald" },
+      ]);
+
+    } catch (err: any) {
+      setError(err.message);
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isAuthLoading || loading) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Inkomsten</CardTitle></CardHeader>
+        <CardContent><p>Laden van inkomsten...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Inkomsten</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">Fout: {error}</p></CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
@@ -18,7 +117,7 @@ const CleanerEarnings = () => {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">€4,521.50</div>
+                    <div className="text-2xl font-bold">€{totalEarned.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -27,7 +126,7 @@ const CleanerEarnings = () => {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">€570.50</div>
+                    <div className="text-2xl font-bold">€{thisMonthEarnings.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -36,7 +135,7 @@ const CleanerEarnings = () => {
                     <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">€120.00</div>
+                    <div className="text-2xl font-bold">€{nextPayoutAmount.toFixed(2)}</div>
                 </CardContent>
             </Card>
         </div>
@@ -55,7 +154,7 @@ const CleanerEarnings = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {mockPayouts.map((payout) => (
+                        {payouts.map((payout) => (
                             <TableRow key={payout.id}>
                                 <TableCell>{payout.date}</TableCell>
                                 <TableCell>{payout.status}</TableCell>

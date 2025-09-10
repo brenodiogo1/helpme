@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -32,9 +33,9 @@ const extraServices = [
     { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
 ];
 
-const defaultHourlyRate = 20.00; // Taxa horária padrão, já que nenhum limpador é selecionado
-const MIN_SERVICES_FOR_DISCOUNT = 2; // Mínimo de serviços para aplicar desconto
-const DISCOUNT_PERCENTAGE = 0.10; // 10% de desconto
+const defaultHourlyRate = 20.00;
+const MIN_SERVICES_FOR_DISCOUNT = 2;
+const DISCOUNT_PERCENTAGE = 0.10;
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -60,14 +61,15 @@ const PublicQuickBooking = () => {
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
   const checkoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get user from AuthContext
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phoneNumber: "",
+      firstName: user?.user_metadata.first_name || "",
+      lastName: user?.user_metadata.last_name || "",
+      email: user?.email || "",
+      phoneNumber: "", // Assuming phone number is not in user_metadata by default
       address: "",
       postcode: "",
       bookingDate: undefined,
@@ -76,6 +78,18 @@ const PublicQuickBooking = () => {
       selectedExtraServices: [],
     },
   });
+
+  // Update form defaults if user changes after initial render
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        ...form.getValues(), // Keep existing form values if user has typed
+        firstName: user.user_metadata.first_name || form.getValues("firstName"),
+        lastName: user.user_metadata.last_name || form.getValues("lastName"),
+        email: user.email || form.getValues("email"),
+      });
+    }
+  }, [user, form]);
 
   const durationHours = form.watch("durationHours");
   const selectedExtraServices = form.watch("selectedExtraServices") || [];
@@ -98,7 +112,6 @@ const PublicQuickBooking = () => {
 
   useEffect(() => {
     if (paymentMethod === 'stripe') {
-        // Only initialize Stripe if total price is positive
         if (totalPrice <= 0) {
             setStripeError("Het totaalbedrag moet positief zijn om online te betalen.");
             setIsLoadingStripe(false);
@@ -106,7 +119,6 @@ const PublicQuickBooking = () => {
         }
 
         const initializeStripeCheckout = async () => {
-            // Ensure all required form fields are valid before initializing Stripe
             const isValid = await form.trigger();
             if (!isValid) {
                 setStripeError("Vul alstublieft alle verplichte velden in.");
@@ -115,7 +127,7 @@ const PublicQuickBooking = () => {
             }
 
             if (!stripePromise) {
-                setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
+                setStripeError("Stripe is niet geconfigureerd. Controleer VITE_STRIPE_PUBLISHABLE_KEY.");
                 setIsLoadingStripe(false);
                 return;
             }
@@ -123,7 +135,7 @@ const PublicQuickBooking = () => {
             try {
                 const stripe = await stripePromise;
                 if (!stripe) {
-                    throw new Error("Falha ao carregar o Stripe.");
+                    throw new Error("Fout bij het laden van Stripe.");
                 }
 
                 const returnUrl = `${window.location.origin}/bevestiging`;
@@ -149,8 +161,8 @@ const PublicQuickBooking = () => {
                     checkout.mount(checkoutRef.current);
                 }
             } catch (err: any) {
-                console.error("Stripe Checkout initialization error:", err);
-                setStripeError(err.message || "Erro ao inicializar o pagamento.");
+                console.error("Stripe Checkout initialisatiefout:", err);
+                setStripeError(err.message || "Fout bij het initialiseren van de betaling.");
             } finally {
                 setIsLoadingStripe(false);
             }
@@ -158,36 +170,35 @@ const PublicQuickBooking = () => {
 
         initializeStripeCheckout();
     } else {
-        setIsLoadingStripe(false); // No Stripe loading for cash payments
+        setIsLoadingStripe(false);
         setStripeError(null);
     }
-  }, [paymentMethod, totalPrice, form.formState.isValid]); // Recarregar se o método de pagamento ou preço total mudar, ou validade do formulário
+  }, [paymentMethod, totalPrice, form.formState.isValid, form]);
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     const toastId = showLoading("Boekingsaanvraag verzenden...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const customerId = user?.id || null;
+      const customerId = user?.id || null; // Use authenticated user ID if available
 
       const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
           .insert({
               customer_id: customerId,
-              cleaner_id: null, // Nenhum limpador atribuído inicialmente
+              cleaner_id: null,
               booking_date: format(values.bookingDate, "yyyy-MM-dd"),
               booking_time: values.bookingTime,
               duration_hours: values.durationHours,
               total_price: totalPrice,
-              status: 'pending_assignment', // Status: aguardando atribuição/pagamento
+              status: 'pending_assignment',
               address: values.address,
               postcode: values.postcode,
               phone_number: values.phoneNumber,
               first_name: values.firstName,
               last_name: values.lastName,
               email: values.email,
-              extra_services: values.selectedExtraServices, // Passar serviços extras
+              extra_services: values.selectedExtraServices,
           })
           .select()
           .single();
@@ -199,8 +210,16 @@ const PublicQuickBooking = () => {
       dismissToast(toastId);
       showSuccess("Boekingsaanvraag succesvol verzonden! We nemen spoedig contact met u op via chat.");
 
-      // Redirecionar para o painel do cliente após a reserva em dinheiro
-      navigate("/account");
+      navigate("/bevestiging", { state: { bookingDetails: {
+        schoonmaker: { name: "Nog niet toegewezen" }, // Placeholder for quick booking
+        date: values.bookingDate.toISOString(),
+        time: values.bookingTime,
+        hours: values.durationHours,
+        totalPrice: totalPrice,
+        status: 'pending_assignment',
+        bookingId: bookingData.id,
+        extra_services: values.selectedExtraServices,
+      }}});
 
     } catch (error: any) {
       dismissToast(toastId);
@@ -231,7 +250,7 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Voornaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jan" {...field} disabled={isSubmitting} />
+                        <Input placeholder="Jan" {...field} disabled={isSubmitting || !!user} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,7 +263,7 @@ const PublicQuickBooking = () => {
                     <FormItem>
                       <FormLabel>Achternaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jansen" {...field} disabled={isSubmitting} />
+                        <Input placeholder="Jansen" {...field} disabled={isSubmitting || !!user} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -258,7 +277,7 @@ const PublicQuickBooking = () => {
                   <FormItem>
                     <FormLabel>E-mailadres</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="naam@voorbeeld.com" {...field} disabled={isSubmitting} />
+                      <Input type="email" placeholder="naam@voorbeeld.com" {...field} disabled={isSubmitting || !!user} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -497,7 +516,7 @@ const PublicQuickBooking = () => {
                         </div>
                     ) : stripeError ? (
                         <div className="text-red-500 text-center p-4 border border-red-300 rounded-md mt-4">
-                            <p>Erro: {stripeError}</p>
+                            <p>Fout: {stripeError}</p>
                             <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
                         </div>
                     ) : (

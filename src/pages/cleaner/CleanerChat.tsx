@@ -1,17 +1,50 @@
 "use client";
 
-import { useState } from "react"; // Removido React
+import { useState, useEffect } from "react";
 import ChatWindow from "@/components/ChatWindow";
-
-const mockCleanerMessages = [
-  { id: "1", sender: "admin" as const, senderName: "Admin", text: "Olá Anna, como posso ajudar hoje?", timestamp: "2024-07-26T10:00:00Z", avatarUrl: "https://i.pravatar.cc/150?img=11" },
-  { id: "2", sender: "user" as const, text: "Olá! Tenho uma dúvida sobre um agendamento para a próxima semana.", timestamp: "2024-07-26T10:05:00Z" },
-  { id: "3", sender: "admin" as const, senderName: "Admin", text: "Claro, qual é o ID do agendamento ou o nome do cliente?", timestamp: "2024-07-26T10:07:00Z", avatarUrl: "https://i.pravatar.cc/150?img=11" },
-  { id: "4", sender: "user" as const, text: "É o agendamento B005 com Henk Groot.", timestamp: "2024-07-26T10:10:00Z" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { showError } from "@/utils/toast";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"; // Removed CardContent
 
 const CleanerChat = () => {
-  const [messages, setMessages] = useState(mockCleanerMessages);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [messages, setMessages] = useState<any[]>([]);
+  const [cleanerProfile, setCleanerProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCleanerProfile = async () => {
+      if (isAuthLoading) return;
+
+      if (!user) {
+        setLoading(false);
+        setError("U moet ingelogd zijn om te chatten.");
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('cleaners')
+          .select('name, photo_url')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw new Error(error.message);
+        }
+        setCleanerProfile(data);
+      } catch (err: any) {
+        showError(err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCleanerProfile();
+  }, [isAuthLoading, user]);
 
   const handleSendMessage = (text: string) => {
     const newMessage = {
@@ -21,18 +54,45 @@ const CleanerChat = () => {
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, newMessage]);
-
-    // A resposta automática foi removida para permitir comunicação manual.
   };
+
+  if (isAuthLoading || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
+        <Card className="mx-auto max-w-sm w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl mt-2">Laden...</CardTitle>
+            <CardDescription>Chat wordt geladen.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
+        <Card className="mx-auto max-w-sm w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl mt-2">Fout</CardTitle>
+            <CardDescription className="text-red-500">{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const currentUserAvatar = cleanerProfile?.photo_url || `https://ui-avatars.com/api/?name=${cleanerProfile?.name || 'C'}&background=random`;
+  const currentUserFallback = cleanerProfile?.name?.charAt(0) || 'C';
 
   return (
     <ChatWindow
-      title="Chat com o Administrador"
-      description="Converse com a equipe de suporte 24/7."
+      title="Chat met de Administrator"
+      description="Converse met de supportteam 24/7."
       messages={messages}
       onSendMessage={handleSendMessage}
-      currentUserAvatar="https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop" // Cleaner's avatar
-      currentUserFallback="A"
+      currentUserAvatar={currentUserAvatar}
+      currentUserFallback={currentUserFallback}
     />
   );
 };

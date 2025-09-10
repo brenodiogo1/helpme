@@ -1,13 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus } from "lucide-react";
+import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus, LogOut, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const { t } = useTranslation();
+  const { user, isLoading, signOut } = useAuth();
+
+  const getDashboardLink = () => {
+    if (!user) return "/login"; // Should not happen if user is null, but as a fallback
+    if (user.email === "admin@helpme.com") return "/admin";
+    if (user.email === "schoonmaker@helpme.com") return "/dashboard";
+    return "/account"; // Default for customer
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,12 +40,29 @@ const Header = () => {
           {/* Desktop Auth */}
           <div className="hidden items-center gap-2 md:flex">
             <LanguageSwitcher />
-            <Button variant="ghost" asChild>
-              <Link to="/login">Inloggen</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/registreren">Aanmelden</Link>
-            </Button>
+            {!isLoading && user ? (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to={getDashboardLink()}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button onClick={signOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Uitloggen
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Inloggen</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/registreren">Aanmelden</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu */}
@@ -76,20 +102,35 @@ const Header = () => {
 
                   <div className="mt-auto">
                     <Separator className="my-4" />
-                    <div className="grid grid-cols-2 gap-4">
+                    {!isLoading && user ? (
+                      <div className="grid grid-cols-1 gap-4">
                         <Button variant="outline" asChild size="lg">
-                            <Link to="/login">
-                                <LogIn className="mr-2 h-5 w-5" />
-                                Inloggen
-                            </Link>
+                          <Link to={getDashboardLink()}>
+                            <LayoutDashboard className="mr-2 h-5 w-5" />
+                            Dashboard
+                          </Link>
                         </Button>
-                        <Button asChild size="lg">
-                            <Link to="/registreren">
-                                <UserPlus className="mr-2 h-5 w-5" />
-                                Aanmelden
-                            </Link>
+                        <Button onClick={signOut} size="lg">
+                          <LogOut className="mr-2 h-5 w-5" />
+                          Uitloggen
                         </Button>
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                          <Button variant="outline" asChild size="lg">
+                              <Link to="/login">
+                                  <LogIn className="mr-2 h-5 w-5" />
+                                  Inloggen
+                              </Link>
+                          </Button>
+                          <Button asChild size="lg">
+                              <Link to="/registreren">
+                                  <UserPlus className="mr-2 h-5 w-5" />
+                                  Aanmelden
+                              </Link>
+                          </Button>
+                      </div>
+                    )}
                     <div className="mt-6 flex justify-center">
                       <LanguageSwitcher />
                     </div>

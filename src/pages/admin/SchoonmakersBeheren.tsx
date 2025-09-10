@@ -5,16 +5,101 @@ import { Schoonmaker } from "@/types";
 import { MoreHorizontal, PlusCircle, ShieldCheck, UserX } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
-import { showSuccess } from "@/utils/toast";
-
-const mockSchoonmakers: Schoonmaker[] = [
-    { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam", address: "Kerkstraat 12, 1012 AB Amsterdam", phoneNumber: "+31612345678" },
-    { id: "2", name: "Ben Janssen", photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.8, ratingCount: 92, hourlyRate: 17.00, bio: "...", services: [], city: "Utrecht", address: "Plein 4, 3511 HT Utrecht", phoneNumber: "+31623456789" },
-    { id: "3", name: "Carla Bakker", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", ratingAvg: 5.0, ratingCount: 210, hourlyRate: 20.00, bio: "...", services: [], city: "Rotterdam", address: "Coolsingel 1, 3011 AA Rotterdam", phoneNumber: "+31634567890" },
-];
+import { Link, useNavigate } from "react-router-dom";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SchoonmakersBeheren = () => {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const navigate = useNavigate();
+  const [schoonmakers, setSchoonmakers] = useState<Schoonmaker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthLoading && user) {
+      if (user.email !== "admin@helpme.com") {
+        showError("U heeft geen toegang tot deze pagina.");
+        navigate('/');
+        return;
+      }
+      fetchSchoonmakers();
+    } else if (!isAuthLoading && !user) {
+      showError("U moet ingelogd zijn om schoonmakers te beheren.");
+      navigate('/login');
+    }
+  }, [isAuthLoading, user, navigate]);
+
+  const fetchSchoonmakers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('cleaners')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw new Error(error.message);
+
+      setSchoonmakers(data as Schoonmaker[]);
+    } catch (err: any) {
+      setError(err.message);
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCleaner = async (cleanerName: string) => { // Removed cleanerId
+    const toastId = showLoading(`${cleanerName} verifiëren...`);
+    try {
+      // In a real app, this would update a 'is_verified' column in the cleaners table
+      // For now, we'll just simulate success.
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      dismissToast(toastId);
+      showSuccess(`${cleanerName} succesvol geverifieerd! (Simulatie)`);
+      // Optionally refresh the list if verification status is displayed
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "Fout bij het verifiëren van de schoonmaker.");
+    }
+  };
+
+  const handleSuspendCleaner = async (cleanerName: string) => { // Removed cleanerId
+    const toastId = showLoading(`${cleanerName} schorsen...`);
+    try {
+      // In a real app, this would update a 'is_suspended' column or similar
+      // For now, we'll just simulate success.
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      dismissToast(toastId);
+      showSuccess(`${cleanerName} succesvol geschorst! (Simulatie)`);
+      // Optionally refresh the list if suspension status is displayed
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message || "Fout bij het schorsen van de schoonmaker.");
+    }
+  };
+
+  if (isAuthLoading || loading) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Schoonmakers</CardTitle></CardHeader>
+        <CardContent><p>Laden van schoonmakers...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Schoonmakers</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">Fout: {error}</p></CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -45,7 +130,7 @@ const SchoonmakersBeheren = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockSchoonmakers.map((schoonmaker) => (
+            {schoonmakers.map((schoonmaker) => (
               <TableRow key={schoonmaker.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
@@ -72,12 +157,12 @@ const SchoonmakersBeheren = () => {
                       <DropdownMenuItem asChild>
                         <Link to={`/admin/schoonmakers/bewerken/${schoonmaker.id}`}>Bewerken</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => showSuccess(`${schoonmaker.name} geverifieerd!`)}>
+                      <DropdownMenuItem onClick={() => handleVerifyCleaner(schoonmaker.name)}>
                         <ShieldCheck className="mr-2 h-4 w-4" />
                         Verifiëren
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600" onClick={() => showSuccess(`${schoonmaker.name} geschorst.`)}>
+                      <DropdownMenuItem className="text-red-600" onClick={() => handleSuspendCleaner(schoonmaker.name)}>
                         <UserX className="mr-2 h-4 w-4" />
                         Schorsen
                       </DropdownMenuItem>

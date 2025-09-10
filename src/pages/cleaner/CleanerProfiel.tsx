@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const allAvailableServices = [
   "Dieptereiniging", "Ramen wassen", "Strijken", "Milieuvriendelijk",
@@ -30,11 +31,12 @@ const formSchema = z.object({
   bio: z.string().min(10, { message: "Biografie moet minimaal 10 tekens lang zijn." }),
   address: z.string().min(1, { message: "Adres is verplicht." }),
   phoneNumber: z.string().min(10, { message: "Telefoonnummer is verplicht." }),
-  services: z.array(z.string()).optional(), // Novo campo para serviços
+  services: z.array(z.string()).optional(),
 });
 
 const CleanerProfiel = () => {
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [currentCleanerId, setCurrentCleanerId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
@@ -54,25 +56,28 @@ const CleanerProfiel = () => {
 
   useEffect(() => {
     const fetchCleanerProfile = async () => {
+      if (isAuthLoading) return;
+
+      if (!user) {
+        setProfileLoading(false);
+        showError("U moet ingelogd zijn om uw profiel te bekijken.");
+        return;
+      }
+
       setProfileLoading(true);
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          throw new Error("Gebruiker niet ingelogd.");
-        }
-        setCurrentUserId(user.id);
-
         const { data, error } = await supabase
           .from('cleaners')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           throw new Error(error.message);
         }
 
         if (data) {
+          setCurrentCleanerId(data.id);
           form.reset({
             name: data.name || "",
             city: data.city || "",
@@ -83,6 +88,8 @@ const CleanerProfiel = () => {
             phoneNumber: data.phone_number || "",
             services: data.services || [],
           });
+        } else {
+          showError("Geen schoonmakerprofiel gevonden voor deze gebruiker.");
         }
       } catch (err: any) {
         showError(err.message);
@@ -93,7 +100,7 @@ const CleanerProfiel = () => {
     };
 
     fetchCleanerProfile();
-  }, [form]);
+  }, [isAuthLoading, user, form]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -107,8 +114,8 @@ const CleanerProfiel = () => {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!currentUserId) {
-      showError("Gebruiker niet geauthenticeerd.");
+    if (!currentCleanerId) {
+      showError("Geen schoonmakerprofiel gevonden om bij te werken.");
       return;
     }
 
@@ -118,8 +125,8 @@ const CleanerProfiel = () => {
     try {
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${currentUserId}.${fileExt}`;
-        const filePath = `${currentUserId}/${fileName}`;
+        const fileName = `${currentCleanerId}.${fileExt}`;
+        const filePath = `${currentCleanerId}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -135,7 +142,7 @@ const CleanerProfiel = () => {
         const { data: publicUrlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
-        
+
         newPhotoUrl = publicUrlData.publicUrl;
       }
 
@@ -149,10 +156,10 @@ const CleanerProfiel = () => {
           bio: values.bio,
           address: values.address,
           phone_number: values.phoneNumber,
-          services: values.services, // Salvar serviços
+          services: values.services,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', currentUserId);
+        .eq('id', currentCleanerId);
 
       if (updateError) {
         throw new Error(updateError.message);
@@ -167,11 +174,20 @@ const CleanerProfiel = () => {
     }
   }
 
-  if (profileLoading) {
+  if (isAuthLoading || profileLoading) {
     return (
       <Card>
         <CardHeader><CardTitle>Mijn Profiel</CardTitle></CardHeader>
         <CardContent><p>Laden van profiel...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Profiel</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">U moet ingelogd zijn om uw profiel te bekijken.</p></CardContent>
       </Card>
     );
   }

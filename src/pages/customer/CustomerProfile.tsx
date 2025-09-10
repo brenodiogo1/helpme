@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -17,21 +20,117 @@ const formSchema = z.object({
 });
 
 const CustomerProfile = () => {
-  const defaultValues = {
-    firstName: "Piet",
-    lastName: "H.",
-    email: "piet.h@email.com",
-    phone: "0612345678",
-  };
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    showSuccess("Profiel succesvol bijgewerkt!");
+  useEffect(() => {
+    const fetchCustomerProfile = async () => {
+      if (isAuthLoading) return;
+
+      if (!user) {
+        setProfileLoading(false);
+        showError("U moet ingelogd zijn om uw profiel te bekijken.");
+        return;
+      }
+
+      setProfileLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+          throw new Error(error.message);
+        }
+
+        form.reset({
+          firstName: data?.first_name || user.user_metadata.first_name || "",
+          lastName: data?.last_name || user.user_metadata.last_name || "",
+          email: user.email || "",
+          phone: "", // Phone number is not in profiles table by default
+        });
+      } catch (err: any) {
+        showError(err.message);
+        console.error("Fout bij het laden van het profiel:", err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchCustomerProfile();
+  }, [isAuthLoading, user, form]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      showError("U moet ingelogd zijn om uw profiel bij te werken.");
+      return;
+    }
+
+    const toastId = showLoading("Profiel bijwerken...");
+    try {
+      // Update auth.users metadata
+      const { error: authUpdateError } = await supabase.auth.updateUser({
+        data: {
+          first_name: values.firstName,
+          last_name: values.lastName,
+        },
+      });
+
+      if (authUpdateError) {
+        throw new Error(authUpdateError.message);
+      }
+
+      // Update public.profiles table
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+      if (profileUpdateError) {
+        throw new Error(profileUpdateError.message);
+      }
+
+      dismissToast(toastId);
+      showSuccess("Profiel succesvol bijgewerkt!");
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message);
+      console.error("Fout bij het bijwerken van het profiel:", err);
+    }
+  }
+
+  if (isAuthLoading || profileLoading) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Profiel</CardTitle></CardHeader>
+        <CardContent><p>Laden van profiel...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Profiel</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">U moet ingelogd zijn om uw profiel te bekijken.</p></CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -78,7 +177,7 @@ const CustomerProfile = () => {
                 <FormItem>
                   <FormLabel>E-mailadres</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input type="email" {...field} disabled /> {/* Email is usually not editable directly */}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -7,19 +7,60 @@ import { addDays, format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const daysOfWeek = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 
 const CleanerAvailability = () => {
-  // Simulação de dados iniciais (em um app real, viria de uma API)
-  const [selectedAvailableDaysOfWeek, setSelectedAvailableDaysOfWeek] = useState<string[]>(["Maandag", "Woensdag", "Vrijdag"]);
-  const [unavailableDates, setUnavailableDates] = useState<Date[] | undefined>([addDays(new Date(), 7)]); // Exemplo: uma data indisponível
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [cleanerId, setCleanerId] = useState<string | null>(null);
+  const [selectedAvailableDaysOfWeek, setSelectedAvailableDaysOfWeek] = useState<string[]>([]);
+  const [unavailableDates, setUnavailableDates] = useState<Date[] | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Kept error for display, removed unused setError
 
   useEffect(() => {
-    // Em um app real, você carregaria a disponibilidade do backend aqui
-    console.log("Carregando disponibilidade inicial...");
-  }, []);
+    const fetchAvailability = async () => {
+      if (isAuthLoading) return;
+
+      if (!user) {
+        setLoading(false);
+        showError("U moet ingelogd zijn om uw beschikbaarheid te beheren.");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { data: cleanerData, error: cleanerError } = await supabase
+          .from('cleaners')
+          .select('id, available_days_of_week, unavailable_dates')
+          .eq('user_id', user.id)
+          .single();
+
+        if (cleanerError && cleanerError.code !== 'PGRST116') {
+          throw new Error(cleanerError.message);
+        }
+
+        if (cleanerData) {
+          setCleanerId(cleanerData.id);
+          setSelectedAvailableDaysOfWeek(cleanerData.available_days_of_week || []);
+          setUnavailableDates(cleanerData.unavailable_dates?.map((dateStr: string) => new Date(dateStr)) || []);
+        } else {
+          showError("Geen schoonmakerprofiel gevonden om beschikbaarheid te laden.");
+        }
+      } catch (err: any) {
+        showError(err.message);
+        console.error("Fout bij het laden van beschikbaarheid:", err);
+        setError(err.message); // Set error for display
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [isAuthLoading, user]);
 
   const handleDayOfWeekChange = (day: string, checked: boolean) => {
     setSelectedAvailableDaysOfWeek(prev =>
@@ -32,12 +73,54 @@ const CleanerAvailability = () => {
     showSuccess("Alle dagen van de week zijn gemarkeerd als beschikbaar!");
   };
 
-  const handleSaveAvailability = () => {
-    // Em um app real, você enviaria selectedAvailableDaysOfWeek e unavailableDates para o backend
-    console.log("Disponibilidade semanal salva:", selectedAvailableDaysOfWeek);
-    console.log("Datas indisponíveis salvas:", unavailableDates?.map(date => format(date, "yyyy-MM-dd")));
-    showSuccess("Je beschikbaarheid is succesvol opgeslagen!");
+  const handleSaveAvailability = async () => {
+    if (!cleanerId) {
+      showError("Geen schoonmakerprofiel gevonden om beschikbaarheid bij te werken.");
+      return;
+    }
+
+    const toastId = showLoading("Beschikbaarheid opslaan...");
+    try {
+      const { error: updateError } = await supabase
+        .from('cleaners')
+        .update({
+          available_days_of_week: selectedAvailableDaysOfWeek,
+          unavailable_dates: unavailableDates?.map(date => format(date, "yyyy-MM-dd")),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', cleanerId);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      dismissToast(toastId);
+      showSuccess("Je beschikbaarheid is succesvol opgeslagen!");
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message);
+      console.error("Fout bij het opslaan van beschikbaarheid:", err);
+      setError(err.message); // Set error for display
+    }
   };
+
+  if (isAuthLoading || loading) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Beschikbaarheid</CardTitle></CardHeader>
+        <CardContent><p>Laden van beschikbaarheid...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Mijn Beschikbaarheid</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">Fout: {error}</p></CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -85,8 +168,8 @@ const CleanerAvailability = () => {
               className="rounded-md border"
             />
             <div className="mt-4 text-sm text-muted-foreground">
-              {unavailableDates?.length ? 
-                `Je bent onbeschikbaar op ${unavailableDates.length} specifieke dag(en).` : 
+              {unavailableDates?.length ?
+                `Je bent onbeschikbaar op ${unavailableDates.length} specifieke dag(en).` :
                 "Geen specifieke onbeschikbare dagen ingesteld."
               }
             </div>

@@ -9,9 +9,11 @@ import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { JobOffer } from "@/types"; // Importar a interface JobOffer do types/index.ts
+import { JobOffer } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MijnTaken = () => {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,12 +21,15 @@ const MijnTaken = () => {
 
   useEffect(() => {
     const setupCleanerAndFetchOffers = async () => {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          throw new Error("Gebruiker niet ingelogd.");
-        }
+      if (isAuthLoading) return;
 
+      if (!user) {
+        setLoading(false);
+        setError("U moet ingelogd zijn om uw taken te bekijken.");
+        return;
+      }
+
+      try {
         const { data: cleanerData, error: cleanerError } = await supabase
           .from('cleaners')
           .select('id')
@@ -44,7 +49,7 @@ const MijnTaken = () => {
     };
 
     setupCleanerAndFetchOffers();
-  }, []);
+  }, [isAuthLoading, user]);
 
   useEffect(() => {
     if (!cleanerId) return;
@@ -63,7 +68,7 @@ const MijnTaken = () => {
           const newOffer = payload.new as JobOffer;
           if (newOffer.status === 'pending') {
             showSuccess("Nieuwe jobaanbieding ontvangen!");
-            fetchJobOffers(cleanerId); // Refresh the list
+            if (cleanerId) fetchJobOffers(cleanerId);
           }
         }
       )
@@ -99,7 +104,7 @@ const MijnTaken = () => {
           )
         `)
         .eq('cleaner_id', currentCleanerId)
-        .in('status', ['pending', 'accepted']) // Show pending and accepted offers
+        .in('status', ['pending', 'accepted'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -107,11 +112,11 @@ const MijnTaken = () => {
       }
 
       const mappedJobOffers: JobOffer[] = data.map((item: any) => {
-        const bookingData = item.bookings && item.bookings.length > 0 ? item.bookings[0] : null;
-        
+        const bookingData = item.bookings && Array.isArray(item.bookings) && item.bookings.length > 0 ? item.bookings[0] : null;
+
         let mappedBooking: JobOffer['bookings'] = null;
         if (bookingData) {
-          const profileData = bookingData.profiles && bookingData.profiles.length > 0 ? bookingData.profiles[0] : null;
+          const profileData = bookingData.profiles && Array.isArray(bookingData.profiles) && bookingData.profiles.length > 0 ? bookingData.profiles[0] : null;
           mappedBooking = {
             id: bookingData.id,
             customer_id: bookingData.customer_id,
@@ -147,7 +152,6 @@ const MijnTaken = () => {
   const handleOfferResponse = async (offerId: string, bookingId: string, newStatus: 'accepted' | 'rejected') => {
     const toastId = showLoading(`Aanbieding ${newStatus === 'accepted' ? 'accepteren' : 'weigeren'}...`);
     try {
-      // Update job_offer status
       const { error: offerError } = await supabase
         .from('job_offers')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -157,7 +161,6 @@ const MijnTaken = () => {
         throw new Error(offerError.message);
       }
 
-      // If accepted, update booking status
       if (newStatus === 'accepted') {
         const { error: bookingError } = await supabase
           .from('bookings')
@@ -168,8 +171,6 @@ const MijnTaken = () => {
           throw new Error(bookingError.message);
         }
       } else {
-        // If rejected, update booking status back to 'pending_offer' or 'rejected'
-        // For now, let's set it to 'rejected' if the cleaner rejects it.
         const { error: bookingError } = await supabase
           .from('bookings')
           .update({ status: 'rejected', updated_at: new Date().toISOString() })
@@ -182,14 +183,14 @@ const MijnTaken = () => {
 
       dismissToast(toastId);
       showSuccess(`Aanbieding succesvol ${newStatus === 'accepted' ? 'geaccepteerd' : 'geweigerd'}!`);
-      if (cleanerId) fetchJobOffers(cleanerId); // Refresh the list
+      if (cleanerId) fetchJobOffers(cleanerId);
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message);
     }
   };
 
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
       <Card>
         <CardHeader><CardTitle>Mijn Taken</CardTitle></CardHeader>

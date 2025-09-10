@@ -13,27 +13,31 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Booking } from "@/types";
 import { PlusCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CustomerBookings = () => {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  const [selectedSchoonmaker, setSelectedSchoonmaker] = useState("");
+  const [selectedSchoonmakerName, setSelectedSchoonmakerName] = useState("");
+  const [selectedCleanerId, setSelectedCleanerId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (!isAuthLoading && user) {
+      fetchBookings(user.id);
+    } else if (!isAuthLoading && !user) {
+      setLoading(false);
+      setError("U moet ingelogd zijn om uw boekingen te bekijken.");
+    }
+  }, [isAuthLoading, user]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (userId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("Gebruiker niet ingelogd.");
-      }
-
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -50,7 +54,7 @@ const CustomerBookings = () => {
           extra_services,
           cleaners (name, photo_url)
         `)
-        .eq('customer_id', user.id)
+        .eq('customer_id', userId)
         .order('booking_date', { ascending: false });
 
       if (error) {
@@ -59,9 +63,8 @@ const CustomerBookings = () => {
 
       const mappedBookings: Booking[] = data.map(item => ({
         ...item,
-        // Ensure cleaners is a single object or null, not an array
-        cleaners: item.cleaners && Array.isArray(item.cleaners) && item.cleaners.length > 0 
-                    ? item.cleaners[0] 
+        cleaners: item.cleaners && Array.isArray(item.cleaners) && item.cleaners.length > 0
+                    ? item.cleaners[0]
                     : null,
         profiles: null,
       }));
@@ -75,8 +78,10 @@ const CustomerBookings = () => {
     }
   };
 
-  const handleOpenReviewDialog = (schoonmakerName: string) => {
-    setSelectedSchoonmaker(schoonmakerName);
+  const handleOpenReviewDialog = (schoonmakerName: string, cleanerId: string, bookingId: string) => {
+    setSelectedSchoonmakerName(schoonmakerName);
+    setSelectedCleanerId(cleanerId);
+    setSelectedBookingId(bookingId);
     setIsReviewDialogOpen(true);
   };
 
@@ -94,7 +99,7 @@ const CustomerBookings = () => {
 
       dismissToast(toastId);
       showSuccess("Boeking succesvol geannuleerd!");
-      fetchBookings(); // Refresh the list
+      if (user) fetchBookings(user.id);
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message);
@@ -119,7 +124,7 @@ const CustomerBookings = () => {
     }
   };
 
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
       <Card>
         <CardHeader><CardTitle>Mijn Boekingen</CardTitle></CardHeader>
@@ -164,7 +169,7 @@ const CustomerBookings = () => {
                   <TableHead>Schoonmaker</TableHead>
                   <TableHead>Datum & Tijd</TableHead>
                   <TableHead>Duur</TableHead>
-                  <TableHead>Extra Diensten</TableHead> {/* Nova coluna */}
+                  <TableHead>Extra Diensten</TableHead>
                   <TableHead className="text-right">Bedrag</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Acties</TableHead>
@@ -203,11 +208,11 @@ const CustomerBookings = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right flex gap-2 justify-end">
-                        {boeking.status === "completed" && (
+                        {boeking.status === "completed" && boeking.cleaner_id && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenReviewDialog(boeking.cleaners?.name || 'Schoonmaker')}
+                            onClick={() => handleOpenReviewDialog(boeking.cleaners?.name || 'Schoonmaker', boeking.cleaner_id!, boeking.id)}
                           >
                             Beoordeling schrijven
                           </Button>
@@ -235,7 +240,10 @@ const CustomerBookings = () => {
       <LeaveReviewDialog
         open={isReviewDialogOpen}
         onOpenChange={setIsReviewDialogOpen}
-        schoonmakerName={selectedSchoonmaker}
+        schoonmakerName={selectedSchoonmakerName}
+        cleanerId={selectedCleanerId!}
+        bookingId={selectedBookingId!}
+        onReviewSubmitted={() => { if (user) fetchBookings(user.id); }}
       />
     </>
   );

@@ -9,21 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Naam is verplicht." }),
   city: z.string().min(1, { message: "Stad is verplicht." }),
   hourlyRate: z.coerce.number().positive({ message: "Uurtarief moet een positief getal zijn." }),
-  photoUrl: z.string().url({ message: "Voer een geldige URL in." }).or(z.literal("")),
+  photoUrl: z.string().url({ message: "Voer een geldige URL in." }).or(z.literal("")).optional(),
   bio: z.string().min(10, { message: "Biografie moet minimaal 10 tekens lang zijn." }),
-  address: z.string().min(1, { message: "Adres is verplicht." }), // Novo campo
-  phoneNumber: z.string().min(10, { message: "Telefoonnummer is verplicht." }), // Novo campo
+  address: z.string().min(1, { message: "Adres is verplicht." }),
+  phoneNumber: z.string().min(10, { message: "Telefoonnummer is verplicht." }),
 });
 
 const SchoonmakerForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const isEditing = !!id;
   const title = isEditing ? "Schoonmaker Bewerken" : "Nieuwe Schoonmaker Toevoegen";
   const description = isEditing
@@ -31,34 +35,134 @@ const SchoonmakerForm = () => {
     : "Voer de gegevens van de nieuwe schoonmaker hieronder in.";
   const buttonText = isEditing ? "Wijzigingen Opslaan" : "Schoonmaker Toevoegen";
 
-  // In een echte app zou je hier de data van de schoonmaker ophalen als je aan het bewerken bent.
-  const defaultValues = isEditing ? {
-    name: "Anna de Vries",
-    city: "Amsterdam",
-    hourlyRate: 18.50,
-    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956",
-    bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis.",
-    address: "Kerkstraat 12, 1012 AB Amsterdam", // Valor padrão
-    phoneNumber: "+31612345678", // Valor padrão
-  } : {
-    name: "",
-    city: "",
-    hourlyRate: 0,
-    photoUrl: "",
-    bio: "",
-    address: "",
-    phoneNumber: "",
-  };
+  const [formLoading, setFormLoading] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      name: "",
+      city: "",
+      hourlyRate: 0,
+      photoUrl: "",
+      bio: "",
+      address: "",
+      phoneNumber: "",
+    },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    showSuccess(`Schoonmaker succesvol ${isEditing ? 'bewerkt' : 'toegevoegd'}! (Simulatie)`);
-    navigate("/admin/schoonmakers");
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!user || user.email !== "admin@helpme.com") {
+      showError("U heeft geen toegang tot deze pagina.");
+      navigate('/');
+      return;
+    }
+
+    const fetchCleanerData = async () => {
+      if (!isEditing) {
+        setFormLoading(false);
+        return;
+      }
+
+      setFormLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('cleaners')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw new Error(error.message);
+
+        form.reset({
+          name: data.name || "",
+          city: data.city || "",
+          hourlyRate: data.hourly_rate || 0,
+          photoUrl: data.photo_url || "",
+          bio: data.bio || "",
+          address: data.address || "",
+          phoneNumber: data.phone_number || "",
+        });
+      } catch (err: any) {
+        setFormError(err.message);
+        showError(err.message);
+      } finally {
+        setFormLoading(false);
+      }
+    };
+
+    fetchCleanerData();
+  }, [id, isEditing, form, isAuthLoading, user, navigate]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user || user.email !== "admin@helpme.com") {
+      showError("U heeft geen toestemming om deze actie uit te voeren.");
+      return;
+    }
+
+    const toastId = showLoading(isEditing ? "Schoonmaker bijwerken..." : "Schoonmaker toevoegen...");
+    try {
+      if (isEditing) {
+        const { error } = await supabase
+          .from('cleaners')
+          .update({
+            name: values.name,
+            city: values.city,
+            hourly_rate: values.hourlyRate,
+            photo_url: values.photoUrl,
+            bio: values.bio,
+            address: values.address,
+            phone_number: values.phoneNumber,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id);
+
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from('cleaners')
+          .insert({
+            name: values.name,
+            city: values.city,
+            hourly_rate: values.hourlyRate,
+            photo_url: values.photoUrl,
+            bio: values.bio,
+            address: values.address,
+            phone_number: values.phoneNumber,
+            user_id: null, // Admin adds cleaner, user_id can be linked later if cleaner registers
+          });
+
+        if (error) throw new Error(error.message);
+      }
+
+      dismissToast(toastId);
+      showSuccess(`Schoonmaker succesvol ${isEditing ? 'bewerkt' : 'toegevoegd'}!`);
+      navigate("/admin/schoonmakers");
+    } catch (err: any) {
+      dismissToast(toastId);
+      showError(err.message);
+      console.error("Fout bij het opslaan van schoonmaker:", err);
+    }
+  }
+
+  if (isAuthLoading || formLoading) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+        <CardContent><p>Laden van formulier...</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (formError) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+        <CardContent><p className="text-red-500">Fout: {formError}</p></CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -126,7 +230,7 @@ const SchoonmakerForm = () => {
                 )}
               />
             </div>
-            <FormField // Novo campo de endereço
+            <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
@@ -139,7 +243,7 @@ const SchoonmakerForm = () => {
                     </FormItem>
                 )}
             />
-            <FormField // Novo campo de telefone
+            <FormField
                 control={form.control}
                 name="phoneNumber"
                 render={({ field }) => (

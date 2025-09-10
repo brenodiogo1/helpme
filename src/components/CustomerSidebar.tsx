@@ -2,9 +2,12 @@ import { Home, Calendar, User, Settings, CreditCard, MapPin, Heart, LogOut, Mess
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
+import { Button } from "@/components/ui/button"; // Added Button import
+import { useAuth } from "@/contexts/AuthContext";
 
 const CustomerSidebar = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
@@ -88,7 +91,7 @@ const CustomerSidebar = () => {
               Instellingen
             </Link>
             <Link
-              to="/account/chat" // This will be a general chat for the customer, or we can link from bookings
+              to="/account/chat"
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 isActive("/account/chat") && "bg-muted text-primary"
@@ -101,10 +104,10 @@ const CustomerSidebar = () => {
         </div>
         <div className="mt-auto p-4">
           <Separator className="mb-4" />
-          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
-            <LogOut className="h-4 w-4" />
+          <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-3" />
             Uitloggen
-          </Link>
+          </Button>
         </div>
       </div>
     </div>
