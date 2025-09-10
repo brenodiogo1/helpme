@@ -167,11 +167,12 @@ const Zoeken = () => {
     );
   };
 
-  const handleCityFilterChange = (city: string) => {
-    setFilterCity(city);
+  const handleCityFilterChange = (cityValue: string) => {
+    const newCity = cityValue === "all" ? "" : cityValue; // Treat "all" as empty string for filtering
+    setFilterCity(newCity);
     const newSearchParams = new URLSearchParams(searchParams);
-    if (city) {
-      newSearchParams.set("city", city);
+    if (newCity) {
+      newSearchParams.set("city", newCity);
     } else {
       newSearchParams.delete("city");
     }
@@ -259,12 +260,12 @@ const Zoeken = () => {
               </div>
               <div>
                   <Label htmlFor="filter-city">Stad</Label>
-                  <Select onValueChange={handleCityFilterChange} value={filterCity}>
+                  <Select onValueChange={handleCityFilterChange} value={filterCity || "all"}> {/* Use "all" when filterCity is empty */}
                     <SelectTrigger id="filter-city">
                       <SelectValue placeholder="Alle steden" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Alle steden</SelectItem>
+                      <SelectItem value="all">Alle steden</SelectItem> {/* Changed value to "all" */}
                       {allCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
