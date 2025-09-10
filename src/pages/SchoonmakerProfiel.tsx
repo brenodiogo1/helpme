@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react"; // Removido useMemo
 import { useParams, useNavigate } from "react-router-dom"; // Removido useLocation, Link
 import { Schoonmaker } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,14 +30,14 @@ const mockSchoonmaker: Schoonmaker = {
         { id: "r2", author: "Janneke S.", rating: 5, comment: "Zeer professioneel en vriendelijk. Een echte aanrader.", date: "2023-10-10" },
         { id: "r3", author: "Klaas de Wit", rating: 4, comment: "Goed werk geleverd, was alleen 10 minuten te laat.", date: "2023-09-28" },
     ],
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"], // Exemplo de disponibilidade semanal
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Frijdag"], // Exemplo de disponibilidade semanal
     unavailableDates: [format(addDays(new Date(), 10), "yyyy-MM-dd")], // Exemplo de data específica indisponível
 };
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const SchoonmakerProfiel = () => {
-  const { id: schoonmakerId } = useParams<{ id: string }>(); // Renomeado 'id' para 'schoonmakerId' para evitar TS6133
+  useParams<{ id: string }>(); // Removido 'schoonmakerId'
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | undefined>();

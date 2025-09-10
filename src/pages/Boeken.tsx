@@ -1,15 +1,15 @@
-import { useState, useMemo, useRef } from "react"; // Removido useEffect
-import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useParams, useLocation, Link } from "react-router-dom"; // Removido useNavigate
 import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"; // Removido CardFooter
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus } from "lucide-react"; // Removido CreditCard
+import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
+// Removido: import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -43,12 +43,13 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const Boeken = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
-    const navigate = useNavigate();
+    // Removido: const navigate = useNavigate();
     const { date, time } = location.state || {};
 
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isLoadingStripe, setIsLoadingStripe] = useState(true);
+    const [stripeError, setStripeError] = useState<string | null>(null);
     const checkoutRef = useRef<HTMLDivElement>(null);
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
@@ -69,57 +70,58 @@ const Boeken = () => {
         );
     };
 
-    const handleInitiateCheckout = async () => {
-        setIsProcessing(true);
-        const toastId = showLoading("Sessie voor betaling aanmaken...");
+    useEffect(() => {
+        const initializeStripeCheckout = async () => {
+            if (!date || !time) {
+                setStripeError("Data e hora da reserva não fornecidas.");
+                setIsLoadingStripe(false);
+                return;
+            }
 
-        try {
             if (!stripePromise) {
-                throw new Error("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
-            }
-            const stripe = await stripePromise;
-            if (!stripe) {
-                throw new Error("Falha ao carregar o Stripe.");
+                setStripeError("Stripe não está configurado. Verifique VITE_STRIPE_PUBLISHABLE_KEY.");
+                setIsLoadingStripe(false);
+                return;
             }
 
-            const returnUrl = `${window.location.origin}/bevestiging`;
+            try {
+                const stripe = await stripePromise;
+                if (!stripe) {
+                    throw new Error("Falha ao carregar o Stripe.");
+                }
 
-            const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-                body: JSON.stringify({
-                    amount: totalPrice,
-                    currency: 'eur',
-                    return_url: returnUrl,
-                }),
-            });
+                const returnUrl = `${window.location.origin}/bevestiging`;
 
-            if (error) {
-                throw new Error(error.message);
+                const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                    body: JSON.stringify({
+                        amount: totalPrice,
+                        currency: 'eur',
+                        return_url: returnUrl,
+                    }),
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                const { clientSecret } = data as { clientSecret: string };
+
+                if (checkoutRef.current) {
+                    const checkout = await stripe.initEmbeddedCheckout({
+                        clientSecret,
+                    });
+                    checkout.mount(checkoutRef.current);
+                }
+            } catch (err: any) {
+                console.error("Stripe Checkout initialization error:", err);
+                setStripeError(err.message || "Erro ao inicializar o pagamento.");
+            } finally {
+                setIsLoadingStripe(false);
             }
+        };
 
-            const { clientSecret } = data as { clientSecret: string };
-
-            dismissToast(toastId);
-            showSuccess("Sessie aangemaakt. Redirigindo para betaling...");
-
-            // Pass booking details to confirmation page via state
-            const bookingDetails = {
-                schoonmaker,
-                date,
-                time,
-                hours,
-                totalPrice,
-                selectedServices,
-            };
-            navigate(returnUrl, { state: { bookingDetails, clientSecret } }); // Pass clientSecret to confirmation page
-
-        } catch (error: any) {
-            dismissToast(toastId);
-            showError(error.message || "Er is een onverwachte fout opgetreden bij het starten van de betaling.");
-            console.error("Checkout initiation error:", error);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
+        initializeStripeCheckout();
+    }, [date, time, totalPrice, id]); // Recarregar se a data, hora, preço total ou ID do limpador mudar
 
     if (!date || !time) {
         return (
@@ -146,11 +148,11 @@ const Boeken = () => {
                     <div>
                         <Label className="font-semibold">Hoeveel uur?</Label>
                         <div className="flex items-center gap-4 mt-2">
-                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.max(2, h - 1))} disabled={isProcessing}>
+                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.max(2, h - 1))} disabled={isLoadingStripe}>
                                 <Minus className="h-4 w-4" />
                             </Button>
                             <span className="text-lg font-bold w-12 text-center">{hours} uur</span>
-                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.min(8, h + 1))} disabled={isProcessing}>
+                            <Button variant="outline" size="icon" onClick={() => setHours(h => Math.min(8, h + 1))} disabled={isLoadingStripe}>
                                 <Plus className="h-4 w-4" />
                             </Button>
                         </div>
@@ -163,7 +165,7 @@ const Boeken = () => {
                                     <Checkbox
                                         id={service.id}
                                         onCheckedChange={() => handleServiceChange(service.id)}
-                                        disabled={isProcessing}
+                                        disabled={isLoadingStripe}
                                     />
                                     <Label htmlFor={service.id} className="flex justify-between w-full">
                                         <span>{service.label}</span>
@@ -200,12 +202,18 @@ const Boeken = () => {
                     <Separator />
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Kies een betaalmethode</h3>
-                        <div ref={checkoutRef} id="checkout">
-                            {/* Stripe Checkout will be rendered here */}
-                        </div>
-                        <Button size="lg" className="w-full mt-6" onClick={handleInitiateCheckout} disabled={isProcessing}>
-                            {isProcessing ? "Verwerken..." : `Betaal €${totalPrice.toFixed(2)} en bevestig`}
-                        </Button>
+                        {isLoadingStripe ? (
+                            <div className="flex items-center justify-center h-32">
+                                <p>Laden van betaalformulier...</p>
+                            </div>
+                        ) : stripeError ? (
+                            <div className="text-red-500 text-center p-4 border border-red-300 rounded-md">
+                                <p>Erro: {stripeError}</p>
+                                <Button onClick={() => window.location.reload()} className="mt-2">Opnieuw proberen</Button>
+                            </div>
+                        ) : (
+                            <div ref={checkoutRef} id="checkout" />
+                        )}
                     </div>
                 </CardContent>
             </Card>
