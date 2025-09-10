@@ -66,7 +66,6 @@ const DotComponent = ({ dot }: { dot: MovingDot }) => {
 
 const ActivityMap = () => {
   const [dots, setDots] = useState<MovingDot[]>(() => Array.from({ length: 8 }, (_, i) => generateRandomDot(i)));
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,18 +88,13 @@ const ActivityMap = () => {
       <CardContent>
         <TooltipProvider>
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-gray-600">
-                Carregando mapa...
-              </div>
-            )}
+            {/* Usando uma imagem local de placeholder para garantir que o mapa sempre apareça */}
             <img 
-              src="https://images.unsplash.com/photo-1596934361360-2422d0cf29b9?q=80&w=1364&auto=format&fit=crop" 
+              src="/placeholder.svg" 
               alt="Mapa da Holanda" 
-              className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
+              className="w-full h-full object-cover"
             />
-            {imageLoaded && dots.map((dot) => (
+            {dots.map((dot) => (
               <DotComponent key={dot.id} dot={dot} />
             ))}
           </div>
