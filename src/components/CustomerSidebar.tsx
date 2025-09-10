@@ -2,12 +2,9 @@ import { Home, Calendar, User, Settings, CreditCard, MapPin, Heart, LogOut } fro
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
-import { useUser } from "@/context/UserContext";
-import { Button } from "./ui/button";
 
 const CustomerSidebar = () => {
   const location = useLocation();
-  const { logout } = useUser();
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
@@ -94,10 +91,10 @@ const CustomerSidebar = () => {
         </div>
         <div className="mt-auto p-4">
           <Separator className="mb-4" />
-          <Button variant="ghost" className="w-full justify-start" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" />
+          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+            <LogOut className="h-4 w-4" />
             Uitloggen
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

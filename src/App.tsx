@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Layout from "@/components/Layout";
@@ -59,84 +59,86 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          element={
-            <Layout>
-              <Outlet />
-            </Layout>
-          }
-        >
-          <Route path="/" element={<Index />} />
-          <Route path="/zoeken" element={<Zoeken />} />
-          <Route path="/schoonmaker/:id" element={<SchoonmakerProfiel />} />
-          <Route path="/boeken/:id" element={<Boeken />} />
-          <Route path="/bevestiging" element={<Bevestiging />} />
-          <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registreren" element={<Registreren />} />
-          <Route path="/registreren/klant" element={<RegistrerenKlant />} />
-          <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
-          {/* Legal Pages */}
-          <Route path="/over-ons" element={<OverOns />} />
-          <Route path="/pers" element={<Pers />} />
-          <Route path="/carriere" element={<Carriere />} />
-          <Route path="/prijzen" element={<Prijzen />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/schoonmaker-faq" element={<SchoonmakerFAQ />} />
-          <Route path="/algemene-voorwaarden" element={<AlgemeneVoorwaarden />} />
-          <Route path="/privacybeleid" element={<Privacybeleid />} />
-          <Route path="/cookiebeleid" element={<Cookiebeleid />} />
-        </Route>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            element={
+              <Layout>
+                <Outlet />
+              </Layout>
+            }
+          >
+            <Route path="/" element={<Index />} />
+            <Route path="/zoeken" element={<Zoeken />} />
+            <Route path="/schoonmaker/:id" element={<SchoonmakerProfiel />} />
+            <Route path="/boeken/:id" element={<Boeken />} />
+            <Route path="/bevestiging" element={<Bevestiging />} />
+            <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/registreren" element={<Registreren />} />
+            <Route path="/registreren/klant" element={<RegistrerenKlant />} />
+            <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
+            {/* Legal Pages */}
+            <Route path="/over-ons" element={<OverOns />} />
+            <Route path="/pers" element={<Pers />} />
+            <Route path="/carriere" element={<Carriere />} />
+            <Route path="/prijzen" element={<Prijzen />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/schoonmaker-faq" element={<SchoonmakerFAQ />} />
+            <Route path="/algemene-voorwaarden" element={<AlgemeneVoorwaarden />} />
+            <Route path="/privacybeleid" element={<Privacybeleid />} />
+            <Route path="/cookiebeleid" element={<Cookiebeleid />} />
+          </Route>
 
-        {/* Cleaner Dashboard Routes */}
-        <Route path="/dashboard" element={<CleanerLayout />}>
-          <Route index element={<CleanerDashboard />} />
-          <Route path="boekingen" element={<MijnBoekingen />} />
-          <Route path="profiel" element={<CleanerProfiel />} />
-          <Route path="beschikbaarheid" element={<CleanerAvailability />} />
-          <Route path="inkomsten" element={<CleanerEarnings />} />
-          <Route path="uitbetalingen" element={<PayoutSettings />} />
-          <Route path="recensies" element={<MyReviews />} />
-          <Route path="abonnement" element={<CleanerSubscription />} />
-          <Route path="instellingen" element={<CleanerSettings />} />
-        </Route>
+          {/* Cleaner Dashboard Routes */}
+          <Route path="/dashboard" element={<CleanerLayout />}>
+            <Route index element={<CleanerDashboard />} />
+            <Route path="boekingen" element={<MijnBoekingen />} />
+            <Route path="profiel" element={<CleanerProfiel />} />
+            <Route path="beschikbaarheid" element={<CleanerAvailability />} />
+            <Route path="inkomsten" element={<CleanerEarnings />} />
+            <Route path="uitbetalingen" element={<PayoutSettings />} />
+            <Route path="recensies" element={<MyReviews />} />
+            <Route path="abonnement" element={<CleanerSubscription />} />
+            <Route path="instellingen" element={<CleanerSettings />} />
+          </Route>
 
-        {/* Customer Account Routes */}
-        <Route path="/account" element={<CustomerLayout />}>
-          <Route index element={<CustomerDashboard />} />
-          <Route path="boekingen" element={<CustomerBookings />} />
-          <Route path="profiel" element={<CustomerProfile />} />
-          <Route path="favorieten" element={<FavoriteCleaners />} />
-          <Route path="betaalmethoden" element={<CustomerPayment />} />
-          <Route path="adressen" element={<CustomerAddresses />} />
-          <Route path="instellingen" element={<CustomerSettings />} />
-        </Route>
+          {/* Customer Account Routes */}
+          <Route path="/account" element={<CustomerLayout />}>
+            <Route index element={<CustomerDashboard />} />
+            <Route path="boekingen" element={<CustomerBookings />} />
+            <Route path="profiel" element={<CustomerProfile />} />
+            <Route path="favorieten" element={<FavoriteCleaners />} />
+            <Route path="betaalmethoden" element={<CustomerPayment />} />
+            <Route path="adressen" element={<CustomerAddresses />} />
+            <Route path="instellingen" element={<CustomerSettings />} />
+          </Route>
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
-          <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
-          <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
-          <Route path="klanten" element={<CustomersBeheren />} />
-          <Route path="boekingen" element={<BoekingenBeheren />} />
-          <Route path="uitbetalingen" element={<PayoutsBeheren />} />
-          <Route path="abonnementen" element={<SubscriptionsBeheren />} />
-          <Route path="instellingen" element={<AdminSettings />} />
-        </Route>
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
+            <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
+            <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
+            <Route path="klanten" element={<CustomersBeheren />} />
+            <Route path="boekingen" element={<BoekingenBeheren />} />
+            <Route path="uitbetalingen" element={<PayoutsBeheren />} />
+            <Route path="abonnementen" element={<SubscriptionsBeheren />} />
+            <Route path="instellingen" element={<AdminSettings />} />
+          </Route>
 
-        {/* Catch-all Route */}
-        <Route
-          path="*"
-          element={
-            <Layout>
-              <NotFound />
-            </Layout>
-          }
-        />
-      </Routes>
+          {/* Catch-all Route */}
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <NotFound />
+              </Layout>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

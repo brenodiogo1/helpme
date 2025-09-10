@@ -97,50 +97,6 @@ const mockSchoonmakers: Schoonmaker[] = [
     services: ["Kantoor schoonmaak", "Grote schoonmaak", "Reguliere schoonmaak"],
     city: "Rotterdam"
   },
-  {
-    id: "9",
-    name: "Ingrid Pieters",
-    photoUrl: "https://images.unsplash.com/photo-1521119989659-a83eee488004?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 95,
-    hourlyRate: 19.50,
-    bio: "Zorgvuldige en betrouwbare schoonmaakster, gespecialiseerd in delicate oppervlakken en interieurverzorging.",
-    services: ["Interieurverzorging", "Dieptereiniging", "Huisdier-vriendelijk"],
-    city: "Amsterdam"
-  },
-  {
-    id: "10",
-    name: "Johan van der Berg",
-    photoUrl: "https://images.unsplash.com/photo-1583864697784-a0efc8379f70?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.7,
-    ratingCount: 88,
-    hourlyRate: 17.00,
-    bio: "Allround schoonmaker voor zowel binnen- als buitenklussen. Geen klus is te groot of te klein.",
-    services: ["Reguliere schoonmaak", "Tuinonderhoud", "Ramen wassen"],
-    city: "Groningen"
-  },
-  {
-    id: "11",
-    name: "Karin de Leeuw",
-    photoUrl: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 5.0,
-    ratingCount: 250,
-    hourlyRate: 22.00,
-    bio: "Met een passie voor orde en netheid, transformeer ik elke ruimte. Expert in organiseren en ontspullen.",
-    services: ["Organiseren", "Grote schoonmaak", "Na verbouwing"],
-    city: "Den Haag"
-  },
-  {
-    id: "12",
-    name: "Leo Hendriks",
-    photoUrl: "https://images.unsplash.com/photo-1615109398623-88346a601842?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.8,
-    ratingCount: 130,
-    hourlyRate: 18.50,
-    bio: "Betrouwbare en discrete professional voor uw wekelijkse schoonmaak. Ik werk snel en efficiënt.",
-    services: ["Kantoor schoonmaak", "Reguliere schoonmaak", "Milieuvriendelijk"],
-    city: "Utrecht"
-  }
 ];
 
 const allServices = [...new Set(mockSchoonmakers.flatMap(s => s.services))].sort();

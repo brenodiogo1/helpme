@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import ActivityMap from "@/components/ActivityMap";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -29,12 +29,9 @@ const mockReviews: Review[] = [
     { id: "r1", author: "Mark V.", rating: 5, comment: "Geweldige service! Anna was punctueel, professioneel en mijn huis is brandschoon. Zeker een aanrader.", date: "2023-10-20", avatarUrl: "https://i.pravatar.cc/150?img=1" },
     { id: "r2", author: "Linda de Groot", rating: 5, comment: "Ik ben zo blij met het werk van Ben. Hij is zeer grondig en vriendelijk. Ik boek hem zeker opnieuw.", date: "2023-10-18", avatarUrl: "https://i.pravatar.cc/150?img=2" },
     { id: "r3", author: "Sander Janssen", rating: 5, comment: "Topkwaliteit en zeer betrouwbaar. Carla heeft fantastisch werk geleverd na onze verbouwing.", date: "2023-10-15", avatarUrl: "https://i.pravatar.cc/150?img=3" },
-];
-
-const supporters = [
-    { name: "TechSolutions" }, { name: "Innovate Inc." }, { name: "Venture Partners" },
-    { name: "GreenLiving" }, { name: "EcoClean" }, { name: "StartupHub NL" },
-    { name: "BrightCapital" }, { name: "NextGen Ventures" }
+    { id: "r4", author: "Chantal Willems", rating: 4, comment: "Goede schoonmaak, communicatie kon iets beter. Maar het resultaat was prima.", date: "2023-10-12", avatarUrl: "https://i.pravatar.cc/150?img=4" },
+    { id: "r5", author: "Familie de Boer", rating: 5, comment: "Eva is een topper! Ze is geweldig met onze hond en het huis ruikt altijd heerlijk fris na haar bezoek.", date: "2023-10-10", avatarUrl: "https://i.pravatar.cc/150?img=5" },
+    { id: "r6", author: "Pieter van Dijk", rating: 5, comment: "Eindelijk iemand gevonden die echt weet wat schoonmaken is. Zeer tevreden over de dieptereiniging.", date: "2023-10-05", avatarUrl: "https://i.pravatar.cc/150?img=6" },
 ];
 
 const Index = () => {
@@ -149,68 +146,52 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Supporters Carousel Section */}
+      {/* Activity Map Section */}
       <section className="py-16 lg:py-24 bg-secondary">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Ondersteund door Topbedrijven</h2>
-          <p className="text-muted-foreground mb-12">We zijn trots op de samenwerking met onze partners.</p>
-          <Carousel
-            opts={{ align: "start", loop: true }}
-            className="w-full max-w-4xl mx-auto"
-          >
-            <CarouselContent>
-              {supporters.map((supporter, index) => (
-                <CarouselItem key={index} className="md:basis-1/3 lg:basis-1/4">
-                  <div className="p-1">
-                    <Card>
-                      <CardContent className="flex aspect-video items-center justify-center p-6">
-                        <span className="text-xl font-semibold text-muted-foreground">{supporter.name}</span>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+        <div className="container mx-auto">
+            <ActivityMap />
         </div>
       </section>
 
       {/* Why Choose Us Section */}
       <section className="py-16 lg:py-24">
-        <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <AspectRatio ratio={4/3} className="rounded-lg overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1558317374-067fb5f3da43?q=80&w=800&auto=format&fit=crop" alt="Clean living room" className="w-full h-full object-cover" />
-            </AspectRatio>
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold mb-4">Waarom kiezen voor HelpMe?</h2>
-            <p className="text-muted-foreground mb-8">Jouw tevredenheid is onze prioriteit. We bieden een naadloze ervaring van begin tot eind.</p>
-            <ul className="space-y-6">
-              <li className="flex items-start gap-4">
-                <ShieldCheck className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold">Betrouwbaar & Gescreend</h3>
-                  <p className="text-muted-foreground">Elke schoonmaker op ons platform is zorgvuldig gescreend en beoordeeld.</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <Star className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold">Topkwaliteit Gegarandeerd</h3>
-                  <p className="text-muted-foreground">We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <Clock className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold">Flexibel & Eenvoudig</h3>
-                  <p className="text-muted-foreground">Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.</p>
-                </div>
-              </li>
-            </ul>
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-2">Waarom kiezen voor HelpMe?</h2>
+          <p className="text-muted-foreground mb-12">Jouw tevredenheid is onze prioriteit.</p>
+          <div className="grid md:grid-cols-3 gap-8 text-left">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+                <CardTitle>Betrouwbaar & Gescreend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Elke schoonmaker op ons platform is zorgvuldig gescreend en beoordeeld.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <Star className="h-8 w-8 text-primary" />
+                <CardTitle>Topkwaliteit Gegarandeerd</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <Clock className="h-8 w-8 text-primary" />
+                <CardTitle>Flexibel & Eenvoudig</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
