@@ -13,20 +13,35 @@ import { Booking } from "@/types"; // Importar a interface Booking do types/inde
 
 const CustomerDashboard = () => {
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
+  const [customerName, setCustomerName] = useState<string>("Gebruiker"); // Estado para o nome do cliente
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUpcomingBooking();
+    fetchDashboardData();
   }, []);
 
-  const fetchUpcomingBooking = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     setError(null);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error("Gebruiker niet ingelogd.");
+      }
+
+      // Fetch customer profile to get the name
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw new Error(profileError.message);
+      }
+      if (profileData) {
+        setCustomerName(profileData.first_name || "Gebruiker");
       }
 
       const { data, error } = await supabase
@@ -93,7 +108,7 @@ const CustomerDashboard = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Welkom terug, Piet!</h1> {/* TODO: Dynamische naam */}
+      <h1 className="text-3xl font-bold mb-6">Welkom terug, {customerName}!</h1>
       <div className="grid gap-8 md:grid-cols-2">
         {upcomingBooking ? (
           <CustomerBookingTimeline
@@ -123,7 +138,7 @@ const CustomerDashboard = () => {
             </CardContent>
           </Card>
         )}
-        <LiveActivityFeed /> {/* Substituído ActivityMap por LiveActivityFeed */}
+        <LiveActivityFeed />
       </div>
       <div className="mt-8">
         {/* Other dashboard content */}

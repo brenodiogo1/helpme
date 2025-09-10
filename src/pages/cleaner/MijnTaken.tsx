@@ -15,33 +15,69 @@ const MijnTaken = () => {
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cleanerId, setCleanerId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchJobOffers();
+    const setupCleanerAndFetchOffers = async () => {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          throw new Error("Gebruiker niet ingelogd.");
+        }
+
+        const { data: cleanerData, error: cleanerError } = await supabase
+          .from('cleaners')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (cleanerError || !cleanerData) {
+          throw new Error(cleanerError?.message || "Geen schoonmakerprofiel gevonden voor deze gebruiker.");
+        }
+        setCleanerId(cleanerData.id);
+        fetchJobOffers(cleanerData.id);
+      } catch (err: any) {
+        setError(err.message);
+        showError(err.message);
+        setLoading(false);
+      }
+    };
+
+    setupCleanerAndFetchOffers();
   }, []);
 
-  const fetchJobOffers = async () => {
+  useEffect(() => {
+    if (!cleanerId) return;
+
+    const channel = supabase
+      .channel(`job_offers_for_cleaner_${cleanerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'job_offers',
+          filter: `cleaner_id=eq.${cleanerId}`
+        },
+        (payload) => {
+          const newOffer = payload.new as JobOffer;
+          if (newOffer.status === 'pending') {
+            showSuccess("Nieuwe jobaanbieding ontvangen!");
+            fetchJobOffers(cleanerId); // Refresh the list
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cleanerId]);
+
+  const fetchJobOffers = async (currentCleanerId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("Gebruiker niet ingelogd.");
-      }
-
-      // Fetch cleaner ID associated with the current user
-      const { data: cleanerData, error: cleanerError } = await supabase
-        .from('cleaners')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (cleanerError || !cleanerData) {
-        throw new Error(cleanerError?.message || "Geen schoonmakerprofiel gevonden voor deze gebruiker.");
-      }
-
-      const cleanerId = cleanerData.id;
-
       const { data, error } = await supabase
         .from('job_offers')
         .select(`
@@ -62,7 +98,7 @@ const MijnTaken = () => {
             profiles (first_name, last_name)
           )
         `)
-        .eq('cleaner_id', cleanerId)
+        .eq('cleaner_id', currentCleanerId)
         .in('status', ['pending', 'accepted']) // Show pending and accepted offers
         .order('created_at', { ascending: false });
 
@@ -70,7 +106,6 @@ const MijnTaken = () => {
         throw new Error(error.message);
       }
 
-      // Mapear os dados para corresponder à interface JobOffer
       const mappedJobOffers: JobOffer[] = data.map((item: any) => {
         const bookingData = item.bookings && item.bookings.length > 0 ? item.bookings[0] : null;
         
@@ -147,7 +182,7 @@ const MijnTaken = () => {
 
       dismissToast(toastId);
       showSuccess(`Aanbieding succesvol ${newStatus === 'accepted' ? 'geaccepteerd' : 'geweigerd'}!`);
-      fetchJobOffers(); // Refresh the list
+      if (cleanerId) fetchJobOffers(cleanerId); // Refresh the list
     } catch (err: any) {
       dismissToast(toastId);
       showError(err.message);
