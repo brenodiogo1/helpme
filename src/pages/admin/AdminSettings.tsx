@@ -28,18 +28,26 @@ const AdminSettings = () => {
         <CardHeader>
           <CardTitle>Payment Gateway Instellingen</CardTitle>
           <CardDescription>
-            Voer hier je API-sleutels in voor de betalingsverwerking.
+            Voer hier je API-sleutels in voor de betalingsverwerking (bijv. Stripe, PayPal, iDEAL).
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
             <div className="space-y-2">
-              <Label htmlFor="stripe-key">Stripe API Key</Label>
+              <Label htmlFor="stripe-key">Stripe Secret Key</Label>
               <Input id="stripe-key" placeholder="sk_test_..." />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="paypal-key">PayPal Client ID</Label>
-              <Input id="paypal-key" placeholder="AZ..." />
+              <Label htmlFor="stripe-publishable-key">Stripe Publishable Key</Label>
+              <Input id="stripe-publishable-key" placeholder="pk_test_..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paypal-client-id">PayPal Client ID</Label>
+              <Input id="paypal-client-id" placeholder="AZ..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ideal-api-key">iDEAL API Key</Label>
+              <Input id="ideal-api-key" placeholder="your_ideal_api_key" />
             </div>
             <div className="flex justify-end">
               <Button type="submit">Opslaan</Button>

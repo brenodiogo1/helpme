@@ -1,4 +1,4 @@
-import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet } from "lucide-react";
+import { Bell, Home, Users, CalendarCheck, FileText, Settings, Gem, LogOut, Wallet, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,6 +96,16 @@ const AdminSidebar = () => {
             >
               <Settings className="h-4 w-4" />
               Instellingen
+            </Link>
+            <Link
+              to="/admin/chat"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/admin/chat") && "bg-muted text-primary"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chat
             </Link>
           </nav>
         </div>

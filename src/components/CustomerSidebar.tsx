@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Settings, CreditCard, MapPin, Heart, LogOut } from "lucide-react";
+import { Home, Calendar, User, Settings, CreditCard, MapPin, Heart, LogOut, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
@@ -86,6 +86,16 @@ const CustomerSidebar = () => {
             >
               <Settings className="h-4 w-4" />
               Instellingen
+            </Link>
+            <Link
+              to="/account/chat" // This will be a general chat for the customer, or we can link from bookings
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/account/chat") && "bg-muted text-primary"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chat
             </Link>
           </nav>
         </div>

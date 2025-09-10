@@ -51,6 +51,9 @@ import Privacybeleid from "./pages/legal/Privacybeleid";
 import Cookiebeleid from "./pages/legal/Cookiebeleid";
 import PayoutSettings from "./pages/cleaner/PayoutSettings";
 import PayoutsBeheren from "./pages/admin/PayoutsBeheren";
+import CleanerChat from "./pages/cleaner/CleanerChat";
+import CustomerChat from "./pages/customer/CustomerChat";
+// import AdminChat from "./pages/admin/AdminChat"; // Removido: módulo não encontrado e não utilizado
 
 const queryClient = new QueryClient();
 
@@ -102,6 +105,7 @@ const App = () => (
             <Route path="recensies" element={<MyReviews />} />
             <Route path="abonnement" element={<CleanerSubscription />} />
             <Route path="instellingen" element={<CleanerSettings />} />
+            <Route path="chat" element={<CleanerChat />} />
           </Route>
 
           {/* Customer Account Routes */}
@@ -113,6 +117,7 @@ const App = () => (
             <Route path="betaalmethoden" element={<CustomerPayment />} />
             <Route path="adressen" element={<CustomerAddresses />} />
             <Route path="instellingen" element={<CustomerSettings />} />
+            <Route path="chat" element={<CustomerChat />} /> {/* General customer chat, can be linked from bookings */}
           </Route>
 
           {/* Admin Routes */}
@@ -126,6 +131,7 @@ const App = () => (
             <Route path="uitbetalingen" element={<PayoutsBeheren />} />
             <Route path="abonnementen" element={<SubscriptionsBeheren />} />
             <Route path="instellingen" element={<AdminSettings />} />
+            <Route path="chat" element={<CleanerChat />} /> {/* Admin uses CleanerChat to talk to cleaners */}
           </Route>
 
           {/* Catch-all Route */}

@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays, LogOut } from "lucide-react";
+import { Home, Calendar, User, Settings, Wallet, Star, CalendarDays, LogOut, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
@@ -106,6 +106,16 @@ const CleanerSidebar = () => {
             >
               <Settings className="h-4 w-4" />
               Instellingen
+            </Link>
+            <Link
+              to="/dashboard/chat"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive("/dashboard/chat") && "bg-muted text-primary"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chat met Admin
             </Link>
           </nav>
         </div>
