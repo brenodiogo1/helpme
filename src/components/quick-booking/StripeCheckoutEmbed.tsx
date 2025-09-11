@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from "@/integrations/supabase/client";
-import { showError } from "@/utils/toast";
+// Removed: import { showError } from "@/utils/toast";
 import { Button } from "@/components/ui/button";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -18,6 +18,7 @@ interface StripeCheckoutEmbedProps {
   stripeError: string | null;
   setStripeError: (error: string | null) => void;
   formTrigger: () => Promise<boolean>; // Adicionado para validar o formulário antes de inicializar o Stripe
+  isLoadingStripe: boolean; // Adicionado aqui na interface
 }
 
 const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
@@ -28,6 +29,7 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
   stripeError,
   setStripeError,
   formTrigger,
+  isLoadingStripe, // <--- Adicionado aqui na desestruturação dos props
 }) => {
   const checkoutRef = useRef<HTMLDivElement>(null);
 

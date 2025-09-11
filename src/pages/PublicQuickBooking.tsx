@@ -11,8 +11,8 @@ import BookingDetailsForm, { bookingDetailsSchema } from "@/components/quick-boo
 import ExtraServicesForm, { extraServicesSchema } from "@/components/quick-booking/ExtraServicesForm";
 import ContactDetailsForm, { contactDetailsSchema } from "@/components/quick-booking/ContactDetailsForm";
 import PriceSummary from "@/components/quick-booking/PriceSummary";
-import PaymentMethodSelection from "@/components/quick-booking/PaymentMethodSelection"; // Novo import
-import StripeCheckoutEmbed from "@/components/quick-booking/StripeCheckoutEmbed"; // Novo import
+import PaymentMethodSelection from "@/components/quick-booking/PaymentMethodSelection";
+import StripeCheckoutEmbed from "@/components/quick-booking/StripeCheckoutEmbed";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,7 +48,7 @@ const PublicQuickBooking: React.FC = () => {
     },
   });
 
-  const { handleSubmit, watch, formState, reset, trigger } = methods; // Adicionado 'trigger'
+  const { handleSubmit, watch, formState, reset, trigger } = methods;
 
   const durationHours = watch("durationHours");
   const selectedExtraServices = watch("selectedExtraServices") || [];
@@ -59,9 +59,9 @@ const PublicQuickBooking: React.FC = () => {
   const [extrasPrice, setExtrasPrice] = useState(0);
   const [discountAmount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe'); // Estado para método de pagamento
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
   const [isLoadingStripe, setIsLoadingStripe] = useState(false); // Estado para carregamento do Stripe
-  const [stripeError, setStripeError] = useState<string | null>(null); // Estado para erros do Stripe
+  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const extraServicesOptions = [
     { id: "ramen", label: "Ramen wassen", price: 25.00 },
@@ -168,7 +168,8 @@ const PublicQuickBooking: React.FC = () => {
                   setIsLoadingStripe={setIsLoadingStripe}
                   stripeError={stripeError}
                   setStripeError={setStripeError}
-                  formTrigger={trigger} // Passar a função trigger do react-hook-form
+                  formTrigger={trigger}
+                  isLoadingStripe={isLoadingStripe} // <--- Passed isLoadingStripe here
                 />
               )}
 
