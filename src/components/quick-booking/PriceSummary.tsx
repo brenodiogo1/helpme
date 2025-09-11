@@ -53,6 +53,12 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
             </div>
           );
         })}
+        {extrasPrice > 0 && selectedExtraServices.length === 0 && ( // Display total extras price if no individual services are listed
+          <div className="flex justify-between">
+            <span>Extra diensten totaal</span>
+            <span>€{extrasPrice.toFixed(2)}</span>
+          </div>
+        )}
         {discountAmount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Korting</span>

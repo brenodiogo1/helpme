@@ -12,9 +12,9 @@ import ExtraServicesForm, { extraServicesSchema } from "@/components/quick-booki
 import ContactDetailsForm, { contactDetailsSchema } from "@/components/quick-booking/ContactDetailsForm";
 import PriceSummary from "@/components/quick-booking/PriceSummary";
 import { useSettings } from "@/contexts/SettingsContext";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom"; // Corrected import for React Router
 
 // Combine all schemas
 const quickBookingSchema = z.object({
@@ -27,9 +27,7 @@ type QuickBookingFormData = z.infer<typeof quickBookingSchema>;
 
 const PublicQuickBooking: React.FC = () => {
   const { settings } = useSettings();
-  const supabase = createClient();
-  const router = useRouter();
-
+  const navigate = useNavigate(); // Use useNavigate
   const methods = useForm<QuickBookingFormData>({
     resolver: zodResolver(quickBookingSchema),
     defaultValues: {
@@ -55,7 +53,7 @@ const PublicQuickBooking: React.FC = () => {
 
   const [basePrice, setBasePrice] = useState(0);
   const [extrasPrice, setExtrasPrice] = useState(0);
-  const [discountAmount] = useState(0); // 'setDiscountAmount' removido pois não estava sendo usado
+  const [discountAmount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
 
   const extraServicesOptions = [
@@ -66,12 +64,10 @@ const PublicQuickBooking: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Garante que hourlyRate existe antes de usá-lo
     if (settings.hourlyRate !== undefined && settings.hourlyRate !== null) {
       const calculatedBasePrice = durationHours * settings.hourlyRate;
       setBasePrice(calculatedBasePrice);
 
-      // Tipagem explícita para 'sum' e 'serviceId'
       const calculatedExtrasPrice = selectedExtraServices.reduce((sum: number, serviceId: string) => {
         const service = extraServicesOptions.find(s => s.id === serviceId);
         return sum + (service ? service.price : 0);
@@ -86,7 +82,7 @@ const PublicQuickBooking: React.FC = () => {
   const onSubmit = async (data: QuickBookingFormData) => {
     console.log("Form Data:", data);
     const { error } = await supabase.from('quick_bookings').insert({
-      booking_date: data.bookingDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      booking_date: data.bookingDate.toISOString().split('T')[0],
       booking_time: data.bookingTime,
       duration_hours: data.durationHours,
       extra_services: data.selectedExtraServices,
@@ -103,7 +99,7 @@ const PublicQuickBooking: React.FC = () => {
       discount_amount: discountAmount,
       total_price: totalPrice,
       platform_fee: settings.platformBookingFee,
-      status: 'pending', // Default status
+      status: 'pending',
     });
 
     if (error) {
@@ -111,8 +107,8 @@ const PublicQuickBooking: React.FC = () => {
       toast.error("Er is een fout opgetreden bij het indienen van uw boeking. Probeer het opnieuw.");
     } else {
       toast.success("Uw boeking is succesvol ingediend!");
-      reset(); // Clear the form
-      router.push('/booking-confirmation'); // Redirect to a confirmation page
+      reset();
+      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours } } }); // Redirect to confirmation page
     }
   };
 
@@ -138,6 +134,7 @@ const PublicQuickBooking: React.FC = () => {
                 durationHours={durationHours}
                 selectedExtraServices={selectedExtraServices}
                 basePrice={basePrice}
+                extrasPrice={extrasPrice}
                 discountAmount={discountAmount}
                 totalPrice={totalPrice}
               />
