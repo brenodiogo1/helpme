@@ -101,6 +101,7 @@ const RegistrerenSchoonmaker = () => {
       });
 
       if (authError) {
+        console.error("Supabase signup error:", authError); // Log the full error object
         throw new Error(authError.message);
       }
 
@@ -123,6 +124,7 @@ const RegistrerenSchoonmaker = () => {
       });
 
       if (cleanerError) {
+        console.error("Supabase cleaner profile creation error:", cleanerError); // Log the full error object
         throw new Error(cleanerError.message);
       }
 
@@ -130,7 +132,7 @@ const RegistrerenSchoonmaker = () => {
       navigate("/login");
     } catch (error: any) {
       showError(error.message);
-      console.error("Registratie fout:", error);
+      console.error("Registratie fout:", error); // Log the full error object
     }
   }
 
