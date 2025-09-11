@@ -56,7 +56,8 @@ import CustomerChat from "./pages/customer/CustomerChat";
 import AdminChat from "./pages/admin/AdminChat";
 import CleanerProvider from "./pages/cleaner/CleanerProvider";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { AuthProvider } from "@/contexts/AuthContext"; // Import AuthProvider
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute"; // Import ProtectedRoute
 import { useEffect } from "react";
 import MijnTaken from "./pages/cleaner/MijnTaken";
 import PublicQuickBooking from "./pages/PublicQuickBooking";
@@ -83,7 +84,7 @@ const App = () => {
         <Sonner />
         <SettingsProvider>
           <BrowserRouter>
-            <AuthProvider> {/* Wrap the entire application with AuthProvider */}
+            <AuthProvider>
               <Routes>
                 {/* Public Routes */}
                 <Route
@@ -116,46 +117,52 @@ const App = () => {
                   <Route path="/cookiebeleid" element={<Cookiebeleid />} />
                 </Route>
 
-                {/* Cleaner Dashboard Routes */}
-                <Route path="/dashboard" element={<CleanerLayout />}>
-                  <Route index element={<CleanerDashboard />} />
-                  <Route path="taken" element={<MijnTaken />} />
-                  <Route path="boekingen" element={<MijnBoekingen />} />
-                  <Route path="profiel" element={<CleanerProfiel />} />
-                  <Route path="beschikbaarheid" element={<CleanerAvailability />} />
-                  <Route path="inkomsten" element={<CleanerEarnings />} />
-                  <Route path="uitbetalingen" element={<PayoutSettings />} />
-                  <Route path="recensies" element={<MyReviews />} />
-                  <Route path="abonnement" element={<CleanerSubscription />} />
-                  <Route path="provedor" element={<CleanerProvider />} />
-                  <Route path="instellingen" element={<CleanerSettings />} />
-                  <Route path="chat" element={<CleanerChat />} />
+                {/* Cleaner Dashboard Routes (Protected) */}
+                <Route element={<ProtectedRoute allowedRoles={['cleaner']} />}>
+                  <Route path="/dashboard" element={<CleanerLayout />}>
+                    <Route index element={<CleanerDashboard />} />
+                    <Route path="taken" element={<MijnTaken />} />
+                    <Route path="boekingen" element={<MijnBoekingen />} />
+                    <Route path="profiel" element={<CleanerProfiel />} />
+                    <Route path="beschikbaarheid" element={<CleanerAvailability />} />
+                    <Route path="inkomsten" element={<CleanerEarnings />} />
+                    <Route path="uitbetalingen" element={<PayoutSettings />} />
+                    <Route path="recensies" element={<MyReviews />} />
+                    <Route path="abonnement" element={<CleanerSubscription />} />
+                    <Route path="provedor" element={<CleanerProvider />} />
+                    <Route path="instellingen" element={<CleanerSettings />} />
+                    <Route path="chat" element={<CleanerChat />} />
+                  </Route>
                 </Route>
 
-                {/* Customer Account Routes */}
-                <Route path="/account" element={<CustomerLayout />}>
-                  <Route index element={<CustomerDashboard />} />
-                  <Route path="boekingen" element={<CustomerBookings />} />
-                  <Route path="profiel" element={<CustomerProfile />} />
-                  <Route path="favorieten" element={<FavoriteCleaners />} />
-                  <Route path="betaalmethoden" element={<CustomerPayment />} />
-                  <Route path="adressen" element={<CustomerAddresses />} />
-                  <Route path="instellingen" element={<CustomerSettings />} />
-                  <Route path="chat" element={<CustomerChat />} />
+                {/* Customer Account Routes (Protected) */}
+                <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
+                  <Route path="/account" element={<CustomerLayout />}>
+                    <Route index element={<CustomerDashboard />} />
+                    <Route path="boekingen" element={<CustomerBookings />} />
+                    <Route path="profiel" element={<CustomerProfile />} />
+                    <Route path="favorieten" element={<FavoriteCleaners />} />
+                    <Route path="betaalmethoden" element={<CustomerPayment />} />
+                    <Route path="adressen" element={<CustomerAddresses />} />
+                    <Route path="instellingen" element={<CustomerSettings />} />
+                    <Route path="chat" element={<CustomerChat />} />
+                  </Route>
                 </Route>
 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
-                  <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
-                  <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
-                  <Route path="klanten" element={<CustomersBeheren />} />
-                  <Route path="boekingen" element={<BoekingenBeheren />} />
-                  <Route path="uitbetalingen" element={<PayoutsBeheren />} />
-                  <Route path="abonnementen" element={<SubscriptionsBeheren />} />
-                  <Route path="instellingen" element={<AdminSettings />} />
-                  <Route path="chat" element={<AdminChat />} />
+                {/* Admin Routes (Protected) */}
+                <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="schoonmakers" element={<SchoonmakersBeheren />} />
+                    <Route path="schoonmakers/nieuw" element={<SchoonmakerForm />} />
+                    <Route path="schoonmakers/bewerken/:id" element={<SchoonmakerForm />} />
+                    <Route path="klanten" element={<CustomersBeheren />} />
+                    <Route path="boekingen" element={<BoekingenBeheren />} />
+                    <Route path="uitbetalingen" element={<PayoutsBeheren />} />
+                    <Route path="abonnementen" element={<SubscriptionsBeheren />} />
+                    <Route path="instellingen" element={<AdminSettings />} />
+                    <Route path="chat" element={<AdminChat />} />
+                  </Route>
                 </Route>
 
                 {/* Catch-all Route */}

@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
-import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Chrome } from "lucide-react"; // Importar ícone do Google
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -19,7 +20,7 @@ const formSchema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
-  const { session, isLoading } = useAuth(); // Usar o contexto de autenticação
+  const { session, isLoading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -29,13 +30,9 @@ const Login = () => {
     },
   });
 
-  // Redirecionar se já estiver logado
   if (!isLoading && session) {
-    // Você pode adicionar lógica de redirecionamento baseada em função aqui, se necessário
-    // Por exemplo, verificar o perfil do usuário para redirecionar para /admin, /dashboard ou /account
-    // Por enquanto, vamos para a página inicial
     navigate('/');
-    return null; // Não renderizar nada enquanto redireciona
+    return null;
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -52,12 +49,29 @@ const Login = () => {
       }
 
       showSuccess("Succesvol ingelogd!");
-      // O redirecionamento será tratado pelo AuthProvider via onAuthStateChange
     } catch (error: any) {
       showError(error.message || "Ongeldige e-mail of wachtwoord.");
       console.error("Login error:", error);
     }
   }
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`, // Redireciona para a home após o login
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      showError(error.message || "Fout bij het inloggen met Google.");
+      console.error("Google login error:", error);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
@@ -117,11 +131,10 @@ const Login = () => {
               Aanmelden
             </Link>
           </div>
-          <div className="mt-6 text-xs text-muted-foreground text-center space-y-1 border-t pt-4">
-            <p><strong>Testaccounts (para testar as rotas):</strong></p>
-            <p><strong>Admin:</strong> admin@helpme.com / admin123</p>
-            <p><strong>Schoonmaker:</strong> schoonmaker@helpme.com / schoonmaker123</p>
-            <p><strong>Klant:</strong> klant@helpme.com / klant123</p>
+          <div className="mt-6">
+            <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+              <Chrome className="mr-2 h-4 w-4" /> Inloggen met Google
+            </Button>
           </div>
         </CardContent>
       </Card>

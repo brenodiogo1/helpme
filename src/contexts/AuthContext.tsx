@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  userRole: string | null; // Adicionado para armazenar o role do usuário
   signOut: () => Promise<void>;
 }
 
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null); // Estado para o role
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -28,10 +30,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(session?.user || null);
         setIsLoading(false);
 
-        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
-          // Optionally, fetch user profile or role here if needed for immediate redirection
-          // For now, we rely on the login component to handle initial redirection
-        } else if (_event === 'SIGNED_OUT') {
+        if (session?.user) {
+          // Fetch user role from the public.profiles table
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine for new users
+            console.error("Error fetching user profile role:", profileError);
+            setUserRole(null);
+          } else if (profile) {
+            setUserRole(profile.role);
+          } else {
+            setUserRole(null); // No profile found or no role set
+          }
+        } else {
+          setUserRole(null);
+        }
+
+        if (_event === 'SIGNED_OUT') {
           showSuccess("Você foi desconectado.");
           navigate('/login');
         }
@@ -47,6 +66,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(session);
       setUser(session?.user || null);
       setIsLoading(false);
+
+      if (session?.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error("Error fetching initial user profile role:", profileError);
+          setUserRole(null);
+        } else if (profile) {
+          setUserRole(profile.role);
+        } else {
+          setUserRole(null);
+        }
+      } else {
+        setUserRole(null);
+      }
     };
 
     getSession();
@@ -65,6 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       showSuccess("Desconectado com sucesso!");
       setSession(null);
       setUser(null);
+      setUserRole(null); // Clear role on sign out
       navigate('/login');
     } catch (error: any) {
       dismissToast(toastId);
@@ -74,7 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, userRole, signOut }}>
       {children}
     </AuthContext.Provider>
   );
