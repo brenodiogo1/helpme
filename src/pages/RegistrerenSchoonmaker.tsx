@@ -95,6 +95,7 @@ const RegistrerenSchoonmaker = () => {
           data: {
             first_name: values.firstName,
             last_name: values.lastName,
+            role: 'cleaner', // Passando o role 'cleaner'
           },
         },
       });

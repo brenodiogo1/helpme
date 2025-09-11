@@ -39,6 +39,7 @@ const RegistrerenKlant = () => {
           data: {
             first_name: values.firstName,
             last_name: values.lastName,
+            role: 'customer', // Passando o role 'customer'
           },
         },
       });
