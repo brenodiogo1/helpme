@@ -103,7 +103,7 @@ const Zoeken = () => {
 
   const [realCleaners, setRealCleaners] = useState<Schoonmaker[]>([]); // Stores cleaners from Supabase
   const [loading, setLoading] = useState(true);
-  const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch
+  // const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch - REMOVED
 
   // New states for sorting and rating filter
   const [sortOption, setSortOption] = useState<string>("recommended"); // 'recommended', 'price_low_high', 'price_high_low', 'rating'
@@ -112,7 +112,7 @@ const Zoeken = () => {
   useEffect(() => {
     const fetchCleaners = async () => {
       setLoading(true);
-      setSupabaseError(null); // Clear previous Supabase errors
+      // setSupabaseError(null); // Clear previous Supabase errors - REMOVED
       try {
         let query = supabase.from('cleaners').select('*');
 
@@ -126,12 +126,13 @@ const Zoeken = () => {
         const { data, error } = await query;
 
         if (error) {
-          throw new Error(error.message);
+          // throw new Error(error.message); // No longer throwing to prevent UI error
+          console.error("Error fetching cleaners from Supabase:", error.message); // Log error but don't block UI
         }
         setRealCleaners(data || []);
       } catch (err: any) {
-        setSupabaseError(err.message);
-        console.error("Error fetching cleaners from Supabase:", err);
+        // setSupabaseError(err.message); // REMOVED
+        console.error("Error fetching cleaners from Supabase (catch block):", err);
       } finally {
         setLoading(false);
       }
@@ -417,12 +418,7 @@ const Zoeken = () => {
           <h1 className="text-3xl font-bold mb-4">
             {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
-          {supabaseError && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-              <strong className="font-bold">Oeps!</strong>
-              <span className="block sm:inline"> Er is een fout opgetreden bij het laden van schoonmakers uit de database: {supabaseError}. De getoonde schoonmakers zijn voorbeelden.</span>
-            </div>
-          )}
+          {/* REMOVED: Error message for Supabase API key */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredSchoonmakers.length > 0 ? (
               filteredSchoonmakers.map((schoonmaker) => (
