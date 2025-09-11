@@ -11,7 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-// Removido import { Chrome, Facebook } from "lucide-react"; // Não precisamos mais dos ícones de login social
+import { Chrome } from "lucide-react"; // Importado o ícone do Google Chrome
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -54,6 +54,26 @@ const Login = () => {
       console.error("Login error:", error);
     }
   }
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin, // Redireciona para a origem atual após o login
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      // Supabase irá redirecionar o usuário para a página de login do Google e depois de volta para a aplicação.
+      // O onAuthStateChange no AuthContext cuidará da navegação após o login bem-sucedido.
+    } catch (error: any) {
+      showError(error.message || "Fout bij het inloggen met Google.");
+      console.error("Google login error:", error);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
@@ -107,6 +127,18 @@ const Login = () => {
               </Button>
             </form>
           </Form>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Of</span>
+            </div>
+          </div>
+          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+            <Chrome className="mr-2 h-4 w-4" />
+            Inloggen met Google
+          </Button>
           <div className="mt-4 text-center text-sm">
             Nog geen account?{" "}
             <Link to="/registreren" className="underline">
