@@ -26,9 +26,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("Auth state change event:", _event, "Session:", session); // Added for debugging
+
         setSession(session);
         setUser(session?.user || null);
         setIsLoading(false);
+
+        let currentRole: string | null = null;
 
         if (session?.user) {
           // Fetch user role from the public.profiles table
@@ -40,11 +44,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine for new users
             console.error("Error fetching user profile role:", profileError);
-            setUserRole(null);
           } else if (profile) {
-            setUserRole(profile.role);
-          } else {
-            setUserRole(null); // No profile found or no role set
+            currentRole = profile.role;
+          }
+          setUserRole(currentRole);
+
+          // Explicitly redirect after successful sign-in
+          if (_event === 'SIGNED_IN') {
+            showSuccess("Login bem-sucedido!");
+            if (currentRole === 'admin') {
+              navigate('/admin');
+            } else if (currentRole === 'cleaner') {
+              navigate('/dashboard');
+            } else if (currentRole === 'customer') {
+              navigate('/account');
+            } else {
+              navigate('/'); // Default redirect if no specific role dashboard
+            }
           }
         } else {
           setUserRole(null);
@@ -57,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     );
 
-    // Initial session check
+    // Initial session check (keep this as is, it sets initial state)
     const getSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
