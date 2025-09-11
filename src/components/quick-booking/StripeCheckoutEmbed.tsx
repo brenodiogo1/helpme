@@ -110,10 +110,18 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
           </div>
       ) : (
           <>
-              <p className="text-sm text-muted-foreground mt-2 mb-4">
-                  Vul uw betaalgegevens in het onderstaande formulier in om de boeking te voltooien.
-              </p>
-              <div ref={checkoutRef} id="checkout" className="mt-4" />
+              {isLoadingStripe ? (
+                  <div className="flex items-center justify-center h-32 mt-4">
+                      <p>Laden van betaalformulier...</p>
+                  </div>
+              ) : (
+                  <>
+                      <p className="text-sm text-muted-foreground mt-2 mb-4">
+                          Vul uw betaalgegevens in het onderstaande formulier in om de boeking te voltooien.
+                      </p>
+                      <div ref={checkoutRef} id="checkout" className="mt-4" />
+                  </>
+              )}
           </>
       )}
     </>

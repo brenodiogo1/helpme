@@ -31,11 +31,12 @@ const ExtraServicesSelection: React.FC<ExtraServicesSelectionProps> = ({ isSubmi
   const { control, watch } = useFormContext();
   const selectedExtraServices = watch("selectedExtraServices") || [];
 
-  const extrasPrice = React.useMemo(() => {
-    return extraServices
-      .filter(service => selectedExtraServices.includes(service.id))
-      .reduce((total, service) => total + service.price, 0);
-  }, [selectedExtraServices]);
+  // Removido: 'extrasPrice' não é usado diretamente neste componente
+  // const extrasPrice = React.useMemo(() => {
+  //   return extraServices
+  //     .filter(service => selectedExtraServices.includes(service.id))
+  //     .reduce((total, service) => total + service.price, 0);
+  // }, [selectedExtraServices]);
 
   // Removido: 'discountAmount' não é usado diretamente neste componente
   // const discountAmount = React.useMemo(() => {
@@ -64,7 +65,7 @@ const ExtraServicesSelection: React.FC<ExtraServicesSelectionProps> = ({ isSubmi
                         ? field.onChange([...(field.value || []), service.id])
                         : field.onChange(
                             field.value?.filter(
-                              (value: string) => value !== service.id // Corrigido aqui
+                              (value: string) => value !== service.id
                             )
                           );
                     }}

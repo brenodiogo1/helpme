@@ -8,7 +8,7 @@ interface PriceSummaryProps {
   durationHours: number;
   selectedExtraServices: string[];
   basePrice: number;
-  // extrasPrice: number; // Removido: não é usado diretamente aqui
+  extrasPrice: number; // Reintroduzido
   discountAmount: number;
   totalPrice: number;
 }
@@ -24,7 +24,7 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
   durationHours,
   selectedExtraServices,
   basePrice,
-  // extrasPrice, // Removido da desestruturação
+  extrasPrice, // Reintroduzido na desestruturação
   discountAmount,
   totalPrice,
 }) => {
@@ -41,10 +41,15 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
         </div>
         {selectedExtraServices.map(serviceId => {
           const service = extraServices.find(s => s.id === serviceId);
+          // Adiciona uma verificação para garantir que 'service' não é undefined
+          if (!service) {
+            console.warn(`Service with ID ${serviceId} not found in extraServices.`);
+            return null; // Não renderiza se o serviço não for encontrado
+          }
           return (
             <div key={serviceId} className="flex justify-between">
-              <span>{service?.label}</span>
-              <span>€{service?.price.toFixed(2)}</span>
+              <span>{service.label}</span>
+              <span>€{service.price.toFixed(2)}</span>
             </div>
           );
         })}

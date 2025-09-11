@@ -27,7 +27,7 @@ interface BookingDetailsFormProps {
 }
 
 const BookingDetailsForm: React.FC<BookingDetailsFormProps> = ({ isSubmitting }) => {
-  const { control, watch, setValue, formState } = useFormContext(); // Adicionado formState
+  const { control, watch, setValue, formState } = useFormContext();
   const durationHours = watch("durationHours");
 
   return (
@@ -117,7 +117,7 @@ const BookingDetailsForm: React.FC<BookingDetailsFormProps> = ({ isSubmitting })
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <FormMessage>{formState.errors.durationHours?.message}</FormMessage> {/* Corrigido aqui */}
+        <FormMessage>{formState.errors.durationHours?.message}</FormMessage>
       </div>
       <Separator />
     </div>

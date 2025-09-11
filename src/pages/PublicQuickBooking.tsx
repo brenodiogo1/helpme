@@ -173,7 +173,7 @@ const PublicQuickBooking = () => {
                   durationHours={durationHours}
                   selectedExtraServices={selectedExtraServices}
                   basePrice={basePrice}
-                  extrasPrice={extrasPrice}
+                  extrasPrice={extrasPrice} // Passando extrasPrice
                   discountAmount={discountAmount}
                   totalPrice={totalPrice}
                 />
