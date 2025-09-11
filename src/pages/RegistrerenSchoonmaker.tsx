@@ -59,7 +59,7 @@ const RegistrerenSchoonmaker = () => {
 
   const onPlaceChanged = () => {
     if (autocompleteRef.current !== null) {
-      const place = autocompleteRef.current.getPlace(); // Corrected typo here
+      const place = autocompleteRef.current.getPlace();
       if (place.address_components) {
         let streetName = "";
         let streetNumber = "";
@@ -155,7 +155,8 @@ const RegistrerenSchoonmaker = () => {
         }
       }
 
-      showSuccess("Account succesvol aangemaakt! Een verificatielink is naar uw e-mailadres gestuurd. Por favor, verifique uw e-mail om uw account te activeren.");
+      // Mensagem de sucesso atualizada para registro manual
+      showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
       navigate("/login");
     } catch (error: any) {
       showError(error.message);

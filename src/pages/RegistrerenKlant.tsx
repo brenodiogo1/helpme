@@ -50,7 +50,6 @@ const RegistrerenKlant = () => {
       let authUserId = user?.id;
 
       if (!authUserId) {
-        // Only include password if it's defined (for manual signup)
         if (!values.password) {
           throw new Error("Wachtwoord is verplicht voor handmatige registratie.");
         }
@@ -88,7 +87,12 @@ const RegistrerenKlant = () => {
         }
       }
 
-      showSuccess("Account succesvol aangemaakt! Verifique seu e-mail para ativar sua conta.");
+      // Mensagem de sucesso atualizada para registro manual
+      if (!user || user.app_metadata.provider !== 'google') {
+        showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
+      } else {
+        showSuccess("Account succesvol aangemaakt!");
+      }
       navigate("/login");
     } catch (error: any) {
       showError(error.message || "Fout bij het aanmaken van het account.");
@@ -102,7 +106,6 @@ const RegistrerenKlant = () => {
         provider: 'google',
         options: {
           redirectTo: window.location.origin + '/registreren/klant',
-          // Removed 'data' property as it's not supported in signInWithOAuth options
         },
       });
 
