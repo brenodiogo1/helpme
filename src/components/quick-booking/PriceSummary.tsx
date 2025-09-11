@@ -8,7 +8,7 @@ interface PriceSummaryProps {
   durationHours: number;
   selectedExtraServices: string[];
   basePrice: number;
-  // extrasPrice: number; // Removido: não é usado diretamente aqui
+  extrasPrice: number; // Added this property
   discountAmount: number;
   totalPrice: number;
 }
@@ -24,7 +24,7 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
   durationHours,
   selectedExtraServices,
   basePrice,
-  // extrasPrice, // Removido da desestruturação
+  extrasPrice, // Now correctly destructured
   discountAmount,
   totalPrice,
 }) => {

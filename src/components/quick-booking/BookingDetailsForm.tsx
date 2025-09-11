@@ -27,7 +27,7 @@ interface BookingDetailsFormProps {
 }
 
 const BookingDetailsForm: React.FC<BookingDetailsFormProps> = ({ isSubmitting }) => {
-  const { control, watch, setValue, formState } = useFormContext();
+  const { control, watch, setValue } = useFormContext(); // Removed formState as it's not directly used for FormMessage anymore
   const durationHours = watch("durationHours");
 
   return (
@@ -94,31 +94,39 @@ const BookingDetailsForm: React.FC<BookingDetailsFormProps> = ({ isSubmitting })
         />
       </div>
 
-      <div>
-        <FormLabel>Duur</FormLabel>
-        <div className="flex items-center gap-4 mt-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setValue("durationHours", Math.max(1, durationHours - 1))}
-            disabled={isSubmitting}
-            type="button"
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="text-lg font-bold w-12 text-center">{durationHours} uur</span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setValue("durationHours", durationHours + 1)}
-            disabled={isSubmitting}
-            type="button"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        <FormMessage>{formState.errors.durationHours?.message}</FormMessage>
-      </div>
+      <FormField
+        control={control}
+        name="durationHours"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Duur</FormLabel>
+            <FormControl>
+              <div className="flex items-center gap-4 mt-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setValue("durationHours", Math.max(1, durationHours - 1))}
+                  disabled={isSubmitting}
+                  type="button"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-lg font-bold w-12 text-center">{durationHours} uur</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setValue("durationHours", durationHours + 1)}
+                  disabled={isSubmitting}
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <Separator />
     </div>
   );
