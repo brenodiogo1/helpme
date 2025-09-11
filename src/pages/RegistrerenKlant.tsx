@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -39,12 +39,13 @@ const RegistrerenKlant = () => {
           data: {
             first_name: values.firstName,
             last_name: values.lastName,
-            role: 'customer', // Passando o role 'customer'
+            role: 'customer',
           },
         },
       });
 
       if (error) {
+        console.error("Supabase signup error:", error); // Log the full error object
         throw new Error(error.message);
       }
 
@@ -56,7 +57,7 @@ const RegistrerenKlant = () => {
       }
     } catch (error: any) {
       showError(error.message || "Fout bij het aanmaken van het account.");
-      console.error("Registration error:", error);
+      console.error("Registration catch block error:", error); // Log the full error object
     }
   }
 
