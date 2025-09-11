@@ -18,7 +18,7 @@ const Header = () => {
             <img src="/logo.png" alt="HelpMe Logo" className="h-20" /> {/* Logo aumentado */}
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-            <Link to="/#hoe-het-werkt">{t("header.howItWorks")}</Link>
+            <Link to="/#hoe-et-werkt">{t("header.howItWorks")}</Link>
             <Link to="/voor-schoonmakers">{t("header.forCleaners")}</Link>
             <Link to="/quick-booking" className="text-primary hover:text-primary/80">
               {t("header.quickBooking")}
@@ -53,14 +53,15 @@ const Header = () => {
                     to="/"
                     className="mb-8 flex items-center gap-2 text-lg font-semibold"
                   >
+                    {/* Logo aumentado no mobile também */}
                     <img
                       src="/logo.png"
                       alt="HelpMe Logo"
-                      className="h-20" {/* Logo aumentado no mobile também */}
+                      className="h-20"
                     />
                   </Link>
                   <div className="flex flex-col gap-6 text-xl">
-                    <Link to="/#hoe-het-werkt" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
+                    <Link to="/#hoe-et-werkt" className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted">
                       <ClipboardList className="h-6 w-6" />
                       {t("header.howItWorks")}
                     </Link>
