@@ -61,14 +61,14 @@ const Index = () => {
         ></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10 md:from-black/70 md:via-black/30 md:to-transparent"></div>
         <div className="relative container mx-auto px-4 py-24 sm:py-32 md:py-48 text-white">
-          <div className="md:w-1/2 lg:w-2/3 text-center md:text-left space-y-4"> {/* Adicionado space-y-4 aqui */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold"> {/* Removido mb-4 */}
+          <div className="md:w-1/2 lg:w-2/3 text-center md:text-left space-y-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">
               {t('hero.title')}
             </h1>
-            <p className="text-lg md:text-xl max-w-xl mx-auto md:mx-0"> {/* Removido mb-8 */}
+            <p className="text-lg md:text-xl max-w-xl mx-auto md:mx-0">
               {t('hero.subtitle')}
             </p>
-            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0 mt-4"> {/* Adicionado mt-4 para empurrar o bloco de busca para baixo */}
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0 mt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-center">
                 <Input
                   type="text"
@@ -84,7 +84,7 @@ const Index = () => {
                 />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal text-foreground"> {/* Adicionado text-foreground */}
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "dd-MM-yyyy") : <span>Kies een datum</span>}
                     </Button>
@@ -100,7 +100,7 @@ const Index = () => {
                   </PopoverContent>
                 </Popover>
                 <Select onValueChange={setTime} value={time}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-foreground"> {/* Adicionado text-foreground */}
                     <SelectValue placeholder="Kies een tijd" />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,7 +184,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanderen.
+                  We werken alleen met de beste schoonmakers om een vlekkeloos resultaat te garanteren.
                 </p>
               </CardContent>
             </Card>
