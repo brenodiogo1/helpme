@@ -26,7 +26,7 @@ const Bevestiging = () => {
       const sessionId = params.get('session_id');
 
       if (!sessionId) {
-        // If no session_id, it means it's a quick booking or direct navigation
+        // If no session_id, it means it's a quick booking (cash) or direct navigation
         if (bookingDetails?.status === 'pending_assignment') {
           setPaymentStatus('pending');
         } else {
@@ -61,49 +61,90 @@ const Bevestiging = () => {
           setPaymentStatus('succeeded');
 
           // Retrieve booking details from location state
-          const { schoonmaker, date, time, hours, totalPrice } = bookingDetails; // Removido selectedServices
+          const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, phone, address, city, zipCode, notes, selectedExtraServices, basePrice, extrasPrice, discountAmount, platformFee } = bookingDetails; // Removido selectedServices
 
           if (!bookingCreated && bookingDetails) {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (userError || !user) {
-                throw new Error("Gebruiker niet ingelogd.");
-            }
+            // Check if it's a quick booking (no cleaner_id) or a regular booking
+            const isQuickBooking = !schoonmaker?.id;
 
-            // Create the booking in Supabase
-            const { data: newBookingData, error: bookingError } = await supabase
-                .from('bookings')
-                .insert({
+            let insertData: any = {
+                booking_date: format(new Date(date), "yyyy-MM-dd"),
+                booking_time: time,
+                duration_hours: hours,
+                total_price: totalPrice,
+                status: 'paid_pending_assignment', // Status inicial para quick booking pago
+            };
+
+            if (isQuickBooking) {
+                // For quick bookings, insert into quick_bookings table
+                insertData = {
+                    ...insertData,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: phone,
+                    address: address,
+                    city: city,
+                    zip_code: zipCode,
+                    notes: notes,
+                    extra_services: selectedExtraServices,
+                    base_price: basePrice,
+                    extras_price: extrasPrice,
+                    discount_amount: discountAmount,
+                    platform_fee: platformFee,
+                };
+
+                const { data: newQuickBookingData, error: quickBookingError } = await supabase
+                    .from('quick_bookings')
+                    .insert(insertData)
+                    .select()
+                    .single();
+
+                if (quickBookingError || !newQuickBookingData) {
+                    throw new Error(quickBookingError?.message || "Fout bij het aanmaken van de snelle boeking na betaling.");
+                }
+                setBookingDetails({ ...bookingDetails, status: 'paid_pending_assignment', bookingId: newQuickBookingData.id });
+
+            } else {
+                // For regular bookings, insert into bookings table
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    throw new Error("Gebruiker niet ingelogd.");
+                }
+                insertData = {
+                    ...insertData,
                     customer_id: user.id,
                     cleaner_id: schoonmaker.id,
-                    booking_date: format(new Date(date), "yyyy-MM-dd"),
-                    booking_time: time,
-                    duration_hours: hours,
-                    total_price: totalPrice,
                     status: 'accepted', // Status 'accepted' após pagamento bem-sucedido
-                })
-                .select()
-                .single();
+                };
 
-            if (bookingError || !newBookingData) {
-                throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
-            }
+                const { data: newBookingData, error: bookingError } = await supabase
+                    .from('bookings')
+                    .insert(insertData)
+                    .select()
+                    .single();
 
-            // Create the job offer for the cleaner
-            const { error: offerError } = await supabase
-                .from('job_offers')
-                .insert({
-                    booking_id: newBookingData.id,
-                    cleaner_id: schoonmaker.id,
-                    status: 'accepted', // Oferta aceita automaticamente se o pagamento foi feito
-                });
+                if (bookingError || !newBookingData) {
+                    throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
+                }
 
-            if (offerError) {
-                throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding na betaling.");
+                // Create the job offer for the cleaner
+                const { error: offerError } = await supabase
+                    .from('job_offers')
+                    .insert({
+                        booking_id: newBookingData.id,
+                        cleaner_id: schoonmaker.id,
+                        status: 'accepted', // Oferta aceita automaticamente se o pagamento foi feito
+                    });
+
+                if (offerError) {
+                    throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding na betaling.");
+                }
+                setBookingDetails({ ...bookingDetails, status: 'accepted', bookingId: newBookingData.id });
             }
 
             setBookingCreated(true);
             showSuccess("Betaling succesvol! Je boeking is bevestigd.");
-            setBookingDetails({ ...bookingDetails, status: 'accepted', bookingId: newBookingData.id });
           }
         } else {
           setPaymentStatus('failed');
@@ -131,7 +172,8 @@ const Bevestiging = () => {
     );
   }
 
-  const { schoonmaker, date, time, hours, totalPrice } = bookingDetails;
+  const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, address, city, zipCode } = bookingDetails;
+  const isQuickBooking = !schoonmaker?.id;
 
   const renderContent = () => {
     switch (paymentStatus) {
@@ -161,7 +203,20 @@ const Bevestiging = () => {
                 Een bevestiging is naar je e-mailadres gestuurd. Hieronder vind je de details van je afspraak.
               </p>
               <div className="text-left border rounded-lg p-4 space-y-2 bg-secondary/50">
-                <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
+                {isQuickBooking ? (
+                    <>
+                        <p><strong>Klant:</strong> {firstName} {lastName}</p>
+                        <p><strong>E-mail:</strong> {email}</p>
+                        <p><strong>Adres:</strong> {address}, {zipCode} {city}</p>
+                        <p><strong>Schoonmaker:</strong> Wordt toegewezen</p>
+                        <p><strong>Status:</strong> Betaald, wacht op toewijzing</p>
+                    </>
+                ) : (
+                    <>
+                        <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
+                        <p><strong>Status:</strong> Geaccepteerd</p>
+                    </>
+                )}
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>
                 <p><strong>Tijd:</strong> {time}</p>
                 <p><strong>Duur:</strong> {hours} uur</p>
@@ -185,7 +240,20 @@ const Bevestiging = () => {
                 We hebben je aanvraag ontvangen en zoeken een geschikte schoonmaker. Je ontvangt spoedig een update via e-mail en chat.
               </p>
               <div className="text-left border rounded-lg p-4 space-y-2 bg-secondary/50">
-                <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
+                {isQuickBooking ? (
+                    <>
+                        <p><strong>Klant:</strong> {firstName} {lastName}</p>
+                        <p><strong>E-mail:</strong> {email}</p>
+                        <p><strong>Adres:</strong> {address}, {zipCode} {city}</p>
+                        <p><strong>Schoonmaker:</strong> Wordt toegewezen</p>
+                        <p><strong>Status:</strong> In afwachting van toewijzing</p>
+                    </>
+                ) : (
+                    <>
+                        <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
+                        <p><strong>Status:</strong> In afwachting van aanbieding</p>
+                    </>
+                )}
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>
                 <p><strong>Tijd:</strong> {time}</p>
                 <p><strong>Duur:</strong> {hours} uur</p>
@@ -209,7 +277,7 @@ const Bevestiging = () => {
                 Helaas is je betaling niet gelukt. Probeer het opnieuw of neem contact op met de ondersteuning.
               </p>
               <Button asChild className="mt-6">
-                <Link to={`/boeken/${schoonmaker?.id}`} state={{ date, time }}>Opnieuw proberen</Link>
+                <Link to={`/quick-booking`}>Opnieuw proberen</Link>
               </Button>
             </CardContent>
           </>

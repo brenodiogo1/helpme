@@ -11,6 +11,8 @@ import BookingDetailsForm, { bookingDetailsSchema } from "@/components/quick-boo
 import ExtraServicesForm, { extraServicesSchema } from "@/components/quick-booking/ExtraServicesForm";
 import ContactDetailsForm, { contactDetailsSchema } from "@/components/quick-booking/ContactDetailsForm";
 import PriceSummary from "@/components/quick-booking/PriceSummary";
+import PaymentMethodSelection from "@/components/quick-booking/PaymentMethodSelection"; // Novo import
+import StripeCheckoutEmbed from "@/components/quick-booking/StripeCheckoutEmbed"; // Novo import
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,15 +48,20 @@ const PublicQuickBooking: React.FC = () => {
     },
   });
 
-  const { handleSubmit, watch, formState, reset } = methods;
+  const { handleSubmit, watch, formState, reset, trigger } = methods; // Adicionado 'trigger'
 
   const durationHours = watch("durationHours");
-  const selectedExtraServices = watch("selectedExtraServices") || []; // Ensure it's always an array
+  const selectedExtraServices = watch("selectedExtraServices") || [];
+  const bookingDate = watch("bookingDate");
+  const bookingTime = watch("bookingTime");
 
   const [basePrice, setBasePrice] = useState(0);
   const [extrasPrice, setExtrasPrice] = useState(0);
   const [discountAmount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe'); // Estado para método de pagamento
+  const [isLoadingStripe, setIsLoadingStripe] = useState(false); // Estado para carregamento do Stripe
+  const [stripeError, setStripeError] = useState<string | null>(null); // Estado para erros do Stripe
 
   const extraServicesOptions = [
     { id: "ramen", label: "Ramen wassen", price: 25.00 },
@@ -79,8 +86,7 @@ const PublicQuickBooking: React.FC = () => {
     }
   }, [durationHours, selectedExtraServices, settings.hourlyRate, settings.platformBookingFee, discountAmount]);
 
-  const onSubmit = async (data: QuickBookingFormData) => {
-    console.log("Form Data:", data);
+  const handleCashBookingSubmit = async (data: QuickBookingFormData) => {
     const { error } = await supabase.from('quick_bookings').insert({
       booking_date: data.bookingDate.toISOString().split('T')[0],
       booking_time: data.bookingTime,
@@ -103,13 +109,21 @@ const PublicQuickBooking: React.FC = () => {
     });
 
     if (error) {
-      console.error("Error submitting booking:", error);
+      console.error("Error submitting cash booking:", error);
       toast.error("Er is een fout opgetreden bij het indienen van uw boeking. Probeer het opnieuw.");
     } else {
       toast.success("Uw boeking is succesvol ingediend!");
       reset();
-      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours } } }); // Redirect to confirmation page
+      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours } } });
     }
+  };
+
+  const onSubmit = async (data: QuickBookingFormData) => {
+    if (paymentMethod === 'cash') {
+      await handleCashBookingSubmit(data);
+    }
+    // Stripe payment is handled by the StripeCheckoutEmbed component directly
+    // It will redirect to /bevestiging on success
   };
 
   return (
@@ -132,16 +146,37 @@ const PublicQuickBooking: React.FC = () => {
 
               <PriceSummary
                 durationHours={durationHours}
-                selectedExtraServices={selectedExtraServices} // Now guaranteed to be string[]
+                selectedExtraServices={selectedExtraServices}
                 basePrice={basePrice}
                 extrasPrice={extrasPrice}
                 discountAmount={discountAmount}
                 totalPrice={totalPrice}
               />
 
-              <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? "Boeking indienen..." : "Boeking indienen"}
-              </Button>
+              <PaymentMethodSelection
+                paymentMethod={paymentMethod}
+                onPaymentMethodChange={setPaymentMethod}
+                isSubmitting={formState.isSubmitting}
+                totalPrice={totalPrice}
+              />
+
+              {paymentMethod === 'stripe' && (
+                <StripeCheckoutEmbed
+                  totalPrice={totalPrice}
+                  bookingDate={bookingDate}
+                  bookingTime={bookingTime}
+                  setIsLoadingStripe={setIsLoadingStripe}
+                  stripeError={stripeError}
+                  setStripeError={setStripeError}
+                  formTrigger={trigger} // Passar a função trigger do react-hook-form
+                />
+              )}
+
+              {paymentMethod === 'cash' && (
+                <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting ? "Boeking indienen..." : "Boeking indienen"}
+                </Button>
+              )}
             </form>
           </FormProvider>
         </CardContent>

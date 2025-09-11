@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from "@/integrations/supabase/client";
-// import { showError } from "@/utils/toast"; // Removido: 'showError' não é usado diretamente aqui
+import { showError } from "@/utils/toast";
 import { Button } from "@/components/ui/button";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -14,7 +14,7 @@ interface StripeCheckoutEmbedProps {
   totalPrice: number;
   bookingDate: Date | undefined;
   bookingTime: string | undefined;
-  // setIsLoadingStripe: (loading: boolean) => void; // Removido: agora gerenciado internamente
+  setIsLoadingStripe: (loading: boolean) => void;
   stripeError: string | null;
   setStripeError: (error: string | null) => void;
   formTrigger: () => Promise<boolean>; // Adicionado para validar o formulário antes de inicializar o Stripe
@@ -24,13 +24,12 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
   totalPrice,
   bookingDate,
   bookingTime,
-  // setIsLoadingStripe, // Removido da desestruturação
+  setIsLoadingStripe,
   stripeError,
   setStripeError,
   formTrigger,
 }) => {
   const checkoutRef = useRef<HTMLDivElement>(null);
-  const [isLoadingStripe, setIsLoadingStripe] = React.useState(true); // Adicionado estado interno
 
   useEffect(() => {
     const initializeStripeCheckout = async () => {
@@ -51,7 +50,7 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
       }
 
       if (!bookingDate || !bookingTime) {
-          setStripeError("Data en tijd da reserva não fornecidas.");
+          setStripeError("Data e tempo da reserva não fornecidas.");
           setIsLoadingStripe(false);
           return;
       }
@@ -99,7 +98,7 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
     };
 
     initializeStripeCheckout();
-  }, [totalPrice, bookingDate, bookingTime, setStripeError, formTrigger]);
+  }, [totalPrice, bookingDate, bookingTime, setIsLoadingStripe, setStripeError, formTrigger]);
 
   return (
     <>
