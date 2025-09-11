@@ -13,6 +13,7 @@ import { showLoading, showSuccess, dismissToast, showError } from "@/utils/toast
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSettings } from "@/contexts/SettingsContext"; // Import useSettings
 
 // Mock data - in a real app, you'd fetch this based on the ID
 const mockSchoonmaker: Schoonmaker = {
@@ -49,6 +50,7 @@ const Boeken = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { date, time } = location.state || {};
+    const { settings } = useSettings(); // Use settings context
 
     const [hours, setHours] = useState(3);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -73,7 +75,9 @@ const Boeken = () => {
         return 0;
     }, [selectedServices, extrasPrice]);
 
-    const totalPrice = basePrice + extrasPrice - discountAmount;
+    const subtotal = basePrice + extrasPrice - discountAmount;
+    const platformFee = settings.platformBookingFee; // Get platform fee from settings
+    const totalPrice = subtotal + platformFee;
 
     const handleServiceChange = (serviceId: string) => {
         setSelectedServices(prev =>
@@ -285,6 +289,10 @@ const Boeken = () => {
                                   <span>-€{discountAmount.toFixed(2)}</span>
                                 </div>
                             )}
+                            <div className="flex justify-between">
+                                <span>Boekingskosten platform</span>
+                                <span>€{platformFee.toFixed(2)}</span>
+                            </div>
                             <Separator className="my-2" />
                             <div className="flex justify-between font-bold text-foreground">
                                 <span>Totaal</span>

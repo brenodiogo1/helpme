@@ -19,6 +19,8 @@ const formSchema = z.object({
   twilioAuthToken: z.string().optional(),
   twilioPhoneNumber: z.string().optional(),
   sendGridApiKey: z.string().optional(),
+  platformBookingFee: z.coerce.number().min(0, { message: "A taxa de reserva não pode ser negativa." }).optional(),
+  platformCommissionPercentage: z.coerce.number().min(0).max(100, { message: "A comissão deve ser entre 0 e 100%." }).optional(),
 });
 
 const AdminSettings = () => {
@@ -32,6 +34,8 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
+      platformBookingFee: settings.platformBookingFee,
+      platformCommissionPercentage: settings.platformCommissionPercentage,
     },
   });
 
@@ -42,6 +46,8 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
+      platformBookingFee: settings.platformBookingFee,
+      platformCommissionPercentage: settings.platformCommissionPercentage,
     });
   }, [settings, form]);
 
@@ -52,6 +58,8 @@ const AdminSettings = () => {
     updateSetting("twilioAuthToken", values.twilioAuthToken || "");
     updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
     updateSetting("sendGridApiKey", values.sendGridApiKey || "");
+    updateSetting("platformBookingFee", values.platformBookingFee || 0);
+    updateSetting("platformCommissionPercentage", values.platformCommissionPercentage || 0);
 
     console.log("Configurações salvas (simulação):", values);
     showSuccess("Instellingen opgeslagen! (Simulatie)");
@@ -67,19 +75,44 @@ const AdminSettings = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Instellingen zoals tarieven, commissies e-mailnotificaties komen hier.</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Integrações & API-sleutels</CardTitle>
-          <CardDescription>
-            Voer hier je API-sleutels in voor de betalingsverwerking e outros serviços.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-lg">
+              <div className="space-y-2">
+                <h3 className="font-semibold">Algemene Tarieven & Commissies</h3>
+                <FormField
+                  control={form.control}
+                  name="platformBookingFee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vaste Boekingskosten (€)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="4.90" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Een vaste vergoeding die aan elke boeking wordt toegevoegd.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="platformCommissionPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Commissiepercentage (%)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="1" placeholder="10" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Het percentage dat van de inkomsten van de schoonmaker wordt ingehouden.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Separator />
               <div className="space-y-2">
                 <h3 className="font-semibold">Google Maps</h3>
                 <FormField

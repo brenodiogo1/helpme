@@ -8,11 +8,13 @@ interface AppSettings {
   twilioAuthToken: string;
   twilioPhoneNumber: string;
   sendGridApiKey: string;
+  platformBookingFee: number; // Nova configuração: taxa de reserva fixa
+  platformCommissionPercentage: number; // Nova configuração: porcentagem de comissão
 }
 
 interface SettingsContextType {
   settings: AppSettings;
-  updateSetting: (key: keyof AppSettings, value: string) => void;
+  updateSetting: (key: keyof AppSettings, value: string | number) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -21,6 +23,8 @@ const defaultSettings: AppSettings = {
   twilioAuthToken: "",
   twilioPhoneNumber: "",
   sendGridApiKey: "",
+  platformBookingFee: 4.90, // Valor padrão
+  platformCommissionPercentage: 10, // Valor padrão (10%)
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -40,7 +44,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings]);
 
-  const updateSetting = (key: keyof AppSettings, value: string) => {
+  const updateSetting = (key: keyof AppSettings, value: string | number) => {
     setSettings(prevSettings => ({
       ...prevSettings,
       [key]: value,

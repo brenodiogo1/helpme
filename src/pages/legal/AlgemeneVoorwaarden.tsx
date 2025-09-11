@@ -17,6 +17,14 @@ const AlgemeneVoorwaarden = () => {
 
           <h3 className="font-semibold text-foreground">3. De overeenkomst</h3>
           <p>De overeenkomst komt, onder voorbehoud van het bepaalde in lid 4, tot stand op het moment van aanvaarding door de consument van het aanbod en het voldoen aan de daarbij gestelde voorwaarden.</p>
+
+          <h3 className="font-semibold text-foreground">4. Annuleringsbeleid</h3>
+          <p>Annuleringen van boekingen moeten tijdig worden doorgegeven. De volgende voorwaarden zijn van toepassing:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Bij annulering minder dan 24 uur voor de geplande service, wordt 50% van het totale bedrag in rekening gebracht.</li>
+            <li>Bij annulering minder dan 3 uur voor de geplande service, wordt 100% van het totale bedrag in rekening gebracht.</li>
+            <li>Annuleringen meer dan 24 uur van tevoren zijn kosteloos.</li>
+          </ul>
         </CardContent>
       </Card>
     </div>

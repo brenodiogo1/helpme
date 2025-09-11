@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from '@stripe/stripe-js';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useSettings } from "@/contexts/SettingsContext"; // Import useSettings
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -60,6 +61,7 @@ const PublicQuickBooking = () => {
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
   const checkoutRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { settings } = useSettings(); // Use settings context
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -94,7 +96,9 @@ const PublicQuickBooking = () => {
     return 0;
   }, [selectedExtraServices, extrasPrice]);
 
-  const totalPrice = basePrice + extrasPrice - discountAmount;
+  const subtotal = basePrice + extrasPrice - discountAmount;
+  const platformFee = settings.platformBookingFee; // Get platform fee from settings
+  const totalPrice = subtotal + platformFee;
 
   useEffect(() => {
     if (paymentMethod === 'stripe') {
@@ -465,6 +469,10 @@ const PublicQuickBooking = () => {
                       <span>-€{discountAmount.toFixed(2)}</span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                      <span>Boekingskosten platform</span>
+                      <span>€{platformFee.toFixed(2)}</span>
+                  </div>
                   <Separator className="my-2" />
                   <div className="flex justify-between font-bold text-foreground">
                     <span>Totaal</span>
@@ -491,7 +499,7 @@ const PublicQuickBooking = () => {
                             Contant betalen
                             <p className="text-xs text-muted-foreground">Betaal de schoonmaker direct na de service.</p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Klik op "Vraag aan" hieronder om uw boeking te bevestigen en contant te betalen.
+                                Klik op "Vraag aan" hieronder om uw boeking te bevestigen en contant te betalar.
                             </p>
                         </Label>
                     </div>
