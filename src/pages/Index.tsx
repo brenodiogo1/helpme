@@ -19,10 +19,10 @@ const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
   { name: "Rotterdam", image: "/rotterdam.jpg" },
-  { name: "Den Haag", image: "/den-haag.jpg" }, // Usando a imagem que você enviou
-  { name: "Utrecht", image: "https://via.placeholder.com/800x450?text=Utrecht" }, // Placeholder
-  { name: "Eindhoven", image: "https://via.placeholder.com/800x450?text=Eindhoven" }, // Placeholder
-  { name: "Groningen", image: "https://via.placeholder.com/800x450?text=Groningen" }, // Placeholder
+  { name: "Den Haag", image: "/den-haag.jpg" },
+  { name: "Utrecht", image: "/utrecht.jpg" }, // Usando a imagem que você enviou
+  { name: "Eindhoven", image: "/eindhoven.jpg" }, // Usando a imagem que você enviou
+  { name: "Groningen", image: "/groningen.jpg" }, // Usando a imagem que você enviou
 ];
 
 const mockReviews: Review[] = [
