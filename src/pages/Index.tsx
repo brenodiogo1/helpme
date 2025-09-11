@@ -1,4 +1,4 @@
-import { useState } from "react"; // Removido useMemo, useRef, useEffect
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Calendar as CalendarIcon, Smile, ShieldCheck, Star, Clock } from "lucide-react";
@@ -13,17 +13,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
-// import QuickBooking from "@/pages/admin/QuickBooking"; // Remover importação
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
-  { name: "Rotterdam", image: "https://images.unsplash.com/photo-1566975371904-c17177011e2a?q=80&w=800&auto=format&fit=crop" }, // Nova imagem para Rotterdam
-  { name: "Den Haag", image: "https://images.unsplash.com/photo-1618897554035-43c6f5665131?auto=format&fit=crop&w=800&q=80" },
-  { name: "Utrecht", image: "https://images.unsplash.com/photo-1561371228-789c35549834?auto=format&fit=crop&w=800&q=80" },
-  { name: "Eindhoven", image: "https://images.unsplash.com/photo-1579253498-243080170428?auto=format&fit=crop&w=800&q=80" },
-  { name: "Groningen", image: "https://images.unsplash.com/photo-1570164742218-8a8a5f00a633?auto=format&fit=crop&w=800&q=80" },
+  { name: "Rotterdam", image: "https://via.placeholder.com/800x450?text=Rotterdam" }, // Placeholder
+  { name: "Den Haag", image: "https://via.placeholder.com/800x450?text=Den+Haag" }, // Placeholder
+  { name: "Utrecht", image: "https://via.placeholder.com/800x450?text=Utrecht" }, // Placeholder
+  { name: "Eindhoven", image: "https://via.placeholder.com/800x450?text=Eindhoven" }, // Placeholder
+  { name: "Groningen", image: "https://via.placeholder.com/800x450?text=Groningen" }, // Placeholder
 ];
 
 const mockReviews: Review[] = [
@@ -39,14 +38,14 @@ const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [postcode, setPostcode] = useState("");
-  const [city, setCity] = useState(""); // Novo estado para a cidade
+  const [city, setCity] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string | undefined>();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (postcode) params.append("postcode", postcode);
-    if (city) params.append("city", city); // Adicionar cidade aos parâmetros
+    if (city) params.append("city", city);
     if (date) params.append("date", date.toISOString().split('T')[0]);
     if (time) params.append("time", time);
     navigate(`/zoeken?${params.toString()}`);
@@ -70,7 +69,7 @@ const Index = () => {
               {t('hero.subtitle')}
             </p>
             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-center"> {/* Ajustado para 4 colunas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-center">
                 <Input
                   type="text"
                   placeholder={t('hero.postalCodePlaceholder')}
@@ -78,7 +77,7 @@ const Index = () => {
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                 />
-                <Input // Novo campo para a cidade
+                <Input
                   type="text"
                   placeholder="Voer je stad in (bijv. Amsterdam)"
                   className="text-black"
@@ -118,14 +117,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Quick Booking Section (Removed) */}
-      {/* <section className="py-16 lg:py-24 bg-gray-50">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-8">Agendamento Rápido</h2>
-          <QuickBooking />
-        </div>
-      </section> */}
 
       {/* How It Works Section */}
       <section id="hoe-het-werkt" className="py-16 lg:py-24">
@@ -206,7 +197,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Boek, beheer en betaal je schoonmaak online, op elk moment dat het jou uitkomt.
+                  Boek, beheer en betaal je schoonmaak online, op elk momento que for mais conveniente para você.
                 </p>
               </CardContent>
             </Card>
