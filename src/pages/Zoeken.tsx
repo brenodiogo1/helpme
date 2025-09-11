@@ -105,6 +105,10 @@ const Zoeken = () => {
   const [loading, setLoading] = useState(true);
   const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch
 
+  // New states for sorting and rating filter
+  const [sortOption, setSortOption] = useState<string>("recommended"); // 'recommended', 'price_low_high', 'price_high_low', 'rating'
+  const [minRating, setMinRating] = useState<number>(0); // 0, 3, 4, 4.5
+
   useEffect(() => {
     const fetchCleaners = async () => {
       setLoading(true);
@@ -177,8 +181,21 @@ const Zoeken = () => {
     setFilterPostcode(e.target.value);
   };
 
+  const handleClearFilters = () => {
+    setPriceRange([10, 50]);
+    setSelectedServices([]);
+    setSelectedDaysOfWeek([]);
+    setFilterCity("");
+    setFilterPostcode("");
+    setSelectedDate(undefined);
+    setSelectedTime(undefined);
+    setSortOption("recommended");
+    setMinRating(0);
+    setSearchParams({}); // Clear URL search params
+  };
+
   const allAvailableCleaners = useMemo(() => {
-    // Combine mock cleaners with real cleaners, prioritizing real cleaners if IDs overlap
+    // Combine mock cleaners with real cleaners, ensuring uniqueness by ID
     const combinedCleanersMap = new Map<string, Schoonmaker>();
     mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
     realCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
@@ -189,22 +206,26 @@ const Zoeken = () => {
   const filteredSchoonmakers = useMemo(() => {
     let currentFilteredCleaners = allAvailableCleaners;
 
+    // Apply price range filter
     currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
       return (schoonmaker.hourlyRate || 0) >= priceRange[0] && (schoonmaker.hourlyRate || 0) <= priceRange[1];
     });
 
+    // Apply services filter
     if (selectedServices.length > 0) {
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
         selectedServices.every(service => schoonmaker.services?.includes(service))
       );
     }
 
+    // Apply days of week filter
     if (selectedDaysOfWeek.length > 0) {
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
         schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day))
       );
     }
 
+    // Apply date filter
     if (selectedDate) {
       const dayName = format(selectedDate, "eeee", { locale: nl });
       const formattedSelectedDate = format(selectedDate, "yyyy-MM-dd");
@@ -217,8 +238,25 @@ const Zoeken = () => {
       });
     }
 
+    // Apply minimum rating filter
+    if (minRating > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        (schoonmaker.ratingAvg || 0) >= minRating
+      );
+    }
+
+    // Apply sorting
+    if (sortOption === "price_low_high") {
+      currentFilteredCleaners.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
+    } else if (sortOption === "price_high_low") {
+      currentFilteredCleaners.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
+    } else if (sortOption === "rating") {
+      currentFilteredCleaners.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
+    }
+    // "recommended" (default) doesn't require explicit sorting here, as the initial order is maintained or can be randomized.
+
     return currentFilteredCleaners;
-  }, [allAvailableCleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate]);
+  }, [allAvailableCleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate, minRating, sortOption]);
 
   const initialPostcode = searchParams.get("postcode");
   const initialCity = searchParams.get("city");
@@ -241,7 +279,7 @@ const Zoeken = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="sort">Sorteer op</Label>
-                <Select>
+                <Select onValueChange={setSortOption} value={sortOption}>
                   <SelectTrigger id="sort">
                     <SelectValue placeholder="Aanbevolen" />
                   </SelectTrigger>
@@ -249,7 +287,7 @@ const Zoeken = () => {
                     <SelectItem value="recommended">Aanbevolen</SelectItem>
                     <SelectItem value="price_low_high">Prijs (laag-hoog)</SelectItem>
                     <SelectItem value="price_high_low">Prijs (hoog-laag)</SelectItem>
-                    <SelectItem value="rating">Beoordeling</SelectItem>
+                    <SelectItem value="rating">Beoordeling (hoog-laag)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -260,6 +298,20 @@ const Zoeken = () => {
                       <span>€{priceRange[0]}</span>
                       <span>€{priceRange[1]}</span>
                   </div>
+              </div>
+              <div>
+                <Label htmlFor="min-rating">Minimale beoordeling</Label>
+                <Select onValueChange={(value) => setMinRating(Number(value))} value={String(minRating)}>
+                  <SelectTrigger id="min-rating" className="mt-2">
+                    <SelectValue placeholder="Geen minimale beoordeling" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Geen minimale beoordeling</SelectItem>
+                    <SelectItem value="3">3 sterren of meer</SelectItem>
+                    <SelectItem value="4">4 sterren of meer</SelectItem>
+                    <SelectItem value="4.5">4.5 sterren of meer</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                   <Label htmlFor="filter-city">Stad</Label>
@@ -353,6 +405,9 @@ const Zoeken = () => {
                       ))}
                   </div>
               </div>
+              <Button variant="outline" className="w-full mt-6" onClick={handleClearFilters}>
+                Filters wissen
+              </Button>
             </div>
           </div>
         </aside>
