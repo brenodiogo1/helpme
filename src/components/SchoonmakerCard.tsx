@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Schoonmaker } from "@/types";
 import { Badge } from "./ui/badge";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 interface SchoonmakerCardProps {
   schoonmaker: Schoonmaker;
@@ -16,6 +17,8 @@ interface SchoonmakerCardProps {
 const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { session } = useAuth(); // Get session from AuthContext
 
   const selectedDate = searchParams.get("date");
   const selectedTime = searchParams.get("time");
@@ -23,6 +26,15 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
     showSuccess(isFavorite ? `${schoonmaker.name} verwijderd van favorieten.` : `${schoonmaker.name} toegevoegd aan favorieten.`);
+  };
+
+  const handleBookNowClick = () => {
+    if (!session) {
+      showError("Você precisa estar logado para agendar uma limpeza.");
+      navigate("/login");
+    } else if (selectedDate && selectedTime) {
+      navigate(`/boeken/${schoonmaker.id}`, { state: { date: selectedDate, time: selectedTime } });
+    }
   };
 
   return (
@@ -58,10 +70,8 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
           <span className="text-sm font-normal text-muted-foreground"> / uur</span>
         </div>
         {selectedDate && selectedTime ? (
-          <Button asChild>
-            <Link to={`/boeken/${schoonmaker.id}`} state={{ date: selectedDate, time: selectedTime }}>
-              Boek nu
-            </Link>
+          <Button onClick={handleBookNowClick}>
+            Boek nu
           </Button>
         ) : (
           <Button asChild variant="outline">

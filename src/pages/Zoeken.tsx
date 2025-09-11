@@ -101,14 +101,14 @@ const Zoeken = () => {
   );
   const [selectedTime, setSelectedTime] = useState<string | undefined>(initialTimeParam || undefined);
 
-  const [cleaners, setCleaners] = useState<Schoonmaker[]>([]);
+  const [realCleaners, setRealCleaners] = useState<Schoonmaker[]>([]); // Stores cleaners from Supabase
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch
 
   useEffect(() => {
     const fetchCleaners = async () => {
       setLoading(true);
-      setError(null);
+      setSupabaseError(null); // Clear previous Supabase errors
       try {
         let query = supabase.from('cleaners').select('*');
 
@@ -124,16 +124,10 @@ const Zoeken = () => {
         if (error) {
           throw new Error(error.message);
         }
-
-        // Combine fetched data with mock data, ensuring uniqueness by ID
-        const combinedCleanersMap = new Map<string, Schoonmaker>();
-        mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
-        (data || []).forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
-
-        setCleaners(Array.from(combinedCleanersMap.values()));
+        setRealCleaners(data || []);
       } catch (err: any) {
-        setError(err.message);
-        console.error("Error fetching cleaners:", err);
+        setSupabaseError(err.message);
+        console.error("Error fetching cleaners from Supabase:", err);
       } finally {
         setLoading(false);
       }
@@ -183,8 +177,17 @@ const Zoeken = () => {
     setFilterPostcode(e.target.value);
   };
 
+  const allAvailableCleaners = useMemo(() => {
+    // Combine mock cleaners with real cleaners, prioritizing real cleaners if IDs overlap
+    const combinedCleanersMap = new Map<string, Schoonmaker>();
+    mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+    realCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+    return Array.from(combinedCleanersMap.values());
+  }, [realCleaners]);
+
+
   const filteredSchoonmakers = useMemo(() => {
-    let currentFilteredCleaners = cleaners;
+    let currentFilteredCleaners = allAvailableCleaners;
 
     currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
       return (schoonmaker.hourlyRate || 0) >= priceRange[0] && (schoonmaker.hourlyRate || 0) <= priceRange[1];
@@ -215,7 +218,7 @@ const Zoeken = () => {
     }
 
     return currentFilteredCleaners;
-  }, [cleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate]);
+  }, [allAvailableCleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate]);
 
   const initialPostcode = searchParams.get("postcode");
   const initialCity = searchParams.get("city");
@@ -224,14 +227,6 @@ const Zoeken = () => {
     return (
       <div className="container py-8 text-center">
         <p>Laden van schoonmakers...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container py-8 text-center text-red-500">
-        <p>Fout bij het laden van schoonmakers: {error}</p>
       </div>
     );
   }
@@ -367,6 +362,12 @@ const Zoeken = () => {
           <h1 className="text-3xl font-bold mb-4">
             {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
+          {supabaseError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <strong className="font-bold">Oeps!</strong>
+              <span className="block sm:inline"> Er is een fout opgetreden bij het laden van schoonmakers uit de database: {supabaseError}. De getoonde schoonmakers zijn voorbeelden.</span>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredSchoonmakers.length > 0 ? (
               filteredSchoonmakers.map((schoonmaker) => (
