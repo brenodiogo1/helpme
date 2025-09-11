@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react"; // Removido useEffect
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
-import { Checkbox } from "@/components/ui/checkbox"; // Removido Button
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -9,132 +9,15 @@ import { Schoonmaker } from "@/types";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 
-const mockSchoonmakers: Schoonmaker[] = [
-  {
-    id: "1",
-    name: "Anna de Vries",
-    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 128,
-    hourlyRate: 18.50,
-    bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers.",
-    services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
-    city: "Amsterdam",
-    address: "Kerkstraat 12, 1012 AB Amsterdam",
-    phoneNumber: "+31612345678",
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
-    unavailableDates: ["2025-09-15"], // Exemplo: Anna não está disponível em 15 de setembro de 2025
-  },
-  {
-    id: "2",
-    name: "Ben Janssen",
-    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.8,
-    ratingCount: 92,
-    hourlyRate: 17.00,
-    bio: "Flexibele en hardwerkende schoonmaker beschikbaar voor wekelijkse klussen. Ik gebruik milieuvriendelijke producten en laat uw huis stralen.",
-    services: ["Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk"],
-    city: "Utrecht",
-    address: "Plein 4, 3511 HT Utrecht",
-    phoneNumber: "+31623456789",
-    availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "3",
-    name: "Carla Bakker",
-    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 5.0,
-    ratingCount: 210,
-    hourlyRate: 20.00,
-    bio: "Perfectie is mijn standaard. Ik ben gespecializado em grandes schoonmaakklussen en het organiseren van ruimtes. Uw tevredenheid is gegarandeerd.",
-    services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
-    city: "Rotterdam",
-    address: "Coolsingel 1, 3011 AA Rotterdam",
-    phoneNumber: "+31634567890",
-    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag", "Zaterdag", "Zondag"],
-    unavailableDates: ["2025-09-20"],
-  },
-  {
-    id: "4",
-    name: "Daan Meijer",
-    photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.7,
-    ratingCount: 75,
-    hourlyRate: 17.50,
-    bio: "Student die met veel enthousiasme en precisie uw huis schoonmaakt. Beschikbaar in de weekenden en avonduren.",
-    services: ["Reguliere schoonmaak", "Boodschappen doen", "Student"],
-    city: "Amsterdam",
-    address: "Nieuwmarkt 20, 1011 JP Amsterdam",
-    phoneNumber: "+31645678901",
-    availableDaysOfWeek: ["Zaterdag", "Zondag"],
-    unavailableDates: [],
-  },
-  {
-    id: "5",
-    name: "Eva de Boer",
-    photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 150,
-    hourlyRate: 19.00,
-    bio: "Ervaren schoonmaakster met oog voor detail. Ik ben pas tevreden als uw huis weer blinkt. Zeer betrouwbaar en discreet.",
-    services: ["Dieptereiniging", "Kantoor schoonmaak", "Ramen wassen"],
-    city: "Den Haag",
-    address: "Laan van Meerdervoort 50, 2517 AN Den Haag",
-    phoneNumber: "+31656789012",
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "6",
-    name: "Frank de Wit",
-    photoUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.6,
-    ratingCount: 60,
-    hourlyRate: 16.50,
-    bio: "Hardwerkende en betrouwbare hulp. Ik help u graag met de wekelijkse schoonmaak en kleine klusjes in huis.",
-    services: ["Reguliere schoonmaak", "Kleine klusjes", "Tuinonderhoud"],
-    city: "Utrecht",
-    address: "Oudegracht 100, 3511 AW Utrecht",
-    phoneNumber: "+31667890123",
-    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "7",
-    name: "Gerda van Dijk",
-    photoUrl: "https://images.unsplash.com/photo-1557053910-d9eadeed1c58?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 5.0,
-    ratingCount: 180,
-    hourlyRate: 21.00,
-    bio: "Professionele schoonmaakster met meer dan 10 jaar ervaring. Gespecialiseerd in huishoudens met allergieën.",
-    services: ["Anti-allergeen", "Dieptereiniging", "Milieuvriendelijk"],
-    city: "Eindhoven",
-    address: "Demer 25, 5611 AS Eindhoven",
-    phoneNumber: "+31678901234",
-    availableDaysOfWeek: ["Dinsdag", "Donderdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "8",
-    name: "Hans Visser",
-    photoUrl: "https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.8,
-    ratingCount: 110,
-    hourlyRate: 18.00,
-    bio: "Efficiënt en grondig. Ik zorg ervoor dat uw kantoor of huis er weer representatief uitziet. Ook voor eenmalige klussen.",
-    services: ["Kantoor schoonmaak", "Grote schoonmaak", "Reguliere schoonmaak"],
-    city: "Rotterdam",
-    address: "Weena 700, 3013 AL Rotterdam",
-    phoneNumber: "+31689012345",
-    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
-    unavailableDates: [],
-  },
-];
-
-const allServices = [...new Set(mockSchoonmakers.flatMap(s => s.services))].sort();
-const allCities = [...new Set(mockSchoonmakers.map(s => s.city))].sort();
+const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
+const allServices = ["Dieptereiniging", "Ramen wassen", "Strijken", "Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging", "Na verbouwing", "Grote schoonmaak", "Organiseren", "Boodschappen doen", "Student", "Kleine klusjes", "Tuinonderhoud", "Anti-allergeen", "Kantoor schoonmaak"]; // Consolidated all services
+const allCities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"]; // Consolidated all cities
 const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
 
 const Zoeken = () => {
@@ -145,11 +28,64 @@ const Zoeken = () => {
   const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || "");
   const [filterPostcode, setFilterPostcode] = useState<string>(searchParams.get("postcode") || "");
 
-  // Removido useEffect, pois não é mais necessário para esta lógica
-  // useEffect(() => {
-  //   setFilterCity(searchParams.get("city") || "");
-  //   setFilterPostcode(searchParams.get("postcode") || "");
-  // }, [searchParams]);
+  const initialDateParam = searchParams.get("date");
+  const initialTimeParam = searchParams.get("time");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    initialDateParam ? new Date(initialDateParam) : undefined
+  );
+  const [selectedTime, setSelectedTime] = useState<string | undefined>(initialTimeParam || undefined);
+
+  const [cleaners, setCleaners] = useState<Schoonmaker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCleaners = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let query = supabase.from('cleaners').select('*');
+
+        if (filterCity) {
+          query = query.ilike('city', `%${filterCity}%`);
+        }
+        if (filterPostcode) {
+          query = query.ilike('postcode', `%${filterPostcode}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        setCleaners(data || []);
+      } catch (err: any) {
+        setError(err.message);
+        console.error("Error fetching cleaners:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCleaners();
+  }, [filterCity, filterPostcode]);
+
+  useEffect(() => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (selectedDate) {
+      newSearchParams.set("date", format(selectedDate, "yyyy-MM-dd"));
+    } else {
+      newSearchParams.delete("date");
+    }
+    if (selectedTime) {
+      newSearchParams.set("time", selectedTime);
+    } else {
+      newSearchParams.delete("time");
+    }
+    setSearchParams(newSearchParams);
+  }, [selectedDate, selectedTime, setSearchParams]);
+
 
   const handleServiceChange = (service: string) => {
     setSelectedServices(prev =>
@@ -168,66 +104,66 @@ const Zoeken = () => {
   };
 
   const handleCityFilterChange = (cityValue: string) => {
-    const newCity = cityValue === "all" ? "" : cityValue; // Treat "all" as empty string for filtering
+    const newCity = cityValue === "all" ? "" : cityValue;
     setFilterCity(newCity);
-    const newSearchParams = new URLSearchParams(searchParams);
-    if (newCity) {
-      newSearchParams.set("city", newCity);
-    } else {
-      newSearchParams.delete("city");
-    }
-    setSearchParams(newSearchParams);
   };
 
-  const handlePostcodeFilterChange = (postcode: string) => {
-    setFilterPostcode(postcode);
-    const newSearchParams = new URLSearchParams(searchParams);
-    if (postcode) {
-      newSearchParams.set("postcode", postcode);
-    } else {
-      newSearchParams.delete("postcode");
-    }
-    setSearchParams(newSearchParams);
+  const handlePostcodeFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterPostcode(e.target.value);
   };
 
   const filteredSchoonmakers = useMemo(() => {
-    const searchDateParam = searchParams.get("date");
-    // Removido searchTimeParam, pois não é mais utilizado
-    // const searchTimeParam = searchParams.get("time");
+    let currentFilteredCleaners = cleaners;
 
-    let searchDate: Date | null = null;
-    if (searchDateParam) {
-      searchDate = new Date(searchDateParam);
-      searchDate.setHours(0, 0, 0, 0);
+    currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
+      return (schoonmaker.hourlyRate || 0) >= priceRange[0] && (schoonmaker.hourlyRate || 0) <= priceRange[1];
+    });
+
+    if (selectedServices.length > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        selectedServices.every(service => schoonmaker.services?.includes(service))
+      );
     }
 
-    return mockSchoonmakers.filter(schoonmaker => {
-      const priceMatch = schoonmaker.hourlyRate >= priceRange[0] && schoonmaker.hourlyRate <= priceRange[1];
-      const servicesMatch = selectedServices.length === 0 || selectedServices.every(service => schoonmaker.services.includes(service));
+    if (selectedDaysOfWeek.length > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day))
+      );
+    }
 
-      const daysOfWeekMatch = selectedDaysOfWeek.length === 0 ||
-                              (schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day)));
+    if (selectedDate) {
+      const dayName = format(selectedDate, "eeee", { locale: nl });
+      const formattedSelectedDate = format(selectedDate, "yyyy-MM-dd");
 
-      const cityMatch = !filterCity || schoonmaker.city.toLowerCase() === filterCity.toLowerCase();
-      const postcodeMatch = !filterPostcode || schoonmaker.address.toLowerCase().includes(filterPostcode.toLowerCase());
-
-      let dateAndTimeMatch = true;
-      if (searchDate) {
-        const dayName = format(searchDate, "eeee", { locale: nl });
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
         const isWeeklyAvailable = schoonmaker.availableDaysOfWeek?.includes(dayName);
-        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(format(searchDate, "yyyy-MM-dd"));
+        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(formattedSelectedDate);
+        
+        return isWeeklyAvailable && !isSpecificallyUnavailable;
+      });
+    }
 
-        if (!isWeeklyAvailable || isSpecificallyUnavailable) {
-          dateAndTimeMatch = false;
-        }
-      }
-
-      return priceMatch && servicesMatch && daysOfWeekMatch && cityMatch && postcodeMatch && dateAndTimeMatch;
-    });
-  }, [priceRange, selectedServices, selectedDaysOfWeek, searchParams, filterCity, filterPostcode]);
+    return currentFilteredCleaners;
+  }, [cleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate]);
 
   const initialPostcode = searchParams.get("postcode");
   const initialCity = searchParams.get("city");
+
+  if (loading) {
+    return (
+      <div className="container py-8 text-center">
+        <p>Laden van schoonmakers...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-8 text-center text-red-500">
+        <p>Fout bij het laden van schoonmakers: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -261,12 +197,12 @@ const Zoeken = () => {
               </div>
               <div>
                   <Label htmlFor="filter-city">Stad</Label>
-                  <Select onValueChange={handleCityFilterChange} value={filterCity || "all"}> {/* Use "all" when filterCity is empty */}
+                  <Select onValueChange={handleCityFilterChange} value={filterCity || "all"}>
                     <SelectTrigger id="filter-city">
                       <SelectValue placeholder="Alle steden" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Alle steden</SelectItem> {/* Changed value to "all" */}
+                      <SelectItem value="all">Alle steden</SelectItem>
                       {allCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -278,10 +214,49 @@ const Zoeken = () => {
                   type="text"
                   placeholder="Voer postcode in"
                   value={filterPostcode}
-                  onChange={(e) => handlePostcodeFilterChange(e.target.value)}
+                  onChange={handlePostcodeFilterChange}
                   className="mt-2"
                 />
               </div>
+
+              {/* New Date Filter */}
+              <div>
+                <Label>Datum</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="w-full justify-start text-left font-normal mt-2"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "dd-MM-yyyy") : <span>Kies een datum</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* New Time Filter */}
+              <div>
+                <Label>Tijd</Label>
+                <Select onValueChange={setSelectedTime} value={selectedTime}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Kies een tijd" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                   <Label>Diensten</Label>
                   <div className="space-y-2 mt-2 max-h-60 overflow-y-auto">
