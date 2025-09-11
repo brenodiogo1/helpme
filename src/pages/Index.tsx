@@ -61,26 +61,24 @@ const Index = () => {
         ></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10 md:from-black/70 md:via-black/30 md:to-transparent"></div>
         <div className="relative container mx-auto px-4 py-24 sm:py-32 md:py-48 text-white">
-          <div className="md:w-1/2 lg:w-2/3 text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+          <div className="md:w-1/2 lg:w-2/3 text-center md:text-left space-y-4"> {/* Adicionado space-y-4 aqui */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold"> {/* Removido mb-4 */}
               {t('hero.title')}
             </h1>
-            <p className="text-lg md:text-xl mb-8 max-w-xl mx-auto md:mx-0">
+            <p className="text-lg md:text-xl max-w-xl mx-auto md:mx-0"> {/* Removido mb-8 */}
               {t('hero.subtitle')}
             </p>
-            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0">
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg max-w-xl mx-auto md:mx-0 mt-4"> {/* Adicionado mt-4 para empurrar o bloco de busca para baixo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-center">
                 <Input
                   type="text"
                   placeholder={t('hero.postalCodePlaceholder')}
-                  // Removido className="text-black"
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                 />
                 <Input
                   type="text"
                   placeholder="Voer je stad in (bijv. Amsterdam)"
-                  // Removido className="text-black"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
@@ -102,7 +100,7 @@ const Index = () => {
                   </PopoverContent>
                 </Popover>
                 <Select onValueChange={setTime} value={time}>
-                  <SelectTrigger> {/* Removido className="text-black" */}
+                  <SelectTrigger>
                     <SelectValue placeholder="Kies een tijd" />
                   </SelectTrigger>
                   <SelectContent>
