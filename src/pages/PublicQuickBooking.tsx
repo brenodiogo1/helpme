@@ -14,7 +14,7 @@ import PriceSummary from "@/components/quick-booking/PriceSummary";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom"; // Corrected import for React Router
+import { useNavigate } from "react-router-dom";
 
 // Combine all schemas
 const quickBookingSchema = z.object({
@@ -27,7 +27,7 @@ type QuickBookingFormData = z.infer<typeof quickBookingSchema>;
 
 const PublicQuickBooking: React.FC = () => {
   const { settings } = useSettings();
-  const navigate = useNavigate(); // Use useNavigate
+  const navigate = useNavigate();
   const methods = useForm<QuickBookingFormData>({
     resolver: zodResolver(quickBookingSchema),
     defaultValues: {
@@ -49,7 +49,7 @@ const PublicQuickBooking: React.FC = () => {
   const { handleSubmit, watch, formState, reset } = methods;
 
   const durationHours = watch("durationHours");
-  const selectedExtraServices = watch("selectedExtraServices");
+  const selectedExtraServices = watch("selectedExtraServices") || []; // Ensure it's always an array
 
   const [basePrice, setBasePrice] = useState(0);
   const [extrasPrice, setExtrasPrice] = useState(0);
@@ -132,7 +132,7 @@ const PublicQuickBooking: React.FC = () => {
 
               <PriceSummary
                 durationHours={durationHours}
-                selectedExtraServices={selectedExtraServices}
+                selectedExtraServices={selectedExtraServices} // Now guaranteed to be string[]
                 basePrice={basePrice}
                 extrasPrice={extrasPrice}
                 discountAmount={discountAmount}
