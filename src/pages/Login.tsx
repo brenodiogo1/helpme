@@ -55,9 +55,6 @@ const Login = () => {
     }
   }
 
-  // As funções handleGoogleLogin e handleFacebookLogin foram removidas
-  // pois os botões correspondentes não estarão mais presentes.
-
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
@@ -116,7 +113,6 @@ const Login = () => {
               Aanmelden
             </Link>
           </div>
-          {/* A seção de botões de login social foi removida */}
         </CardContent>
       </Card>
     </div>
