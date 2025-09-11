@@ -15,7 +15,7 @@ const Header = () => {
         {/* Left side: Logo and Desktop Nav */}
         <div className="flex items-center">
           <Link to="/" className="mr-6 flex items-center">
-            <img src="/logo.png" alt="HelpMe Logo" className="h-16" />
+            <img src="/logo.png" alt="HelpMe Logo" className="h-20" /> {/* Logo aumentado */}
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
             <Link to="/#hoe-het-werkt">{t("header.howItWorks")}</Link>
@@ -56,7 +56,7 @@ const Header = () => {
                     <img
                       src="/logo.png"
                       alt="HelpMe Logo"
-                      className="h-16"
+                      className="h-20" {/* Logo aumentado no mobile também */}
                     />
                   </Link>
                   <div className="flex flex-col gap-6 text-xl">
