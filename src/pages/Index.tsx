@@ -20,9 +20,9 @@ const cities = [
   { name: "Amsterdam", image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80" },
   { name: "Rotterdam", image: "/rotterdam.jpg" },
   { name: "Den Haag", image: "/den-haag.jpg" },
-  { name: "Utrecht", image: "/utrecht.jpg" }, // Usando a imagem que você enviou
-  { name: "Eindhoven", image: "/eindhoven.jpg" }, // Usando a imagem que você enviou
-  { name: "Groningen", image: "/groningen.jpg" }, // Usando a imagem que você enviou
+  { name: "Utrecht", image: "/utrecht.jpg" },
+  { name: "Eindhoven", image: "/eindhoven.jpg" },
+  { name: "Groningen", image: "/groningen.jpg" },
 ];
 
 const mockReviews: Review[] = [
@@ -73,20 +73,20 @@ const Index = () => {
                 <Input
                   type="text"
                   placeholder={t('hero.postalCodePlaceholder')}
-                  className="text-black"
+                  // Removido className="text-black"
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                 />
                 <Input
                   type="text"
                   placeholder="Voer je stad in (bijv. Amsterdam)"
-                  className="text-black"
+                  // Removido className="text-black"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal text-black">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "dd-MM-yyyy") : <span>Kies een datum</span>}
                     </Button>
@@ -102,7 +102,7 @@ const Index = () => {
                   </PopoverContent>
                 </Popover>
                 <Select onValueChange={setTime} value={time}>
-                  <SelectTrigger className="text-black">
+                  <SelectTrigger> {/* Removido className="text-black" */}
                     <SelectValue placeholder="Kies een tijd" />
                   </SelectTrigger>
                   <SelectContent>
