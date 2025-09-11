@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
@@ -19,6 +21,70 @@ const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"
 const allServices = ["Dieptereiniging", "Ramen wassen", "Strijken", "Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging", "Na verbouwing", "Grote schoonmaak", "Organiseren", "Boodschappen doen", "Student", "Kleine klusjes", "Tuinonderhoud", "Anti-allergeen", "Kantoor schoonmaak"]; // Consolidated all services
 const allCities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"]; // Consolidated all cities
 const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+
+// Mock data for cleaners
+const mockCleaners: Schoonmaker[] = [
+  {
+    id: "mock-1",
+    name: "Sophie Jansen",
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.8,
+    ratingCount: 95,
+    hourlyRate: 22.00,
+    bio: "Ervaren en betrouwbare schoonmaakster met oog voor detail. Ik zorg ervoor dat uw huis weer straalt!",
+    services: ["Reguliere schoonmaak", "Ramen wassen", "Milieuvriendelijk"],
+    city: "Amsterdam",
+    address: "Damrak 1, 1012 LK Amsterdam",
+    phoneNumber: "+31611223344",
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-2",
+    name: "Thomas Bakker",
+    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.5,
+    ratingCount: 70,
+    hourlyRate: 20.00,
+    bio: "Flexibele en hardwerkende schoonmaker, beschikbaar voor diverse klussen. Uw tevredenheid is mijn prioriteit.",
+    services: ["Dieptereiniging", "Ovenreiniging", "Kleine klusjes"],
+    city: "Utrecht",
+    address: "Oudegracht 100, 3511 AW Utrecht",
+    phoneNumber: "+31655443322",
+    availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-3",
+    name: "Laura de Jong",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.9,
+    ratingCount: 110,
+    hourlyRate: 25.00,
+    bio: "Specialist in grote schoonmaak en na verbouwing. Ik werk snel en efficiënt, met een perfect resultaat.",
+    services: ["Na verbouwing", "Grote schoonmaak", "Strijken"],
+    city: "Rotterdam",
+    address: "Coolsingel 1, 3011 AA Rotterdam",
+    phoneNumber: "+31677889900",
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Donderdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-4",
+    name: "Mohammed El-Amin",
+    photoUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.7,
+    ratingCount: 80,
+    hourlyRate: 19.50,
+    bio: "Vriendelijke en grondige schoonmaker. Ik help u graag met uw huishouden, inclusief huisdier-vriendelijke opties.",
+    services: ["Reguliere schoonmaak", "Huisdier-vriendelijk", "Boodschappen doen"],
+    city: "Den Haag",
+    address: "Spui 1, 2511 AA Den Haag",
+    phoneNumber: "+31699887766",
+    availableDaysOfWeek: ["Woensdag", "Vrijdag", "Zondag"],
+    unavailableDates: [],
+  },
+];
 
 const Zoeken = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,7 +125,12 @@ const Zoeken = () => {
           throw new Error(error.message);
         }
 
-        setCleaners(data || []);
+        // Combine fetched data with mock data, ensuring uniqueness by ID
+        const combinedCleanersMap = new Map<string, Schoonmaker>();
+        mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+        (data || []).forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+
+        setCleaners(Array.from(combinedCleanersMap.values()));
       } catch (err: any) {
         setError(err.message);
         console.error("Error fetching cleaners:", err);
