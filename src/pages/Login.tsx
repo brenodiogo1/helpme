@@ -11,7 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Chrome } from "lucide-react"; // Importar ícone do Google
+import { Chrome, Facebook } from "lucide-react"; // Importar ícones do Google e Facebook
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -73,6 +73,24 @@ const Login = () => {
     }
   };
 
+  const handleFacebookLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${window.location.origin}/`, // Redireciona para a home após o login
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      showError(error.message || "Fout bij het inloggen met Facebook.");
+      console.error("Facebook login error:", error);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
@@ -131,9 +149,12 @@ const Login = () => {
               Aanmelden
             </Link>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 space-y-2">
             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
               <Chrome className="mr-2 h-4 w-4" /> Inloggen met Google
+            </Button>
+            <Button variant="outline" className="w-full" onClick={handleFacebookLogin} disabled={isLoading}>
+              <Facebook className="mr-2 h-4 w-4" /> Inloggen met Facebook
             </Button>
           </div>
         </CardContent>
