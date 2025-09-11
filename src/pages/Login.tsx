@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -17,6 +19,8 @@ const formSchema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
+  const { session, isLoading } = useAuth(); // Usar o contexto de autenticação
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -25,41 +29,44 @@ const Login = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  // Redirecionar se já estiver logado
+  if (!isLoading && session) {
+    // Você pode adicionar lógica de redirecionamento baseada em função aqui, se necessário
+    // Por exemplo, verificar o perfil do usuário para redirecionar para /admin, /dashboard ou /account
+    // Por enquanto, vamos para a página inicial
+    navigate('/');
+    return null; // Não renderizar nada enquanto redireciona
+  }
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password } = values;
 
-    // Admin user
-    if (email === "admin@helpme.com" && password === "admin123") {
-      showSuccess("Succesvol ingelogd als admin!");
-      navigate("/admin");
-      return;
-    }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    // Cleaner user
-    if (email === "schoonmaker@helpme.com" && password === "schoonmaker123") {
-      showSuccess("Succesvol ingelogd als schoonmaker!");
-      navigate("/dashboard");
-      return;
-    }
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    // Customer user
-    if (email === "klant@helpme.com" && password === "klant123") {
       showSuccess("Succesvol ingelogd!");
-      navigate("/account");
-      return;
+      // O redirecionamento será tratado pelo AuthProvider via onAuthStateChange
+    } catch (error: any) {
+      showError(error.message || "Ongeldige e-mail of wachtwoord.");
+      console.error("Login error:", error);
     }
-
-    showError("Ongeldige e-mail of wachtwoord.");
   }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" /> {/* Aumentado de h-12 para h-16 */}
+          <img src="/logo.png" alt="HelpMe Logo" className="h-16 mx-auto" />
           <CardTitle className="text-2xl mt-2">Inloggen</CardTitle>
           <CardDescription>
-            Voer je e-mailadres in om in te loggen. Gebruik de testaccounts hieronder.
+            Voer je e-mailadres in om in te loggen.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,7 +106,7 @@ const Login = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 Inloggen
               </Button>
             </form>
@@ -111,6 +118,7 @@ const Login = () => {
             </Link>
           </div>
           <div className="mt-6 text-xs text-muted-foreground text-center space-y-1 border-t pt-4">
+            <p><strong>Testaccounts (para testar as rotas):</strong></p>
             <p><strong>Admin:</strong> admin@helpme.com / admin123</p>
             <p><strong>Schoonmaker:</strong> schoonmaker@helpme.com / schoonmaker123</p>
             <p><strong>Klant:</strong> klant@helpme.com / klant123</p>
