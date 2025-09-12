@@ -9,9 +9,9 @@ import { Link } from "react-router-dom";
 import { showSuccess } from "@/utils/toast";
 
 const mockSchoonmakers: Schoonmaker[] = [
-    { id: "1", name: "Anna de Vries", photo_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", rating_avg: 4.9, rating_count: 128, hourly_rate: 18.50, bio: "...", services: [], city: "Amsterdam", address: "Kerkstraat 12, 1012 AB Amsterdam", phone_number: "+31612345678" },
-    { id: "2", name: "Ben Janssen", photo_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", rating_avg: 4.8, rating_count: 92, hourly_rate: 17.00, bio: "...", services: [], city: "Utrecht", address: "Plein 4, 3511 HT Utrecht", phone_number: "+31623456789" },
-    { id: "3", name: "Carla Bakker", photo_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", rating_avg: 5.0, rating_count: 210, hourly_rate: 20.00, bio: "...", services: [], city: "Rotterdam", address: "Coolsingel 1, 3011 AA Rotterdam", phone_number: "+31634567890" },
+    { id: "1", name: "Anna de Vries", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.9, ratingCount: 128, hourlyRate: 18.50, bio: "...", services: [], city: "Amsterdam", address: "Kerkstraat 12, 1012 AB Amsterdam", phoneNumber: "+31612345678" },
+    { id: "2", name: "Ben Janssen", photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop", ratingAvg: 4.8, ratingCount: 92, hourlyRate: 17.00, bio: "...", services: [], city: "Utrecht", address: "Plein 4, 3511 HT Utrecht", phoneNumber: "+31623456789" },
+    { id: "3", name: "Carla Bakker", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop", ratingAvg: 5.0, ratingCount: 210, hourlyRate: 20.00, bio: "...", services: [], city: "Rotterdam", address: "Coolsingel 1, 3011 AA Rotterdam", phoneNumber: "+31634567890" },
 ];
 
 const SchoonmakersBeheren = () => {
@@ -50,15 +50,15 @@ const SchoonmakersBeheren = () => {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
                     <Avatar className="hidden h-9 w-9 sm:flex">
-                      <AvatarImage src={schoonmaker.photo_url} alt={schoonmaker.name} />
+                      <AvatarImage src={schoonmaker.photoUrl} alt={schoonmaker.name} />
                       <AvatarFallback>{schoonmaker.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     {schoonmaker.name}
                   </div>
                 </TableCell>
                 <TableCell>{schoonmaker.city}</TableCell>
-                <TableCell>€{schoonmaker.hourly_rate.toFixed(2)}</TableCell>
-                <TableCell>{schoonmaker.rating_avg.toFixed(1)} ({schoonmaker.rating_count})</TableCell>
+                <TableCell>€{schoonmaker.hourlyRate.toFixed(2)}</TableCell>
+                <TableCell>{schoonmaker.ratingAvg.toFixed(1)} ({schoonmaker.ratingCount})</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,12 +16,75 @@ import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { showError } from "@/utils/toast";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 const allServices = ["Dieptereiniging", "Ramen wassen", "Strijken", "Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging", "Na verbouwing", "Grote schoonmaak", "Organiseren", "Boodschappen doen", "Student", "Kleine klusjes", "Tuinonderhoud", "Anti-allergeen", "Kantoor schoonmaak"]; // Consolidated all services
 const allCities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"]; // Consolidated all cities
 const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+
+// Mock data for cleaners
+const mockCleaners: Schoonmaker[] = [
+  {
+    id: "mock-1",
+    name: "Sophie Jansen",
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.8,
+    ratingCount: 95,
+    hourlyRate: 22.00,
+    bio: "Ervaren en betrouwbare schoonmaakster met oog voor detail. Ik zorg ervoor dat uw huis weer straalt!",
+    services: ["Reguliere schoonmaak", "Ramen wassen", "Milieuvriendelijk"],
+    city: "Amsterdam",
+    address: "Damrak 1, 1012 LK Amsterdam",
+    phoneNumber: "+31611223344",
+    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-2",
+    name: "Thomas Bakker",
+    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.5,
+    ratingCount: 70,
+    hourlyRate: 20.00,
+    bio: "Flexibele en hardwerkende schoonmaker, beschikbaar voor diverse klussen. Uw tevredenheid is mijn prioriteit.",
+    services: ["Dieptereiniging", "Ovenreiniging", "Kleine klusjes"],
+    city: "Utrecht",
+    address: "Oudegracht 100, 3511 AW Utrecht",
+    phoneNumber: "+31655443322",
+    availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-3",
+    name: "Laura de Jong",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.9,
+    ratingCount: 110,
+    hourlyRate: 25.00,
+    bio: "Specialist in grote schoonmaak en na verbouwing. Ik werk snel en efficiënt, met een perfect resultaat.",
+    services: ["Na verbouwing", "Grote schoonmaak", "Strijken"],
+    city: "Rotterdam",
+    address: "Coolsingel 1, 3011 AA Rotterdam",
+    phoneNumber: "+31677889900",
+    availableDaysOfWeek: ["Maandag", "Dinsdag", "Donderdag"],
+    unavailableDates: [],
+  },
+  {
+    id: "mock-4",
+    name: "Mohammed El-Amin",
+    photoUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.7,
+    ratingCount: 80,
+    hourlyRate: 19.50,
+    bio: "Vriendelijke en grondige schoonmaker. Ik help u graag met uw huishouden, inclusief huisdier-vriendelijke opties.",
+    services: ["Reguliere schoonmaak", "Huisdier-vriendelijk", "Boodschappen doen"],
+    city: "Den Haag",
+    address: "Spui 1, 2511 AA Den Haag",
+    phoneNumber: "+31699887766",
+    availableDaysOfWeek: ["Woensdag", "Vrijdag", "Zondag"],
+    unavailableDates: [],
+  },
+];
 
 const Zoeken = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,65 +101,45 @@ const Zoeken = () => {
   );
   const [selectedTime, setSelectedTime] = useState<string | undefined>(initialTimeParam || undefined);
 
-  const [cleaners, setCleaners] = useState<Schoonmaker[]>([]); // Stores cleaners from Supabase
+  const [realCleaners, setRealCleaners] = useState<Schoonmaker[]>([]); // Stores cleaners from Supabase
   const [loading, setLoading] = useState(true);
-  
+  // const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch - REMOVED
+
   // New states for sorting and rating filter
   const [sortOption, setSortOption] = useState<string>("recommended"); // 'recommended', 'price_low_high', 'price_high_low', 'rating'
   const [minRating, setMinRating] = useState<number>(0); // 0, 3, 4, 4.5
 
-  const fetchCleaners = useCallback(async () => {
-    setLoading(true);
-    try {
-      let query = supabase.from('cleaners').select('*');
-
-      if (filterCity) {
-        query = query.ilike('city', `%${filterCity}%`);
-      }
-      if (filterPostcode) {
-        query = query.ilike('postcode', `%${filterPostcode}%`);
-      }
-      if (selectedServices.length > 0) {
-        query = query.contains('services', selectedServices);
-      }
-      if (selectedDaysOfWeek.length > 0) {
-        query = query.contains('available_days_of_week', selectedDaysOfWeek);
-      }
-      if (minRating > 0) {
-        query = query.gte('rating_avg', minRating);
-      }
-      
-      query = query.gte('hourly_rate', priceRange[0]);
-      query = query.lte('hourly_rate', priceRange[1]);
-
-      if (sortOption === "price_low_high") {
-        query = query.order('hourly_rate', { ascending: true });
-      } else if (sortOption === "price_high_low") {
-        query = query.order('hourly_rate', { ascending: false });
-      } else if (sortOption === "rating") {
-        query = query.order('rating_avg', { ascending: false });
-      } else {
-        query = query.order('rating_count', { ascending: false }).order('rating_avg', { ascending: false }); // Default: recommended by rating and count
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        throw new Error(error.message);
-      }
-      setCleaners(data || []);
-    } catch (err: any) {
-      showError(err.message || "Fout bij het laden van schoonmakers.");
-      console.error("Error fetching cleaners from Supabase:", err);
-      setCleaners([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [filterCity, filterPostcode, selectedServices, selectedDaysOfWeek, minRating, priceRange, sortOption]);
-
   useEffect(() => {
+    const fetchCleaners = async () => {
+      setLoading(true);
+      // setSupabaseError(null); // Clear previous Supabase errors - REMOVED
+      try {
+        let query = supabase.from('cleaners').select('*');
+
+        if (filterCity) {
+          query = query.ilike('city', `%${filterCity}%`);
+        }
+        if (filterPostcode) {
+          query = query.ilike('postcode', `%${filterPostcode}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          // throw new Error(error.message); // No longer throwing to prevent UI error
+          console.error("Error fetching cleaners from Supabase:", error.message); // Log error but don't block UI
+        }
+        setRealCleaners(data || []);
+      } catch (err: any) {
+        // setSupabaseError(err.message); // REMOVED
+        console.error("Error fetching cleaners from Supabase (catch block):", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCleaners();
-  }, [fetchCleaners]);
+  }, [filterCity, filterPostcode]);
 
   useEffect(() => {
     const newSearchParams = new URLSearchParams(searchParams);
@@ -152,24 +195,69 @@ const Zoeken = () => {
     setSearchParams({}); // Clear URL search params
   };
 
-  const filteredSchoonmakers = useMemo(() => {
-    let currentFilteredCleaners = cleaners;
+  const allAvailableCleaners = useMemo(() => {
+    // Combine mock cleaners with real cleaners, ensuring uniqueness by ID
+    const combinedCleanersMap = new Map<string, Schoonmaker>();
+    mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+    realCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
+    return Array.from(combinedCleanersMap.values());
+  }, [realCleaners]);
 
-    // Apply date filter (client-side for unavailableDates)
+
+  const filteredSchoonmakers = useMemo(() => {
+    let currentFilteredCleaners = allAvailableCleaners;
+
+    // Apply price range filter
+    currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
+      return (schoonmaker.hourlyRate || 0) >= priceRange[0] && (schoonmaker.hourlyRate || 0) <= priceRange[1];
+    });
+
+    // Apply services filter
+    if (selectedServices.length > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        selectedServices.every(service => schoonmaker.services?.includes(service))
+      );
+    }
+
+    // Apply days of week filter
+    if (selectedDaysOfWeek.length > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day))
+      );
+    }
+
+    // Apply date filter
     if (selectedDate) {
       const dayName = format(selectedDate, "eeee", { locale: nl });
       const formattedSelectedDate = format(selectedDate, "yyyy-MM-dd");
 
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
-        const isWeeklyAvailable = schoonmaker.available_days_of_week?.includes(dayName);
-        const isSpecificallyUnavailable = schoonmaker.unavailable_dates?.includes(formattedSelectedDate);
+        const isWeeklyAvailable = schoonmaker.availableDaysOfWeek?.includes(dayName);
+        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(formattedSelectedDate);
         
         return isWeeklyAvailable && !isSpecificallyUnavailable;
       });
     }
 
+    // Apply minimum rating filter
+    if (minRating > 0) {
+      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
+        (schoonmaker.ratingAvg || 0) >= minRating
+      );
+    }
+
+    // Apply sorting
+    if (sortOption === "price_low_high") {
+      currentFilteredCleaners.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
+    } else if (sortOption === "price_high_low") {
+      currentFilteredCleaners.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
+    } else if (sortOption === "rating") {
+      currentFilteredCleaners.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
+    }
+    // "recommended" (default) doesn't require explicit sorting here, as the initial order is maintained or can be randomized.
+
     return currentFilteredCleaners;
-  }, [cleaners, selectedDate]);
+  }, [allAvailableCleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate, minRating, sortOption]);
 
   const initialPostcode = searchParams.get("postcode");
   const initialCity = searchParams.get("city");
@@ -330,6 +418,7 @@ const Zoeken = () => {
           <h1 className="text-3xl font-bold mb-4">
             {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
+          {/* REMOVED: Error message for Supabase API key */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredSchoonmakers.length > 0 ? (
               filteredSchoonmakers.map((schoonmaker) => (

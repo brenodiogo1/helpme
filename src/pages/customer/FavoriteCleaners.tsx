@@ -7,28 +7,28 @@ const mockFavoriteSchoonmakers: Schoonmaker[] = [
   {
     id: "1",
     name: "Anna de Vries",
-    photo_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
-    rating_avg: 4.9,
-    rating_count: 128,
-    hourly_rate: 18.50,
+    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 4.9,
+    ratingCount: 128,
+    hourlyRate: 18.50,
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis...",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
     city: "Amsterdam",
     address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
-    phone_number: "+31612345678" // Adicionado
+    phoneNumber: "+31612345678" // Adicionado
   },
   {
     id: "3",
     name: "Carla Bakker",
-    photo_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
-    rating_avg: 5.0,
-    rating_count: 210,
-    hourly_rate: 20.00,
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
+    ratingAvg: 5.0,
+    ratingCount: 210,
+    hourlyRate: 20.00,
     bio: "Perfectie is mijn standaard...",
     services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
     city: "Rotterdam",
     address: "Coolsingel 1, 3011 AA Rotterdam", // Adicionado
-    phone_number: "+31634567890" // Adicionado
+    phoneNumber: "+31634567890" // Adicionado
   },
 ];
 

@@ -3,20 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from "@/integrations/supabase/client";
+// Removed: import { showError } from "@/utils/toast";
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { bookingDetailsSchema } from "./BookingDetailsForm";
-import { extraServicesSchema } from "./ExtraServicesSelection";
-import { contactDetailsSchema } from "./ContactDetailsForm";
-
-// Combine all schemas to define the full form data type
-const quickBookingSchema = z.object({
-  ...bookingDetailsSchema.shape,
-  ...extraServicesSchema.shape,
-  ...contactDetailsSchema.shape,
-});
-
-type QuickBookingFormData = z.infer<typeof quickBookingSchema>;
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -29,13 +17,8 @@ interface StripeCheckoutEmbedProps {
   setIsLoadingStripe: (loading: boolean) => void;
   stripeError: string | null;
   setStripeError: (error: string | null) => void;
-  formTrigger: () => Promise<boolean>;
-  isLoadingStripe: boolean;
-  quickBookingFormData: QuickBookingFormData; // Adicionado para receber todos os dados do formulário
-  basePrice: number; // Adicionado
-  extrasPrice: number; // Adicionado
-  discountAmount: number; // Adicionado
-  platformFee: number; // Adicionado
+  formTrigger: () => Promise<boolean>; // Adicionado para validar o formulário antes de inicializar o Stripe
+  isLoadingStripe: boolean; // Adicionado aqui na interface
 }
 
 const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
@@ -46,12 +29,7 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
   stripeError,
   setStripeError,
   formTrigger,
-  isLoadingStripe,
-  quickBookingFormData, // Usado aqui
-  basePrice,
-  extrasPrice,
-  discountAmount,
-  platformFee,
+  isLoadingStripe, // <--- Adicionado aqui na desestruturação dos props
 }) => {
   const checkoutRef = useRef<HTMLDivElement>(null);
 
@@ -93,24 +71,11 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
 
           const returnUrl = `${window.location.origin}/bevestiging`;
 
-          // Prepare metadata, ensuring date is a string
-          const metadataToSend = {
-            ...quickBookingFormData,
-            bookingDate: quickBookingFormData.bookingDate ? quickBookingFormData.bookingDate.toISOString() : undefined,
-            basePrice: basePrice.toFixed(2),
-            extrasPrice: extrasPrice.toFixed(2),
-            discountAmount: discountAmount.toFixed(2),
-            totalPrice: totalPrice.toFixed(2),
-            platformFee: platformFee.toFixed(2),
-            isQuickBooking: 'true', // Flag to identify quick bookings on confirmation page
-          };
-
           const { data, error } = await supabase.functions.invoke('create-checkout-session', {
               body: JSON.stringify({
                   amount: totalPrice,
                   currency: 'eur',
                   return_url: returnUrl,
-                  metadata: metadataToSend, // Envia os dados do formulário como metadata
               }),
           });
 
@@ -135,7 +100,7 @@ const StripeCheckoutEmbed: React.FC<StripeCheckoutEmbedProps> = ({
     };
 
     initializeStripeCheckout();
-  }, [totalPrice, bookingDate, bookingTime, setIsLoadingStripe, setStripeError, formTrigger, quickBookingFormData, basePrice, extrasPrice, discountAmount, platformFee]);
+  }, [totalPrice, bookingDate, bookingTime, setIsLoadingStripe, setStripeError, formTrigger]);
 
   return (
     <>

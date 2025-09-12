@@ -9,23 +9,19 @@ export interface Review {
 
 export interface Schoonmaker {
   id: string;
-  user_id?: string; // Adicionado user_id
   name: string;
-  photo_url?: string; // Alterado para photo_url
-  rating_avg: number; // Alterado para rating_avg
-  rating_count: number; // Alterado para rating_count
-  hourly_rate: number; // Alterado para hourly_rate
+  photoUrl: string;
+  ratingAvg: number;
+  ratingCount: number;
+  hourlyRate: number;
   bio: string;
-  services?: string[]; // Alterado para services (array de strings)
+  services: string[];
   city: string;
   address: string;
-  postcode?: string; // Adicionado postcode
-  phone_number: string; // Alterado para phone_number
+  phoneNumber: string;
   reviews?: Review[];
-  available_days_of_week?: string[]; // Alterado para available_days_of_week
-  unavailable_dates?: string[]; // Alterado para unavailable_dates
-  can_work_in_nl?: boolean; // Adicionado
-  has_residence_permit_or_eu?: boolean; // Adicionado
+  availableDaysOfWeek?: string[];
+  unavailableDates?: string[];
 }
 
 export interface Booking {

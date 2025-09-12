@@ -55,53 +55,28 @@ const Bevestiging = () => {
           throw new Error(error.message);
         }
 
-        const { status, payment_status, metadata } = data as { status: string; payment_status: string; metadata: any }; // Recupera metadata
+        const { status, payment_status } = data as { status: string; payment_status: string };
 
         if (status === 'complete' && payment_status === 'paid') {
           setPaymentStatus('succeeded');
 
-          // Retrieve booking details from metadata if it's a quick booking via Stripe
-          const isQuickBookingFromStripe = metadata?.isQuickBooking === 'true';
-          let currentBookingDetails = bookingDetails;
+          // Retrieve booking details from location state
+          const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, phone, address, city, zipCode, notes, selectedExtraServices, basePrice, extrasPrice, discountAmount, platformFee } = bookingDetails; // Removido selectedServices
 
-          if (isQuickBookingFromStripe && !bookingCreated) {
-            // Parse metadata back into a usable object
-            const parsedMetadata = {
-              bookingDate: new Date(metadata.bookingDate), // Convert back to Date object
-              bookingTime: metadata.bookingTime,
-              durationHours: parseFloat(metadata.durationHours),
-              selectedExtraServices: metadata.selectedExtraServices,
-              firstName: metadata.firstName,
-              lastName: metadata.lastName,
-              email: metadata.email,
-              phone: metadata.phone,
-              address: metadata.address,
-              city: metadata.city,
-              zipCode: metadata.zipCode,
-              notes: metadata.notes,
-              basePrice: parseFloat(metadata.basePrice),
-              extrasPrice: parseFloat(metadata.extrasPrice),
-              discountAmount: parseFloat(metadata.discountAmount),
-              totalPrice: parseFloat(metadata.totalPrice),
-              platformFee: parseFloat(metadata.platformFee),
-              status: 'paid_pending_assignment', // Status inicial para quick booking pago
-            };
-            currentBookingDetails = parsedMetadata;
-            setBookingDetails(parsedMetadata); // Update state with parsed metadata
-          }
-
-          if (!bookingCreated && currentBookingDetails) {
-            const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, phone, address, city, zipCode, notes, selectedExtraServices, basePrice, extrasPrice, discountAmount, platformFee } = currentBookingDetails;
-            const isRegularBooking = !!schoonmaker?.id;
+          if (!bookingCreated && bookingDetails) {
+            // Check if it's a quick booking (no cleaner_id) or a regular booking
+            const isQuickBooking = !schoonmaker?.id;
 
             let insertData: any = {
                 booking_date: format(new Date(date), "yyyy-MM-dd"),
                 booking_time: time,
                 duration_hours: hours,
                 total_price: totalPrice,
+                status: 'paid_pending_assignment', // Status inicial para quick booking pago
             };
 
-            if (!isRegularBooking) { // It's a quick booking
+            if (isQuickBooking) {
+                // For quick bookings, insert into quick_bookings table
                 insertData = {
                     ...insertData,
                     first_name: firstName,
@@ -117,7 +92,6 @@ const Bevestiging = () => {
                     extras_price: extrasPrice,
                     discount_amount: discountAmount,
                     platform_fee: platformFee,
-                    status: 'paid_pending_assignment',
                 };
 
                 const { data: newQuickBookingData, error: quickBookingError } = await supabase
@@ -129,9 +103,10 @@ const Bevestiging = () => {
                 if (quickBookingError || !newQuickBookingData) {
                     throw new Error(quickBookingError?.message || "Fout bij het aanmaken van de snelle boeking na betaling.");
                 }
-                setBookingDetails({ ...currentBookingDetails, status: 'paid_pending_assignment', bookingId: newQuickBookingData.id });
+                setBookingDetails({ ...bookingDetails, status: 'paid_pending_assignment', bookingId: newQuickBookingData.id });
 
-            } else { // It's a regular booking
+            } else {
+                // For regular bookings, insert into bookings table
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) {
                     throw new Error("Gebruiker niet ingelogd.");
@@ -140,7 +115,7 @@ const Bevestiging = () => {
                     ...insertData,
                     customer_id: user.id,
                     cleaner_id: schoonmaker.id,
-                    status: 'accepted',
+                    status: 'accepted', // Status 'accepted' após pagamento bem-sucedido
                 };
 
                 const { data: newBookingData, error: bookingError } = await supabase
@@ -153,18 +128,19 @@ const Bevestiging = () => {
                     throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
                 }
 
+                // Create the job offer for the cleaner
                 const { error: offerError } = await supabase
                     .from('job_offers')
                     .insert({
                         booking_id: newBookingData.id,
                         cleaner_id: schoonmaker.id,
-                        status: 'accepted',
+                        status: 'accepted', // Oferta aceita automaticamente se o pagamento foi feito
                     });
 
                 if (offerError) {
                     throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding na betaling.");
                 }
-                setBookingDetails({ ...currentBookingDetails, status: 'accepted', bookingId: newBookingData.id });
+                setBookingDetails({ ...bookingDetails, status: 'accepted', bookingId: newBookingData.id });
             }
 
             setBookingCreated(true);

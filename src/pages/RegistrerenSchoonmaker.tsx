@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useRef } from "react";
 import { Separator } from "@/components/ui/separator";
-import { Chrome } from "lucide-react"; // Adicionado Chrome aqui
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -141,8 +140,8 @@ const RegistrerenSchoonmaker = () => {
           user_id: authUserId,
           name: `${values.firstName} ${values.lastName}`,
           city: values.city,
-          hourly_rate: 0, // Default value, can be updated later
-          bio: "", // Default value, can be updated later
+          hourly_rate: 0,
+          bio: "",
           address: values.address,
           postcode: values.postcode,
           phone_number: values.phone,
@@ -156,31 +155,14 @@ const RegistrerenSchoonmaker = () => {
         }
       }
 
+      // Mensagem de sucesso atualizada para registro manual
       showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
-      navigate("/dashboard"); // Redirect directly to cleaner dashboard
+      navigate("/login");
     } catch (error: any) {
       showError(error.message);
       console.error("Registratie fout:", error);
     }
   }
-
-  const handleGoogleRegister = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/registreren/schoonmaker', // Redirect to cleaner registration to complete profile
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-    } catch (error: any) {
-      showError(error.message || "Fout bij het registreren met Google.");
-      console.error("Google registration error:", error);
-    }
-  };
 
   if (!isLoaded) {
     return (
@@ -206,18 +188,6 @@ const RegistrerenSchoonmaker = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" className="w-full mb-4" onClick={handleGoogleRegister}>
-            <Chrome className="mr-2 h-4 w-4" />
-            Registreren met Google
-          </Button>
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Of</span>
-            </div>
-          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
