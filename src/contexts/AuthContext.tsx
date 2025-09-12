@@ -5,6 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
+import { routeAfterAuth } from '@/lib/auth'; // Import the new routing function
 
 interface AuthContextType {
   session: Session | null;
@@ -21,7 +22,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null); // Estado para o role
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Keep navigate for internal component use, but routeAfterAuth handles main redirects
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -49,14 +50,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
           setUserRole(currentRole);
 
-          // Explicitly redirect after successful sign-in
-          if (_event === 'SIGNED_IN') {
+          // Use routeAfterAuth for redirection after sign-in or user update
+          if (_event === 'SIGNED_IN' || _event === 'USER_UPDATED') {
             showSuccess("Login bem-sucedido!");
+            // routeAfterAuth will handle the actual window.location.assign
+            // We use navigate here as a fallback or for immediate UI updates if routeAfterAuth doesn't trigger a full page reload
             if (currentRole === 'admin') {
               navigate('/admin');
             } else if (currentRole === 'cleaner') {
-              navigate('/dashboard');
-            } else if (currentRole === 'customer') {
+              if (profile?.cleaner_status === 'approved') {
+                navigate('/dashboard');
+              } else {
+                navigate('/awaiting-approval');
+              }
+            } else if (currentRole === 'provider') { // 'provider' is the customer role
               navigate('/account');
             } else {
               navigate('/'); // Default redirect if no specific role dashboard
@@ -86,7 +93,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (session?.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, cleaner_status')
           .eq('id', session.user.id)
           .single();
 

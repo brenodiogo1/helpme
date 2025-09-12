@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Link } from "react-router-dom"; // Removed useNavigate
-import { showError } from "@/utils/toast"; // Removed showSuccess
+import { Link } from "react-router-dom";
+import { showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chrome } from "lucide-react";
+import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
@@ -19,8 +20,7 @@ const formSchema = z.object({
 });
 
 const Login = () => {
-  // Removed 'navigate' declaration
-  const { isLoading } = useAuth(); // Removido 'session' pois o redirecionamento será tratado pelo AuthContext
+  const { isLoading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -29,12 +29,6 @@ const Login = () => {
       password: "",
     },
   });
-
-  // A lógica de redirecionamento foi movida para o AuthContext para centralizar o controle.
-  // if (!isLoading && session) {
-  //   navigate('/');
-  //   return null;
-  // }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password } = values;
@@ -49,8 +43,7 @@ const Login = () => {
         throw new Error(error.message);
       }
 
-      // O redirecionamento após o login bem-sucedido será tratado pelo AuthContext.
-      // showSuccess("Succesvol ingelogd!");
+      // Redirection is handled by AuthContext's onAuthStateChange -> routeAfterAuth
     } catch (error: any) {
       showError(error.message || "Ongeldige e-mail of wachtwoord.");
       console.error("Login error:", error);
@@ -59,18 +52,8 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin, // Redireciona para a origem atual após o login
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-      // Supabase irá redirecionar o usuário para a página de login do Google e depois de volta para a aplicação.
-      // O onAuthStateChange no AuthContext cuidará da navegação após o login bem-sucedido.
+      await signInWithGoogle('provider'); // Default to 'provider' (customer) role for general login
+      // Supabase will redirect, AuthContext will handle post-login navigation
     } catch (error: any) {
       showError(error.message || "Fout bij het inloggen met Google.");
       console.error("Google login error:", error);

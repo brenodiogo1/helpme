@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const AdminSidebar = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname.startsWith(path);
+  const { signOut } = useAuth(); // Use signOut from AuthContext
 
   return (
     <div className="border-r bg-muted/40 h-full">
@@ -121,10 +123,10 @@ const AdminSidebar = () => {
         </div>
         <div className="mt-auto p-4">
           <Separator className="mb-4" />
-          <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
-            <LogOut className="h-4 w-4" />
+          <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-3" />
             Uitloggen
-          </Link>
+          </Button>
         </div>
       </div>
     </div>

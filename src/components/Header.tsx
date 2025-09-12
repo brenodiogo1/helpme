@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const Header = () => {
   const { t } = useTranslation();
+  const { session, signOut } = useAuth(); // Get session and signOut from AuthContext
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,12 +33,20 @@ const Header = () => {
           {/* Desktop Auth */}
           <div className="hidden items-center gap-2 md:flex">
             <LanguageSwitcher />
-            <Button variant="ghost" asChild>
-              <Link to="/login">Inloggen</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/registreren">Aanmelden</Link>
-            </Button>
+            {session ? (
+              <Button variant="ghost" onClick={signOut}>
+                Uitloggen
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Inloggen</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/registreren">Aanmelden</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu */}
@@ -47,7 +57,7 @@ const Header = () => {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-full sm:w-3/4">
+              <SheetContent side="left" className="flex flex-col p-0 w-full sm:w-3/4">
                 <nav className="flex h-full flex-col p-6">
                   <Link
                     to="/"
@@ -77,20 +87,27 @@ const Header = () => {
 
                   <div className="mt-auto">
                     <Separator className="my-4" />
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button variant="outline" asChild size="lg">
-                            <Link to="/login">
-                                <LogIn className="mr-2 h-5 w-5" />
-                                Inloggen
-                            </Link>
-                        </Button>
-                        <Button asChild size="lg">
-                            <Link to="/registreren">
-                                <UserPlus className="mr-2 h-5 w-5" />
-                                Aanmelden
-                            </Link>
-                        </Button>
-                    </div>
+                    {session ? (
+                      <Button variant="outline" className="w-full" onClick={signOut} size="lg">
+                        <LogOut className="mr-2 h-5 w-5" />
+                        Uitloggen
+                      </Button>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                          <Button variant="outline" asChild size="lg">
+                              <Link to="/login">
+                                  <LogIn className="mr-2 h-5 w-5" />
+                                  Inloggen
+                              </Link>
+                          </Button>
+                          <Button asChild size="lg">
+                              <Link to="/registreren">
+                                  <UserPlus className="mr-2 h-5 w-5" />
+                                  Aanmelden
+                              </Link>
+                          </Button>
+                      </div>
+                    )}
                     <div className="mt-6 flex justify-center">
                       <LanguageSwitcher />
                     </div>

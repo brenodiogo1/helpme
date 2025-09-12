@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } => "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useRef } from "react";
 import { Separator } from "@/components/ui/separator";
+import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -31,6 +33,7 @@ const formSchema = z.object({
 const RegistrerenSchoonmaker = () => {
   const navigate = useNavigate();
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -53,6 +56,16 @@ const RegistrerenSchoonmaker = () => {
     },
   });
 
+  useEffect(() => {
+    if (user && user.app_metadata.provider === 'google') {
+      form.setValue("firstName", user.user_metadata.first_name || "");
+      form.setValue("lastName", user.user_metadata.last_name || "");
+      form.setValue("email", user.email || "");
+      form.setValue("password", "GOOGLE_AUTH_PLACEHOLDER"); // Placeholder, password not needed for Google
+      form.trigger(["firstName", "lastName", "email"]);
+    }
+  }, [user, form]);
+
   const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   };
@@ -71,10 +84,10 @@ const RegistrerenSchoonmaker = () => {
             streetNumber = component.long_name;
           } else if (component.types.includes("route")) {
             streetName = component.long_name;
-          } else if (component.types.includes("postal_code")) {
-            postcode = component.long_name;
           } else if (component.types.includes("locality")) {
             city = component.long_name;
+          } else if (component.types.includes("postal_code")) {
+            postcode = component.long_name;
           }
         }
         form.setValue("address", `${streetName} ${streetNumber}`.trim());
@@ -87,29 +100,25 @@ const RegistrerenSchoonmaker = () => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            first_name: values.firstName,
-            last_name: values.lastName,
-            role: 'cleaner',
-          },
-        },
-      });
+      let authUserId = user?.id;
 
-      if (authError) {
-        console.error("Supabase signup error:", authError);
-        throw new Error(authError.message);
-      }
+      if (!authUserId) {
+        const { data: authData } = await authSignUpEmailPassword(
+          values.email,
+          values.password,
+          'cleaner', // Role for cleaner
+          `${values.firstName} ${values.lastName}`
+        );
 
-      if (!authData.user) {
-        throw new Error("Gebruiker kon niet worden aangemaakt.");
+        if (!authData.user) {
+          throw new Error("Gebruiker kon niet worden aangemaakt.");
+        }
+        authUserId = authData.user.id;
       }
-      const authUserId = authData.user.id;
 
       // Upsert cleaner profile
+      // The initial profile is created by the handle_new_user trigger.
+      // We only update with cleaner-specific fields here.
       const { error: cleanerUpsertError } = await supabase.from('cleaners').upsert({
         user_id: authUserId,
         name: `${values.firstName} ${values.lastName}`,
@@ -136,13 +145,23 @@ const RegistrerenSchoonmaker = () => {
     }
   }
 
-  if (!isLoaded) {
+  const handleGoogleRegister = async () => {
+    try {
+      await signInWithGoogle('cleaner'); // Role for cleaner
+      // Supabase will redirect, AuthContext will handle post-login navigation
+    } catch (error: any) {
+      showError(error.message || "Fout bij het registreren met Google.");
+      console.error("Google registration error:", error);
+    }
+  };
+
+  if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
         <Card className="mx-auto max-w-lg w-full">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl mt-2">Laden...</CardTitle>
-            <CardDescription>Google Maps wordt geladen.</CardDescription>
+            <CardDescription>Autenticação wordt geladen.</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -160,6 +179,18 @@ const RegistrerenSchoonmaker = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Button variant="outline" className="w-full mb-4" onClick={handleGoogleRegister} disabled={isAuthLoading}>
+            <Chrome className="mr-2 h-4 w-4" />
+            Registreren met Google
+          </Button>
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Of</span>
+            </div>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,7 +201,7 @@ const RegistrerenSchoonmaker = () => {
                     <FormItem>
                       <FormLabel>Voornaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Anna" {...field} />
+                        <Input placeholder="Anna" {...field} disabled={user?.app_metadata.provider === 'google'} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -183,7 +214,7 @@ const RegistrerenSchoonmaker = () => {
                     <FormItem>
                       <FormLabel>Achternaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="de Vries" {...field} />
+                        <Input placeholder="de Vries" {...field} disabled={user?.app_metadata.provider === 'google'} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -197,7 +228,7 @@ const RegistrerenSchoonmaker = () => {
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input placeholder="naam@voorbeeld.com" {...field} />
+                      <Input placeholder="naam@voorbeeld.com" {...field} disabled={user?.app_metadata.provider === 'google'} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -216,19 +247,21 @@ const RegistrerenSchoonmaker = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Wachtwoord</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!user || user.app_metadata.provider !== 'google' ? (
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Wachtwoord</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
 
               <Separator className="my-4" />
               <h3 className="font-semibold text-lg">Adresgegevens</h3>

@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chrome } from "lucide-react";
 import { useEffect } from "react";
+import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -57,22 +58,12 @@ const RegistrerenKlant = () => {
         if (!values.password) {
           throw new Error("Wachtwoord is verplicht voor handmatige registratie.");
         }
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              first_name: values.firstName,
-              last_name: values.lastName,
-              role: 'customer',
-            },
-          },
-        });
-
-        if (authError) {
-          console.error("Supabase signup error:", authError);
-          throw new Error(authError.message);
-        }
+        const { data: authData } = await authSignUpEmailPassword(
+          values.email,
+          values.password,
+          'provider', // Role for customer
+          `${values.firstName} ${values.lastName}`
+        );
 
         if (!authData.user) {
           throw new Error("Gebruiker kon niet worden aangemaakt.");
@@ -81,11 +72,12 @@ const RegistrerenKlant = () => {
       }
 
       // Update or insert profile with address and postcode
+      // The initial profile is created by the handle_new_user trigger.
+      // We only update if there are additional fields like address/postcode.
       const { error: profileUpsertError } = await supabase.from('profiles').upsert({
         id: authUserId,
-        first_name: values.firstName,
-        last_name: values.lastName,
-        role: 'customer',
+        full_name: `${values.firstName} ${values.lastName}`,
+        role: 'provider', // Ensure role is set correctly
         address: values.address,
         postcode: values.postcode,
       }, { onConflict: 'id' }); // Use upsert to handle both new and existing (Google) profiles
@@ -110,16 +102,8 @@ const RegistrerenKlant = () => {
 
   const handleGoogleRegister = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/registreren/klant',
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      await signInWithGoogle('provider'); // Role for customer
+      // Supabase will redirect, AuthContext will handle post-login navigation
     } catch (error: any) {
       showError(error.message || "Fout bij het registreren met Google.");
       console.error("Google registration error:", error);
