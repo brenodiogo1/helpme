@@ -19,10 +19,10 @@ import { useSettings } from "@/contexts/SettingsContext"; // Import useSettings
 const mockSchoonmaker: Schoonmaker = {
     id: "1",
     name: "Anna de Vries",
-    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 128,
-    hourlyRate: 18.50,
+    photo_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", // Corrigido para photo_url
+    rating_avg: 4.9, // Corrigido para rating_avg
+    rating_count: 128, // Corrigido para rating_count
+    hourly_rate: 18.50, // Corrigido para hourly_rate
     bio: "Bio",
     services: [],
     city: "Amsterdam",
@@ -61,7 +61,7 @@ const Boeken = () => {
 
     const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
 
-    const basePrice = hours * schoonmaker.hourlyRate;
+    const basePrice = hours * schoonmaker.hourly_rate; // Corrigido para hourly_rate
     const extrasPrice = useMemo(() => {
         return extraServices
             .filter(service => selectedServices.includes(service.id))

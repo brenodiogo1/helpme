@@ -1,5 +1,5 @@
-import { useState } from "react"; // Removido useMemo
-import { useParams, useNavigate } from "react-router-dom"; // Removido useLocation, Link
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Schoonmaker } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -7,45 +7,58 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, MapPin, CheckCircle, CalendarDays, Phone } from "lucide-react";
-import ReviewCard from "@/components/ReviewCard";
+// import ReviewCard from "@/components/ReviewCard"; // Removido: 'ReviewCard' não é lido
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, isBefore, addDays } from "date-fns";
+import { format, isBefore } from "date-fns"; // Removido: 'addDays' não é lido
 import { nl } from "date-fns/locale";
-
-// Mock data for a single cleaner, including reviews and new availability fields
-const mockSchoonmaker: Schoonmaker = {
-    id: "1",
-    name: "Anna de Vries",
-    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 128,
-    hourlyRate: 18.50,
-    bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers. Ik ben flexibel inzetbaar en neem mijn eigen, milieuvriendelijke schoonmaakmiddelen mee. Ik kijk ernaar uit om ook uw huis te laten stralen!",
-    services: ["Dieptereiniging", "Ramen wassen", "Strijken", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging"],
-    city: "Amsterdam",
-    address: "Kerkstraat 12, 1012 AB Amsterdam", // Novo campo
-    phoneNumber: "+31612345678", // Novo campo
-    reviews: [
-        { id: "r1", author: "Piet H.", rating: 5, comment: "Anna is fantastisch! Ons huis was nog nooit zo schoon.", date: "2023-10-15" },
-        { id: "r2", author: "Janneke S.", rating: 5, comment: "Zeer professioneel en vriendelijk. Een echte aanrader.", date: "2023-10-10" },
-        { id: "r3", author: "Klaas de Wit", rating: 4, comment: "Goed werk geleverd, was alleen 10 minuten te laat.", date: "2023-09-28" },
-    ],
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Frijdag"], // Exemplo de disponibilidade semanal
-    unavailableDates: [format(addDays(new Date(), 10), "yyyy-MM-dd")], // Exemplo de data específica indisponível
-};
+import { supabase } from "@/integrations/supabase/client";
+import { showError } from "@/utils/toast";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const SchoonmakerProfiel = () => {
-  useParams<{ id: string }>(); // Removido 'schoonmakerId'
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [schoonmaker, setSchoonmaker] = useState<Schoonmaker | null>(null);
+  const [loading, setLoading] = useState(true);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | undefined>();
 
-  const schoonmaker = mockSchoonmaker;
+  const fetchSchoonmaker = useCallback(async () => {
+    if (!id) {
+      showError("ID do limpador não fornecido.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('cleaners')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      setSchoonmaker(data as Schoonmaker);
+    } catch (err: any) {
+      showError(err.message || "Fout bij het laden van het schoonmakerprofiel.");
+      console.error("Error fetching cleaner profile:", err);
+      setSchoonmaker(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchSchoonmaker();
+  }, [fetchSchoonmaker]);
 
   // Função para verificar se uma data está disponível
   const isDateAvailable = (day: Date) => {
+    if (!schoonmaker) return false;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time for comparison
 
@@ -55,14 +68,14 @@ const SchoonmakerProfiel = () => {
     }
 
     // Check specific unavailable dates
-    const formattedUnavailableDates = schoonmaker.unavailableDates?.map(d => format(new Date(d), "yyyy-MM-dd")) || [];
+    const formattedUnavailableDates = schoonmaker.unavailable_dates?.map(d => format(new Date(d), "yyyy-MM-dd")) || [];
     if (formattedUnavailableDates.includes(format(day, "yyyy-MM-dd"))) {
       return false;
     }
 
     // Check general available days of week
     const dayName = format(day, "eeee", { locale: nl }); // Get day name in Dutch
-    if (!schoonmaker.availableDaysOfWeek?.includes(dayName)) {
+    if (!schoonmaker.available_days_of_week?.includes(dayName)) {
       return false;
     }
 
@@ -70,13 +83,17 @@ const SchoonmakerProfiel = () => {
   };
 
   const handleBooking = () => {
-    if (date && time) {
+    if (date && time && schoonmaker) {
       navigate(`/boeken/${schoonmaker.id}`, { state: { date: date.toISOString(), time } });
     }
   };
 
+  if (loading) {
+    return <div className="container py-8 text-center">Laden van schoonmakerprofiel...</div>;
+  }
+
   if (!schoonmaker) {
-    return <div>Schoonmaker niet gevonden</div>;
+    return <div className="container py-8 text-center">Schoonmaker niet gevonden</div>;
   }
 
   return (
@@ -87,7 +104,7 @@ const SchoonmakerProfiel = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start gap-6">
             <Avatar className="h-32 w-32">
-              <AvatarImage src={schoonmaker.photoUrl} alt={schoonmaker.name} />
+              <AvatarImage src={schoonmaker.photo_url || undefined} alt={schoonmaker.name} />
               <AvatarFallback>{schoonmaker.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -95,8 +112,8 @@ const SchoonmakerProfiel = () => {
               <div className="flex items-center gap-4 mt-2 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold">{schoonmaker.ratingAvg.toFixed(1)}</span>
-                  <span>({schoonmaker.ratingCount} reviews)</span>
+                  <span className="font-semibold">{schoonmaker.rating_avg?.toFixed(1) || 'N/A'}</span>
+                  <span>({schoonmaker.rating_count || 0} reviews)</span>
                 </div>
                 <div className="flex items-center gap-1">
                     <MapPin className="h-5 w-5" />
@@ -104,7 +121,7 @@ const SchoonmakerProfiel = () => {
                 </div>
                 <div className="flex items-center gap-1">
                     <Phone className="h-5 w-5" />
-                    <span>{schoonmaker.phoneNumber}</span>
+                    <span>{schoonmaker.phone_number}</span>
                 </div>
               </div>
               <p className="mt-4">{schoonmaker.bio}</p>
@@ -130,8 +147,8 @@ const SchoonmakerProfiel = () => {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 <span className="font-semibold mr-2">Beschikbaar op:</span>
-                {schoonmaker.availableDaysOfWeek && schoonmaker.availableDaysOfWeek.length > 0 ? (
-                  schoonmaker.availableDaysOfWeek.map(day => (
+                {schoonmaker.available_days_of_week && schoonmaker.available_days_of_week.length > 0 ? (
+                  schoonmaker.available_days_of_week.map(day => (
                     <Badge key={day} variant="secondary" className="flex items-center gap-1">
                       <CalendarDays className="h-3 w-3" />
                       {day}
@@ -141,9 +158,9 @@ const SchoonmakerProfiel = () => {
                   <p className="text-muted-foreground">Geen wekelijkse beschikbaarheid ingesteld.</p>
                 )}
               </div>
-              {schoonmaker.unavailableDates && schoonmaker.unavailableDates.length > 0 && (
+              {schoonmaker.unavailable_dates && schoonmaker.unavailable_dates.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  Niet beschikbaar op: {schoonmaker.unavailableDates.map(d => format(new Date(d), "dd-MM-yyyy")).join(", ")}
+                  Niet beschikbaar op: {schoonmaker.unavailable_dates.map(d => format(new Date(d), "dd-MM-yyyy")).join(", ")}
                 </p>
               )}
             </CardContent>
@@ -155,12 +172,16 @@ const SchoonmakerProfiel = () => {
               <CardTitle>Diensten</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              {schoonmaker.services.map(service => (
-                <Badge key={service} variant="secondary" className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    {service}
-                </Badge>
-              ))}
+              {schoonmaker.services && schoonmaker.services.length > 0 ? (
+                schoonmaker.services.map(service => (
+                  <Badge key={service} variant="secondary" className="flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      {service}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground">Geen diensten ingesteld.</p>
+              )}
             </CardContent>
           </Card>
 
@@ -170,9 +191,8 @@ const SchoonmakerProfiel = () => {
               <CardTitle>Recensies</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {schoonmaker.reviews?.map(review => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
+              {/* Reviews will be fetched here later */}
+              <p className="text-muted-foreground">Nog geen recensies beschikbaar.</p>
             </CardContent>
           </Card>
         </div>
@@ -185,7 +205,7 @@ const SchoonmakerProfiel = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center space-y-4">
                 <div className="text-2xl font-bold">
-                    €{schoonmaker.hourlyRate.toFixed(2)}
+                    €{schoonmaker.hourly_rate?.toFixed(2) || '0.00'}
                     <span className="text-base font-normal text-muted-foreground"> / uur</span>
                 </div>
                 <Calendar

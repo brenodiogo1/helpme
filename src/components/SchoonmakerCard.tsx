@@ -41,15 +41,15 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-start gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={schoonmaker.photoUrl} alt={schoonmaker.name} />
+          <AvatarImage src={schoonmaker.photo_url || undefined} alt={schoonmaker.name} />
           <AvatarFallback>{schoonmaker.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-grow">
           <h3 className="text-xl font-bold">{schoonmaker.name}</h3>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span>{schoonmaker.ratingAvg?.toFixed(1) || 'N/A'}</span>
-            <span>({schoonmaker.ratingCount || 0} reviews)</span>
+            <span>{schoonmaker.rating_avg?.toFixed(1) || 'N/A'}</span>
+            <span>({schoonmaker.rating_count || 0} reviews)</span>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleFavorite}>
@@ -66,7 +66,7 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <div className="text-lg font-bold">
-          €{schoonmaker.hourlyRate?.toFixed(2) || '0.00'}
+          €{schoonmaker.hourly_rate?.toFixed(2) || '0.00'}
           <span className="text-sm font-normal text-muted-foreground"> / uur</span>
         </div>
         {selectedDate && selectedTime ? (
