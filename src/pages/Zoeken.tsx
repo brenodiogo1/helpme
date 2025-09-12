@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom"; // Added Link import
+import { useSearchParams, Link } from "react-router-dom";
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -81,6 +81,7 @@ const Zoeken = () => {
           services: item.services || [],
           city: item.city || "Onbekend",
           address: item.address || "Onbekend adres",
+          postcode: item.postcode || "Onbekend postcode", // Added postcode
           phoneNumber: item.phone_number || "Onbekend telefoonnummer",
           availableDaysOfWeek: item.available_days_of_week || [],
           unavailableDates: item.unavailable_dates || [],

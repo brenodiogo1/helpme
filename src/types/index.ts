@@ -18,6 +18,7 @@ export interface Schoonmaker {
   services: string[];
   city: string;
   address: string;
+  postcode: string; // Added postcode
   phoneNumber: string;
   reviews?: Review[];
   availableDaysOfWeek?: string[];
@@ -48,6 +49,8 @@ export interface Booking {
   profiles?: {
     first_name: string;
     last_name: string;
+    address?: string; // Added address to profile
+    postcode?: string; // Added postcode to profile
   } | null;
 }
 
@@ -69,6 +72,8 @@ export interface JobOffer {
     profiles: {
       first_name: string;
       last_name: string;
+      address?: string; // Added address to profile
+      postcode?: string; // Added postcode to profile
     } | null;
   } | null;
 }

@@ -27,6 +27,7 @@ const mockSchoonmaker: Schoonmaker = {
     services: [],
     city: "Amsterdam",
     address: "Kerkstraat 12, 1012 AB Amsterdam",
+    postcode: "1012 AB", // Added postcode
     phoneNumber: "+31612345678",
 };
 

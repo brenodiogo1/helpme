@@ -17,8 +17,9 @@ const formSchema = z.object({
   hourlyRate: z.coerce.number().positive({ message: "Uurtarief moet een positief getal zijn." }),
   photoUrl: z.string().url({ message: "Voer een geldige URL in." }).or(z.literal("")),
   bio: z.string().min(10, { message: "Biografie moet minimaal 10 tekens lang zijn." }),
-  address: z.string().min(1, { message: "Adres is verplicht." }), // Novo campo
-  phoneNumber: z.string().min(10, { message: "Telefoonnummer is verplicht." }), // Novo campo
+  address: z.string().min(1, { message: "Adres is verplicht." }),
+  postcode: z.string().min(4, { message: "Postcode is verplicht." }), // Added postcode
+  phoneNumber: z.string().min(10, { message: "Telefoonnummer is verplicht." }),
 });
 
 const CleanerProfiel = () => {
@@ -28,8 +29,9 @@ const CleanerProfiel = () => {
     hourlyRate: 18.50,
     photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis. Ik ben betrouwbaar, efficiënt en heb oog voor detail. Specialiteit: dieptereiniging van keukens en badkamers.",
-    address: "Kerkstraat 12, 1012 AB Amsterdam", // Valor padrão
-    phoneNumber: "+31612345678", // Valor padrão
+    address: "Kerkstraat 12",
+    postcode: "1017 GW", // Realistic Dutch postcode
+    phoneNumber: "+31612345678",
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -111,20 +113,33 @@ const CleanerProfiel = () => {
                     </FormItem>
                 )}
                 />
-            <FormField // Novo campo de endereço
+            <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Adres</FormLabel>
                     <FormControl>
-                        <Input placeholder="Kerkstraat 12, 1012 AB Amsterdam" {...field} />
+                        <Input placeholder="Kerkstraat 12" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
-            <FormField // Novo campo de telefone
+            <FormField
+                control={form.control}
+                name="postcode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Postcode</FormLabel>
+                    <FormControl>
+                        <Input placeholder="1017 GW" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
                 control={form.control}
                 name="phoneNumber"
                 render={({ field }) => (

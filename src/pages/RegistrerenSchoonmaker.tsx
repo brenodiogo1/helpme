@@ -22,7 +22,7 @@ const formSchema = z.object({
   phone: z.string().min(10, { message: "Voer een geldig telefoonnummer in." }),
   password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }),
   address: z.string().min(1, { message: "Adres is verplicht." }),
-  postcode: z.string().min(4, { message: "Postcode is verplicht." }),
+  postcode: z.string().regex(/^[1-9][0-9]{3}[ ]?[A-Z]{2}$/, { message: "Voer een geldige Nederlandse postcode in (bijv. 1234AB)." }),
   city: z.string().min(1, { message: "Stad is verplicht." }),
   canWorkInNL: z.boolean().refine(val => val === true, { message: "U moet bevestigen dat u in Nederland kunt werken." }),
   hasResidencePermitOrEU: z.boolean().refine(val => val === true, { message: "U moet bevestigen dat u een verblijfsvergunning of EU-burgerschap heeft." }),
@@ -109,53 +109,25 @@ const RegistrerenSchoonmaker = () => {
       }
       const authUserId = authData.user.id;
 
-      const { data: existingCleaner, error: fetchCleanerError } = await supabase
-        .from('cleaners')
-        .select('id')
-        .eq('user_id', authUserId)
-        .single();
+      // Upsert cleaner profile
+      const { error: cleanerUpsertError } = await supabase.from('cleaners').upsert({
+        user_id: authUserId,
+        name: `${values.firstName} ${values.lastName}`,
+        city: values.city,
+        hourly_rate: 0, // Default to 0, cleaner can update later
+        bio: "", // Default to empty, cleaner can update later
+        address: values.address,
+        postcode: values.postcode,
+        phone_number: values.phone,
+        can_work_in_nl: values.canWorkInNL,
+        has_residence_permit_or_eu: values.hasResidencePermitOrEU,
+      }, { onConflict: 'user_id' }); // Use user_id as conflict target for upsert
 
-      if (fetchCleanerError && fetchCleanerError.code !== 'PGRST116') {
-        console.error("Error fetching existing cleaner profile:", fetchCleanerError);
-        throw new Error(fetchCleanerError.message);
+      if (cleanerUpsertError) {
+        console.error("Supabase cleaner profile upsert error:", cleanerUpsertError);
+        throw new Error(cleanerUpsertError.message);
       }
 
-      if (existingCleaner) {
-        const { error: updateCleanerError } = await supabase.from('cleaners').update({
-          name: `${values.firstName} ${values.lastName}`,
-          city: values.city,
-          address: values.address,
-          postcode: values.postcode,
-          phone_number: values.phone,
-          can_work_in_nl: values.canWorkInNL,
-          has_residence_permit_or_eu: values.hasResidencePermitOrEU,
-        }).eq('user_id', authUserId);
-
-        if (updateCleanerError) {
-          console.error("Supabase cleaner profile update error:", updateCleanerError);
-          throw new Error(updateCleanerError.message);
-        }
-      } else {
-        const { error: insertCleanerError } = await supabase.from('cleaners').insert({
-          user_id: authUserId,
-          name: `${values.firstName} ${values.lastName}`,
-          city: values.city,
-          hourly_rate: 0,
-          bio: "",
-          address: values.address,
-          postcode: values.postcode,
-          phone_number: values.phone,
-          can_work_in_nl: values.canWorkInNL,
-          has_residence_permit_or_eu: values.hasResidencePermitOrEU,
-        });
-
-        if (insertCleanerError) {
-          console.error("Supabase cleaner profile creation error:", insertCleanerError);
-          throw new Error(insertCleanerError.message);
-        }
-      }
-
-      // Mensagem de sucesso atualizada para registro manual
       showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
       navigate("/login");
     } catch (error: any) {

@@ -14,6 +14,8 @@ const formSchema = z.object({
   lastName: z.string().min(1, { message: "Achternaam is verplicht." }),
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
   phone: z.string().optional(),
+  address: z.string().optional(), // Added address
+  postcode: z.string().optional(), // Added postcode
 });
 
 const CustomerProfile = () => {
@@ -22,6 +24,8 @@ const CustomerProfile = () => {
     lastName: "H.",
     email: "piet.h@email.com",
     phone: "0612345678",
+    address: "Dam 1", // Realistic Dutch address
+    postcode: "1012 JS", // Realistic Dutch postcode
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -90,6 +94,32 @@ const CustomerProfile = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Telefoonnummer</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Adres</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="postcode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Postcode</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

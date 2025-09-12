@@ -14,8 +14,9 @@ const mockFavoriteSchoonmakers: Schoonmaker[] = [
     bio: "Met 5 jaar ervaring zorg ik voor een brandschoon huis...",
     services: ["Dieptereiniging", "Ramen wassen", "Strijken"],
     city: "Amsterdam",
-    address: "Kerkstraat 12, 1012 AB Amsterdam", // Adicionado
-    phoneNumber: "+31612345678" // Adicionado
+    address: "Kerkstraat 12",
+    postcode: "1017 GW",
+    phoneNumber: "+31612345678"
   },
   {
     id: "3",
@@ -27,8 +28,9 @@ const mockFavoriteSchoonmakers: Schoonmaker[] = [
     bio: "Perfectie is mijn standaard...",
     services: ["Na verbouwing", "Grote schoonmaak", "Organiseren"],
     city: "Rotterdam",
-    address: "Coolsingel 1, 3011 AA Rotterdam", // Adicionado
-    phoneNumber: "+31634567890" // Adicionado
+    address: "Coolsingel 1",
+    postcode: "3011 AA",
+    phoneNumber: "+31634567890"
   },
 ];
 

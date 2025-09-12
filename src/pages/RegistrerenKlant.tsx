@@ -19,6 +19,8 @@ const formSchema = z.object({
   lastName: z.string().min(1, { message: "Achternaam is verplicht." }),
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
   password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }).optional(),
+  address: z.string().min(1, { message: "Adres is verplicht." }).optional(), // Added address
+  postcode: z.string().regex(/^[1-9][0-9]{3}[ ]?[A-Z]{2}$/, { message: "Voer een geldige Nederlandse postcode in (bijv. 1234AB)." }).optional(), // Added postcode with NL regex
 });
 
 const RegistrerenKlant = () => {
@@ -32,6 +34,8 @@ const RegistrerenKlant = () => {
       lastName: "",
       email: "",
       password: "",
+      address: "", // Default value
+      postcode: "", // Default value
     },
   });
 
@@ -74,17 +78,21 @@ const RegistrerenKlant = () => {
           throw new Error("Gebruiker kon niet worden aangemaakt.");
         }
         authUserId = authData.user.id;
-      } else {
-        const { error: profileUpdateError } = await supabase.from('profiles').update({
-          first_name: values.firstName,
-          last_name: values.lastName,
-          role: 'customer',
-        }).eq('id', authUserId);
+      }
 
-        if (profileUpdateError) {
-          console.error("Supabase profile update error:", profileUpdateError);
-          throw new Error(profileUpdateError.message);
-        }
+      // Update or insert profile with address and postcode
+      const { error: profileUpsertError } = await supabase.from('profiles').upsert({
+        id: authUserId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        role: 'customer',
+        address: values.address,
+        postcode: values.postcode,
+      }, { onConflict: 'id' }); // Use upsert to handle both new and existing (Google) profiles
+
+      if (profileUpsertError) {
+        console.error("Supabase profile upsert error:", profileUpsertError);
+        throw new Error(profileUpsertError.message);
       }
 
       // Mensagem de sucesso atualizada para registro manual
@@ -210,6 +218,32 @@ const RegistrerenKlant = () => {
                   )}
                 />
               ) : null}
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adres</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dam 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="postcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Postcode</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1012 JS" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="w-full">
                 Account aanmaken
               </Button>
