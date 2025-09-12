@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react"; // Removed useMemo as timeSlots is commented out
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,9 +17,9 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import BookingStepper from "@/components/booking/BookingStepper"; // Added missing import
-import { FrequencyCards, FREQ, FrequencyCode } from "@/components/booking/FrequencyCards"; // Added missing import
-import { BookingSummary } from "@/components/booking/BookingSummary"; // Added missing import
+import BookingStepper from "@/components/booking/BookingStepper";
+import { FrequencyCards, FREQ, FrequencyCode } from "@/components/booking/FrequencyCards";
+import { BookingSummary } from "@/components/booking/BookingSummary";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +30,7 @@ import { useRef } from "react";
 // Define o schema para a primeira etapa (Booking Builder)
 const step1Schema = z.object({
   frequency: z.nativeEnum(FREQ).transform(val => val.code), // Use transform to get the code
-  homeSizeM2: z.coerce.number().min(0).optional(),
+  homeSizeM2: z.coerce.number().min(0, { message: "Tamanho da casa não pode ser negativo." }).optional(),
   durationHours: z.coerce.number().min(2, { message: "Duur moet minimaal 2 uur zijn." }).step(0.5, { message: "Duur moet in stappen van 0.5 uur zijn." }),
   bookingDate: z.date({ required_error: "Datum is verplicht." }),
   bookingTime: z.string().min(1, { message: "Tijd is verplicht." }),
@@ -92,14 +92,14 @@ const PublicQuickBooking: React.FC = () => {
     },
   });
 
-  const { handleSubmit, watch, formState, reset, trigger, setValue } = methods; // Removed getValues
+  const { handleSubmit, watch, formState, reset, trigger, setValue } = methods;
 
   const frequency = watch("frequency");
-  // const homeSizeM2 = watch("homeSizeM2"); // Kept in schema, but not directly used in JSX here
+  const homeSizeM2 = watch("homeSizeM2");
   const durationHours = watch("durationHours");
   const bookingDate = watch("bookingDate");
   const bookingTime = watch("bookingTime");
-  // const allowAltWeekday = watch("allowAltWeekday"); // Kept in schema, but not directly used in JSX here
+  const allowAltWeekday = watch("allowAltWeekday");
   const postcode = watch("postcode");
   const city = watch("city");
   const selectedExtraServices = watch("selectedExtraServices") || [];
@@ -163,7 +163,7 @@ const PublicQuickBooking: React.FC = () => {
   const handleNextStep = async () => {
     let isValid = false;
     if (currentStep === 1) {
-      isValid = await trigger(["frequency", "homeSizeM2", "durationHours", "bookingDate", "bookingTime", "postcode", "city", "selectedExtraServices"]);
+      isValid = await trigger(["frequency", "homeSizeM2", "durationHours", "bookingDate", "bookingTime", "postcode", "city", "selectedExtraServices", "allowAltWeekday"]);
     } else if (currentStep === 2) {
       isValid = await trigger(["firstName", "lastName", "email", "phone", "address", "zipCode"]);
     }
@@ -197,7 +197,7 @@ const PublicQuickBooking: React.FC = () => {
         frequency_code: data.frequency,
         home_size_m2: data.homeSizeM2,
         duration_hours: data.durationHours,
-        date: (data.bookingDate as Date).toISOString().split('T')[0], // Explicitly cast to Date
+        date: data.bookingDate!.toISOString().split('T')[0], // Added non-null assertion
         start_time: data.bookingTime,
         allow_alt_weekday: data.allowAltWeekday,
         postcode: data.postcode,
@@ -241,7 +241,7 @@ const PublicQuickBooking: React.FC = () => {
 
       toast.success("Uw boeking is succesvol ingediend!");
       reset();
-      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_payment', totalPrice: totalPrice, date: (data.bookingDate as Date).toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode, notes: data.notes, selectedExtraServices: data.selectedExtraServices, basePrice: basePrice, extrasPrice: extrasPrice, discountAmount: discountAmount, platformFee: settings.serviceFeeFixed } } });
+      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_payment', totalPrice: totalPrice, date: data.bookingDate!.toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode, notes: data.notes, selectedExtraServices: data.selectedExtraServices, basePrice: basePrice, extrasPrice: extrasPrice, discountAmount: discountAmount, platformFee: settings.serviceFeeFixed } } });
     } catch (error: any) {
       toast.error(error.message || "Er is een fout opgetreden bij het indienen van uw boeking. Probeer het opnieuw.");
       console.error("Cash booking submission error:", error);
@@ -257,17 +257,6 @@ const PublicQuickBooking: React.FC = () => {
     // Stripe payment is handled by the StripeCheckoutEmbed component directly
     // It will redirect to /bevestiging on success
   };
-
-  // const timeSlots = useMemo(() => { // Removed redundant timeSlots definition
-  //   const slots = [];
-  //   for (let i = 9; i <= 18; i++) { // 09:00 to 18:00
-  //     slots.push(`${i.toString().padStart(2, '0')}:00`);
-  //     if (i < 18) { // Don't add 18:30
-  //       slots.push(`${i.toString().padStart(2, '0')}:30`);
-  //     }
-  //   }
-  //   return slots;
-  // }, []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -352,6 +341,22 @@ const PublicQuickBooking: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <BookingDetailsForm isSubmitting={formState.isSubmitting} />
                     </div>
+                    <FormField
+                      control={methods.control}
+                      name="homeSizeM2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tamanho da casa (m²)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="100" {...field} disabled={formState.isSubmitting} />
+                          </FormControl>
+                          <FormDescription>
+                            Opcional: Ajuda a estimar o tempo necessário.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={methods.control}
                       name="allowAltWeekday"
