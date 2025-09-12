@@ -4,24 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Schoonmaker } from "@/types";
 import { Badge } from "./ui/badge";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Removed useSearchParams
 import { useState } from "react";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+// Removed import { format } from "date-fns"; 
 
 interface SchoonmakerCardProps {
   schoonmaker: Schoonmaker;
+  selectedDate?: Date; // Added optional selectedDate prop
+  selectedTime?: string; // Added optional selectedTime prop
 }
 
-const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
+const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker, selectedDate, selectedTime }) => {
   const [isFavorite, setIsFavorite] = useState(false);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useAuth(); // Get session from AuthContext
-
-  const selectedDate = searchParams.get("date");
-  const selectedTime = searchParams.get("time");
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -33,7 +32,7 @@ const SchoonmakerCard: React.FC<SchoonmakerCardProps> = ({ schoonmaker }) => {
       showError("Você precisa estar logado para agendar uma limpeza.");
       navigate("/login");
     } else if (selectedDate && selectedTime) {
-      navigate(`/boeken/${schoonmaker.id}`, { state: { date: selectedDate, time: selectedTime } });
+      navigate(`/boeken/${schoonmaker.id}`, { state: { date: selectedDate.toISOString(), time: selectedTime } });
     }
   };
 

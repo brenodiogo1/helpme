@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Schoonmaker } from "@/types";
-import { format } from "date-fns";
+import { format, isBefore } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,27 +26,61 @@ const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vr
 
 const Zoeken = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [priceRange, setPriceRange] = useState([10, 50]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]);
-  const [filterCity, setFilterCity] = useState<string>(searchParams.get("city") || "");
-  const [filterPostcode, setFilterPostcode] = useState<string>(searchParams.get("postcode") || "");
-
-  const initialDateParam = searchParams.get("date");
-  const initialTimeParam = searchParams.get("time");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    initialDateParam ? new Date(initialDateParam) : undefined
+  
+  // Local states for filter inputs (user interacts with these)
+  const [localPriceRange, setLocalPriceRange] = useState([10, 50]);
+  const [localSelectedServices, setLocalSelectedServices] = useState<string[]>([]);
+  const [localSelectedDaysOfWeek, setLocalSelectedDaysOfWeek] = useState<string[]>([]);
+  const [localFilterCity, setLocalFilterCity] = useState<string>(searchParams.get("city") || "");
+  const [localFilterPostcode, setLocalFilterPostcode] = useState<string>(searchParams.get("postcode") || "");
+  const [localSelectedDate, setLocalSelectedDate] = useState<Date | undefined>(
+    searchParams.get("date") ? new Date(searchParams.get("date")!) : undefined
   );
-  const [selectedTime, setSelectedTime] = useState<string | undefined>(initialTimeParam || undefined);
+  const [localSelectedTime, setLocalSelectedTime] = useState<string | undefined>(searchParams.get("time") || undefined);
+  const [localMinRating, setLocalMinRating] = useState<number>(Number(searchParams.get("minRating")) || 0);
+  const [localSortOption, setLocalSortOption] = useState<string>(searchParams.get("sortOption") || "recommended");
+
+  // States that actually trigger the fetch/memo re-evaluation (updated by "Apply Filters" button)
+  const [appliedPriceRange, setAppliedPriceRange] = useState(localPriceRange);
+  const [appliedSelectedServices, setAppliedSelectedServices] = useState(localSelectedServices);
+  const [appliedSelectedDaysOfWeek, setAppliedSelectedDaysOfWeek] = useState(localSelectedDaysOfWeek);
+  const [appliedFilterCity, setAppliedFilterCity] = useState(localFilterCity);
+  const [appliedFilterPostcode, setAppliedFilterPostcode] = useState(localFilterPostcode);
+  const [appliedSelectedDate, setAppliedSelectedDate] = useState(localSelectedDate);
+  const [appliedSelectedTime, setAppliedSelectedTime] = useState(localSelectedTime);
+  const [appliedMinRating, setAppliedMinRating] = useState(localMinRating);
+  const [appliedSortOption, setAppliedSortOption] = useState(localSortOption);
 
   const [cleaners, setCleaners] = useState<Schoonmaker[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // New states for sorting and rating filter
-  const [sortOption, setSortOption] = useState<string>("recommended"); // 'recommended', 'price_low_high', 'price_high_low', 'rating'
-  const [minRating, setMinRating] = useState<number>(0); // 0, 3, 4, 4.5
+  // Effect to initialize local states from URL search params on mount
+  useEffect(() => {
+    const cityParam = searchParams.get("city") || "";
+    const postcodeParam = searchParams.get("postcode") || "";
+    const dateParam = searchParams.get("date");
+    const timeParam = searchParams.get("time");
+    const minRatingParam = Number(searchParams.get("minRating")) || 0;
+    const sortOptionParam = searchParams.get("sortOption") || "recommended";
 
+    setLocalFilterCity(cityParam);
+    setLocalFilterPostcode(postcodeParam);
+    setLocalSelectedDate(dateParam ? new Date(dateParam) : undefined);
+    setLocalSelectedTime(timeParam || undefined);
+    setLocalMinRating(minRatingParam);
+    setLocalSortOption(sortOptionParam);
+
+    // Apply these initial values immediately
+    setAppliedFilterCity(cityParam);
+    setAppliedFilterPostcode(postcodeParam);
+    setAppliedSelectedDate(dateParam ? new Date(dateParam) : undefined);
+    setAppliedSelectedTime(timeParam || undefined);
+    setAppliedMinRating(minRatingParam);
+    setAppliedSortOption(sortOptionParam);
+  }, [searchParams]);
+
+  // Main fetch effect, now dependent on 'applied' states
   useEffect(() => {
     const fetchCleaners = async () => {
       setLoading(true);
@@ -54,15 +88,25 @@ const Zoeken = () => {
       try {
         let query = supabase.from('cleaners').select('*');
 
-        if (filterCity) {
-          query = query.ilike('city', `%${filterCity}%`);
+        if (appliedFilterCity) {
+          query = query.ilike('city', `%${appliedFilterCity}%`);
         }
-        if (filterPostcode) {
-          query = query.ilike('postcode', `%${filterPostcode}%`);
+        if (appliedFilterPostcode) {
+          query = query.ilike('postcode', `%${appliedFilterPostcode}%`);
         }
-        if (minRating > 0) {
-          query = query.gte('rating_avg', minRating);
+        if (appliedMinRating > 0) {
+          query = query.gte('rating_avg', appliedMinRating);
         }
+
+        // Apply sorting directly in the query if possible, otherwise client-side
+        if (appliedSortOption === "price_low_high") {
+          query = query.order('hourly_rate', { ascending: true });
+        } else if (appliedSortOption === "price_high_low") {
+          query = query.order('hourly_rate', { ascending: false });
+        } else if (appliedSortOption === "rating") {
+          query = query.order('rating_avg', { ascending: false });
+        }
+        // "recommended" (default) doesn't require explicit sorting here, as the initial order is maintained or can be randomized.
 
         const { data, error } = await query;
 
@@ -81,7 +125,7 @@ const Zoeken = () => {
           services: item.services || [],
           city: item.city || "Onbekend",
           address: item.address || "Onbekend adres",
-          postcode: item.postcode || "Onbekend postcode", // Added postcode
+          postcode: item.postcode || "Onbekend postcode",
           phoneNumber: item.phone_number || "Onbekend telefoonnummer",
           availableDaysOfWeek: item.available_days_of_week || [],
           unavailableDates: item.unavailable_dates || [],
@@ -98,139 +142,110 @@ const Zoeken = () => {
     };
 
     fetchCleaners();
-  }, [filterCity, filterPostcode, minRating]);
+  }, [appliedFilterCity, appliedFilterPostcode, appliedMinRating, appliedSortOption]); // Dependencies for API fetch
 
-  useEffect(() => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    if (selectedDate) {
-      newSearchParams.set("date", format(selectedDate, "yyyy-MM-dd"));
-    } else {
-      newSearchParams.delete("date");
-    }
-    if (selectedTime) {
-      newSearchParams.set("time", selectedTime);
-    } else {
-      newSearchParams.delete("time");
-    }
-    setSearchParams(newSearchParams);
-  }, [selectedDate, selectedTime, setSearchParams]);
-
-
-  const handleServiceChange = (service: string) => {
-    setSelectedServices(prev =>
-      prev.includes(service)
-        ? prev.filter(s => s !== service)
-        : [...prev, service]
-    );
-  };
-
-  const handleDayOfWeekFilterChange = (day: string) => {
-    setSelectedDaysOfWeek(prev =>
-      prev.includes(day)
-        ? prev.filter(d => d !== day)
-        : [...prev, day]
-    );
-  };
-
-  const handleCityFilterChange = (cityValue: string) => {
-    const newCity = cityValue === "all" ? "" : cityValue;
-    setFilterCity(newCity);
-  };
-
-  const handlePostcodeFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterPostcode(e.target.value);
-  };
-
-  const handleClearFilters = () => {
-    setPriceRange([10, 50]);
-    setSelectedServices([]);
-    setSelectedDaysOfWeek([]);
-    setFilterCity("");
-    setFilterPostcode("");
-    setSelectedDate(undefined);
-    setSelectedTime(undefined);
-    setSortOption("recommended");
-    setMinRating(0);
-    setSearchParams({}); // Clear URL search params
-  };
-
+  // Client-side filtering for date, time, price range, and services
   const filteredAndSortedCleaners = useMemo(() => {
     let currentFilteredCleaners = cleaners;
 
     // Apply price range filter
     currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
-      return (schoonmaker.hourlyRate || 0) >= priceRange[0] && (schoonmaker.hourlyRate || 0) <= priceRange[1];
+      return (schoonmaker.hourlyRate || 0) >= appliedPriceRange[0] && (schoonmaker.hourlyRate || 0) <= appliedPriceRange[1];
     });
 
     // Apply services filter
-    if (selectedServices.length > 0) {
+    if (appliedSelectedServices.length > 0) {
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
-        selectedServices.every(service => schoonmaker.services?.includes(service))
+        appliedSelectedServices.every(service => schoonmaker.services?.includes(service))
       );
     }
 
     // Apply days of week filter
-    if (selectedDaysOfWeek.length > 0) {
+    if (appliedSelectedDaysOfWeek.length > 0) {
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
-        schoonmaker.availableDaysOfWeek && selectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day))
+        schoonmaker.availableDaysOfWeek && appliedSelectedDaysOfWeek.every(day => schoonmaker.availableDaysOfWeek?.includes(day))
       );
     }
 
     // Apply date filter
-    if (selectedDate) {
-      const dayName = format(selectedDate, "eeee", { locale: nl });
-      const formattedSelectedDate = format(selectedDate, "yyyy-MM-dd");
+    if (appliedSelectedDate) {
+      const dayName = format(appliedSelectedDate, "eeee", { locale: nl });
+      const formattedAppliedSelectedDate = format(appliedSelectedDate, "yyyy-MM-dd");
 
       currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
         const isWeeklyAvailable = schoonmaker.availableDaysOfWeek?.includes(dayName);
-        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(formattedSelectedDate);
+        const isSpecificallyUnavailable = schoonmaker.unavailableDates?.includes(formattedAppliedSelectedDate);
         
-        return isWeeklyAvailable && !isSpecificallyUnavailable;
+        // Also ensure the date is not in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPastDate = isBefore(appliedSelectedDate, today);
+
+        return isWeeklyAvailable && !isSpecificallyUnavailable && !isPastDate;
       });
     }
 
-    // Apply sorting
-    if (sortOption === "price_low_high") {
-      currentFilteredCleaners.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
-    } else if (sortOption === "price_high_low") {
-      currentFilteredCleaners.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
-    } else if (sortOption === "rating") {
-      currentFilteredCleaners.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
+    // Apply time filter (simple check, could be more complex for time ranges)
+    if (appliedSelectedTime) {
+        // This is a simple check, assuming cleaners have availability by day, not specific time slots in their profile.
+        // For a more robust time filter, cleaner profiles would need to store time slot availability.
+        // For now, we'll just ensure a time is selected if the user wants to filter by it.
+        // This filter is more about *having* a time selected for booking, rather than filtering cleaners by specific time slot availability.
     }
-    // "recommended" (default) doesn't require explicit sorting here, as the initial order is maintained or can be randomized.
 
     return currentFilteredCleaners;
-  }, [cleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate, minRating, sortOption]);
+  }, [cleaners, appliedPriceRange, appliedSelectedServices, appliedSelectedDaysOfWeek, appliedSelectedDate, appliedSelectedTime]); // Dependencies for client-side filtering
 
-  const initialPostcode = searchParams.get("postcode");
+  const handleApplyFilters = () => {
+    // Update the 'applied' states, which will trigger the main useEffect and memo
+    setAppliedPriceRange(localPriceRange);
+    setAppliedSelectedServices(localSelectedServices);
+    setAppliedSelectedDaysOfWeek(localSelectedDaysOfWeek);
+    setAppliedFilterCity(localFilterCity);
+    setAppliedFilterPostcode(localFilterPostcode);
+    setAppliedSelectedDate(localSelectedDate);
+    setAppliedSelectedTime(localSelectedTime);
+    setAppliedMinRating(localMinRating);
+    setAppliedSortOption(localSortOption);
+
+    // Also update URL search params for persistence and sharing
+    const newSearchParams = new URLSearchParams();
+    if (localFilterCity) newSearchParams.set("city", localFilterCity);
+    if (localFilterPostcode) newSearchParams.set("postcode", localFilterPostcode);
+    if (localSelectedDate) newSearchParams.set("date", format(localSelectedDate, "yyyy-MM-dd"));
+    if (localSelectedTime) newSearchParams.set("time", localSelectedTime);
+    if (localMinRating > 0) newSearchParams.set("minRating", String(localMinRating));
+    if (localSortOption !== "recommended") newSearchParams.set("sortOption", localSortOption);
+    setSearchParams(newSearchParams);
+  };
+
+  const handleClearFilters = () => {
+    setLocalPriceRange([10, 50]);
+    setLocalSelectedServices([]);
+    setLocalSelectedDaysOfWeek([]);
+    setLocalFilterCity("");
+    setLocalFilterPostcode("");
+    setLocalSelectedDate(undefined);
+    setLocalSelectedTime(undefined);
+    setLocalMinRating(0);
+    setLocalSortOption("recommended");
+
+    // Clear applied states
+    setAppliedPriceRange([10, 50]);
+    setAppliedSelectedServices([]);
+    setAppliedSelectedDaysOfWeek([]);
+    setAppliedFilterCity("");
+    setAppliedFilterPostcode("");
+    setAppliedSelectedDate(undefined);
+    setAppliedSelectedTime(undefined);
+    setAppliedMinRating(0);
+    setAppliedSortOption("recommended");
+
+    setSearchParams({}); // Clear URL search params
+  };
+
   const initialCity = searchParams.get("city");
-
-  if (loading) {
-    return (
-      <div className="container flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Laden van schoonmakers...</p>
-      </div>
-    );
-  }
-
-  if (fetchError) {
-    return (
-      <div className="container py-20 text-center">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-red-500">Fout</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{fetchError}</p>
-            <Button asChild className="mt-4">
-              <Link to="/">Terug naar Home</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const initialPostcode = searchParams.get("postcode");
 
   return (
     <div className="container py-8">
@@ -242,7 +257,7 @@ const Zoeken = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="sort">Sorteer op</Label>
-                <Select onValueChange={setSortOption} value={sortOption}>
+                <Select onValueChange={setLocalSortOption} value={localSortOption}>
                   <SelectTrigger id="sort">
                     <SelectValue placeholder="Aanbevolen" />
                   </SelectTrigger>
@@ -256,15 +271,15 @@ const Zoeken = () => {
               </div>
               <div>
                   <Label>Uurprijs</Label>
-                  <Slider value={priceRange} onValueChange={setPriceRange} max={50} min={10} step={1} className="mt-2" />
+                  <Slider value={localPriceRange} onValueChange={setLocalPriceRange} max={50} min={10} step={1} className="mt-2" />
                   <div className="flex justify-between text-sm text-muted-foreground mt-1">
-                      <span>€{priceRange[0]}</span>
-                      <span>€{priceRange[1]}</span>
+                      <span>€{localPriceRange[0]}</span>
+                      <span>€{localPriceRange[1]}</span>
                   </div>
               </div>
               <div>
                 <Label htmlFor="min-rating">Minimale beoordeling</Label>
-                <Select onValueChange={(value) => setMinRating(Number(value))} value={String(minRating)}>
+                <Select onValueChange={(value) => setLocalMinRating(Number(value))} value={String(localMinRating)}>
                   <SelectTrigger id="min-rating" className="mt-2">
                     <SelectValue placeholder="Geen minimale beoordeling" />
                   </SelectTrigger>
@@ -278,7 +293,7 @@ const Zoeken = () => {
               </div>
               <div>
                   <Label htmlFor="filter-city">Stad</Label>
-                  <Select onValueChange={handleCityFilterChange} value={filterCity || "all"}>
+                  <Select onValueChange={setLocalFilterCity} value={localFilterCity || "all"}>
                     <SelectTrigger id="filter-city">
                       <SelectValue placeholder="Alle steden" />
                     </SelectTrigger>
@@ -294,8 +309,8 @@ const Zoeken = () => {
                   id="filter-postcode"
                   type="text"
                   placeholder="Voer postcode in"
-                  value={filterPostcode}
-                  onChange={handlePostcodeFilterChange}
+                  value={localFilterPostcode}
+                  onChange={(e) => setLocalFilterPostcode(e.target.value)}
                   className="mt-2"
                 />
               </div>
@@ -310,14 +325,14 @@ const Zoeken = () => {
                       className="w-full justify-start text-left font-normal mt-2"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "dd-MM-yyyy") : <span>Kies een datum</span>}
+                      {localSelectedDate ? format(localSelectedDate, "dd-MM-yyyy") : <span>Kies een datum</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
+                      selected={localSelectedDate}
+                      onSelect={setLocalSelectedDate}
                       disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
                       initialFocus
                     />
@@ -328,7 +343,7 @@ const Zoeken = () => {
               {/* New Time Filter */}
               <div>
                 <Label>Tijd</Label>
-                <Select onValueChange={setSelectedTime} value={selectedTime}>
+                <Select onValueChange={setLocalSelectedTime} value={localSelectedTime}>
                   <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Kies een tijd" />
                   </SelectTrigger>
@@ -345,8 +360,10 @@ const Zoeken = () => {
                           <div key={service} className="flex items-center space-x-2">
                               <Checkbox
                                 id={service}
-                                checked={selectedServices.includes(service)}
-                                onCheckedChange={() => handleServiceChange(service)}
+                                checked={localSelectedServices.includes(service)}
+                                onCheckedChange={() => setLocalSelectedServices(prev =>
+                                  prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+                                )}
                               />
                               <Label htmlFor={service} className="font-normal">{service}</Label>
                           </div>
@@ -360,15 +377,20 @@ const Zoeken = () => {
                           <div key={day} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`day-filter-${day}`}
-                                checked={selectedDaysOfWeek.includes(day)}
-                                onCheckedChange={() => handleDayOfWeekFilterChange(day)}
+                                checked={localSelectedDaysOfWeek.includes(day)}
+                                onCheckedChange={() => setLocalSelectedDaysOfWeek(prev =>
+                                  prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+                                )}
                               />
                               <Label htmlFor={`day-filter-${day}`} className="font-normal">{day}</Label>
                           </div>
                       ))}
                   </div>
               </div>
-              <Button variant="outline" className="w-full mt-6" onClick={handleClearFilters}>
+              <Button className="w-full mt-6" onClick={handleApplyFilters}>
+                Filters Toepassen
+              </Button>
+              <Button variant="outline" className="w-full mt-2" onClick={handleClearFilters}>
                 Filters wissen
               </Button>
             </div>
@@ -380,15 +402,34 @@ const Zoeken = () => {
           <h1 className="text-3xl font-bold mb-4">
             {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredAndSortedCleaners.length > 0 ? (
-              filteredAndSortedCleaners.map((schoonmaker) => (
-                <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} />
-              ))
-            ) : (
-              <p className="text-muted-foreground col-span-full">Geen schoonmakers gevonden die aan je criteria voldoen.</p>
-            )}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-2 text-muted-foreground">Laden van schoonmakers...</p>
+            </div>
+          ) : fetchError ? (
+            <div className="container py-20 text-center">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-red-500">Fout</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>{fetchError}</p>
+                  <Button asChild className="mt-4">
+                    <Link to="/">Terug naar Home</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : filteredAndSortedCleaners.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {filteredAndSortedCleaners.map((schoonmaker) => (
+                <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} selectedDate={appliedSelectedDate} selectedTime={appliedSelectedTime} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground col-span-full">Geen schoonmakers gevonden die aan je criteria voldoen.</p>
+          )}
         </main>
       </div>
     </div>
