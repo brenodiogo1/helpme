@@ -10,19 +10,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase, signUpEmailPassword, signInWithGoogle } from "@/integrations/supabase/client"; // Import new auth functions
+import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import { Chrome } from "lucide-react"; // Added Chrome import
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
   lastName: z.string().min(1, { message: "Achternaam is verplicht." }),
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),
   phone: z.string().min(10, { message: "Voer een geldig telefoonnummer in." }),
-  password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }).optional(), // Made optional for Google users
+  password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens lang zijn." }),
   address: z.string().min(1, { message: "Adres is verplicht." }),
   postcode: z.string().regex(/^[1-9][0-9]{3}[ ]?[A-Z]{2}$/, { message: "Voer een geldige Nederlandse postcode in (bijv. 1234AB)." }),
   city: z.string().min(1, { message: "Stad is verplicht." }),
@@ -33,7 +31,6 @@ const formSchema = z.object({
 const RegistrerenSchoonmaker = () => {
   const navigate = useNavigate();
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const { user, isLoading: isAuthLoading, refreshUser } = useAuth(); // Added refreshUser
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -56,23 +53,13 @@ const RegistrerenSchoonmaker = () => {
     },
   });
 
-  useEffect(() => {
-    if (user && user.app_metadata.provider === 'google') {
-      form.setValue("firstName", user.user_metadata.first_name || "");
-      form.setValue("lastName", user.user_metadata.last_name || "");
-      form.setValue("email", user.email || "");
-      form.setValue("password", undefined); // Password is not needed for Google sign-ups
-      form.trigger(["firstName", "lastName", "email"]);
-    }
-  }, [user, form]);
-
   const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   };
 
   const onPlaceChanged = () => {
     if (autocompleteRef.current !== null) {
-      const place = autocomplete.current.getPlace();
+      const place = autocompleteRef.current.getPlace();
       if (place.address_components) {
         let streetName = "";
         let streetNumber = "";
@@ -100,47 +87,29 @@ const RegistrerenSchoonmaker = () => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      let authUserId = user?.id;
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+            role: 'cleaner',
+          },
+        },
+      });
 
-      if (!authUserId) {
-        if (!values.password) {
-          throw new Error("Wachtwoord is verplicht voor handmatige registratie.");
-        }
-        const { data, error: authError } = await signUpEmailPassword( // Corrected destructuring
-          values.email,
-          values.password,
-          'cleaner',
-          `${values.firstName} ${values.lastName}`
-        );
-
-        if (authError) {
-          console.error("Supabase signup error:", authError);
-          throw new Error(authError.message);
-        }
-
-        if (!data.user) { // Access user from data
-          throw new Error("Gebruiker kon niet worden aangemaakt.");
-        }
-        authUserId = data.user.id; // Access user from data
+      if (authError) {
+        console.error("Supabase signup error:", authError);
+        throw new Error(authError.message);
       }
+
+      if (!authData.user) {
+        throw new Error("Gebruiker kon niet worden aangemaakt.");
+      }
+      const authUserId = authData.user.id;
 
       // Upsert cleaner profile
-      const { error: profileUpsertError } = await supabase.from('profiles').upsert({
-        id: authUserId,
-        full_name: `${values.firstName} ${values.lastName}`,
-        role: 'cleaner',
-        cleaner_status: 'pending', // Always pending for new cleaners
-        phone: values.phone,
-        address: values.address,
-        postcode: values.postcode,
-      }, { onConflict: 'id' });
-
-      if (profileUpsertError) {
-        console.error("Supabase profile upsert error:", profileUpsertError);
-        throw new Error(profileUpsertError.message);
-      }
-
-      // Upsert cleaner specific data (if needed, currently handled by profiles)
       const { error: cleanerUpsertError } = await supabase.from('cleaners').upsert({
         user_id: authUserId,
         name: `${values.firstName} ${values.lastName}`,
@@ -159,12 +128,7 @@ const RegistrerenSchoonmaker = () => {
         throw new Error(cleanerUpsertError.message);
       }
 
-      if (!user || user.app_metadata.provider !== 'google') {
-        showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
-      } else {
-        showSuccess("Account succesvol aangemaakt!");
-        await refreshUser(); // Refresh user context after profile update
-      }
+      showSuccess("Account succesvol aangemaakt! Controleer uw e-mail voor een verificatielink om uw account te activeren.");
       navigate("/login");
     } catch (error: any) {
       showError(error.message);
@@ -172,19 +136,7 @@ const RegistrerenSchoonmaker = () => {
     }
   }
 
-  const handleGoogleRegister = async () => {
-    try {
-      const { error } = await signInWithGoogle('cleaner');
-      if (error) {
-        throw new Error(error.message);
-      }
-    } catch (error: any) {
-      showError(error.message || "Fout bij het registreren met Google.");
-      console.error("Google registration error:", error);
-    }
-  };
-
-  if (isAuthLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[80vh] bg-secondary/50 py-12">
         <Card className="mx-auto max-w-lg w-full">
@@ -208,18 +160,6 @@ const RegistrerenSchoonmaker = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" className="w-full mb-4" onClick={handleGoogleRegister} disabled={isAuthLoading}>
-            <Chrome className="mr-2 h-4 w-4" />
-            Registreren met Google
-          </Button>
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Of</span>
-            </div>
-          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,7 +170,7 @@ const RegistrerenSchoonmaker = () => {
                     <FormItem>
                       <FormLabel>Voornaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="Anna" {...field} disabled={user?.app_metadata.provider === 'google'} />
+                        <Input placeholder="Anna" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -243,7 +183,7 @@ const RegistrerenSchoonmaker = () => {
                     <FormItem>
                       <FormLabel>Achternaam</FormLabel>
                       <FormControl>
-                        <Input placeholder="de Vries" {...field} disabled={user?.app_metadata.provider === 'google'} />
+                        <Input placeholder="de Vries" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,7 +197,7 @@ const RegistrerenSchoonmaker = () => {
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input placeholder="naam@voorbeeld.com" {...field} disabled={user?.app_metadata.provider === 'google'} />
+                      <Input placeholder="naam@voorbeeld.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,21 +216,19 @@ const RegistrerenSchoonmaker = () => {
                   </FormItem>
                 )}
               />
-              {!user || user.app_metadata.provider !== 'google' ? (
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Wachtwoord</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : null}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Wachtwoord</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <Separator className="my-4" />
               <h3 className="font-semibold text-lg">Adresgegevens</h3>

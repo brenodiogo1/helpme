@@ -29,7 +29,7 @@ import { useRef } from "react";
 
 // Define o schema para a primeira etapa (Booking Builder)
 const step1Schema = z.object({
-  frequency: z.enum(Object.keys(FREQ) as [FrequencyCode, ...FrequencyCode[]]), // Corrected z.nativeEnum usage
+  frequency: z.nativeEnum(FREQ).transform(val => val.code), // Use transform to get the code
   homeSizeM2: z.coerce.number().min(0).optional(),
   durationHours: z.coerce.number().min(2, { message: "Duur moet minimaal 2 uur zijn." }).step(0.5, { message: "Duur moet in stappen van 0.5 uur zijn." }),
   bookingDate: z.date({ required_error: "Datum is verplicht." }),
