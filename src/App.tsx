@@ -61,6 +61,8 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // Import ProtectedRou
 import { useEffect } from "react";
 import MijnTaken from "./pages/cleaner/MijnTaken";
 import PublicQuickBooking from "./pages/PublicQuickBooking";
+import AuthCallback from "./pages/AuthCallback"; // New import
+import AwaitingApproval from "./pages/AwaitingApproval"; // New import
 
 const queryClient = new QueryClient();
 
@@ -105,6 +107,8 @@ const App = () => {
                   <Route path="/registreren/klant" element={<RegistrerenKlant />} />
                   <Route path="/registreren/schoonmaker" element={<RegistrerenSchoonmaker />} />
                   <Route path="/quick-booking" element={<PublicQuickBooking />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} /> {/* New route */}
+                  <Route path="/awaiting-approval" element={<AwaitingApproval />} /> {/* New route */}
                   {/* Legal Pages */}
                   <Route path="/over-ons" element={<OverOns />} />
                   <Route path="/pers" element={<Pers />} />
