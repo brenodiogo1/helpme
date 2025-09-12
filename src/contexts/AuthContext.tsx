@@ -47,6 +47,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else if (profile) {
             currentRole = profile.role;
           }
+          
+          // Default to 'customer' if no role is found for a logged-in user
+          if (!currentRole) {
+            currentRole = 'customer';
+          }
           setUserRole(currentRole);
 
           // Explicitly redirect after successful sign-in
@@ -56,10 +61,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               navigate('/admin');
             } else if (currentRole === 'cleaner') {
               navigate('/dashboard');
-            } else if (currentRole === 'customer') {
+            } else { // Now 'customer' or any other default role
               navigate('/account');
-            } else {
-              navigate('/'); // Default redirect if no specific role dashboard
             }
           }
         } else {
@@ -90,14 +93,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', session.user.id)
           .single();
 
+        let initialRole: string | null = null;
         if (profileError && profileError.code !== 'PGRST116') {
           console.error("Error fetching initial user profile role:", profileError);
-          setUserRole(null);
         } else if (profile) {
-          setUserRole(profile.role);
-        } else {
-          setUserRole(null);
+          initialRole = profile.role;
         }
+        
+        // Default to 'customer' if no role is found for a logged-in user
+        if (!initialRole) {
+          initialRole = 'customer';
+        }
+        setUserRole(initialRole);
       } else {
         setUserRole(null);
       }

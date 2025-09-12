@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, Briefcase } from "lucide-react"; // Adicionado Briefcase
 import LiveActivityFeed from "@/components/LiveActivityFeed";
 import CustomerBookingTimeline from "@/components/CustomerBookingTimeline";
 import { useState, useEffect } from "react";
@@ -139,7 +139,22 @@ const CustomerDashboard = () => {
         <LiveActivityFeed />
       </div>
       <div className="mt-8">
-        {/* Other dashboard content */}
+        <Card className="flex flex-col items-center justify-center text-center bg-secondary">
+          <CardHeader>
+            <CardTitle>Word een Schoonmaker!</CardTitle>
+            <CardDescription>
+              Heb je interesse om zelf schoonmaakdiensten aan te bieden? Meld je aan als schoonmaker en begin met verdienen!
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button size="lg" asChild>
+              <Link to="/registreren/schoonmaker">
+                <Briefcase className="mr-2 h-5 w-5" />
+                Meld je aan als Schoonmaker
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
