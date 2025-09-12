@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus } from "lucide-react";
+import { Menu, ClipboardList, Briefcase, LogIn, UserPlus, CalendarPlus, LogOut } from "lucide-react"; // Added LogOut
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";

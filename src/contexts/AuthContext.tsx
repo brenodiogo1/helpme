@@ -5,7 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
-import { routeAfterAuth } from '@/lib/auth'; // Import the new routing function
+// import { routeAfterAuth } from '@/lib/auth'; // Removed unused import
 
 interface AuthContextType {
   session: Session | null;
@@ -34,12 +34,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsLoading(false);
 
         let currentRole: string | null = null;
+        let cleanerStatus: string | null = null;
 
         if (session?.user) {
-          // Fetch user role from the public.profiles table
+          // Fetch user role and cleaner_status from the public.profiles table
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, cleaner_status') // Include cleaner_status in select
             .eq('id', session.user.id)
             .single();
 
@@ -47,6 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.error("Error fetching user profile role:", profileError);
           } else if (profile) {
             currentRole = profile.role;
+            cleanerStatus = profile.cleaner_status; // Get cleaner_status
           }
           setUserRole(currentRole);
 
@@ -58,7 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (currentRole === 'admin') {
               navigate('/admin');
             } else if (currentRole === 'cleaner') {
-              if (profile?.cleaner_status === 'approved') {
+              if (cleanerStatus === 'approved') { // Use cleanerStatus here
                 navigate('/dashboard');
               } else {
                 navigate('/awaiting-approval');
@@ -93,7 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (session?.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, cleaner_status')
+          .select('role, cleaner_status') // Include cleaner_status
           .eq('id', session.user.id)
           .single();
 

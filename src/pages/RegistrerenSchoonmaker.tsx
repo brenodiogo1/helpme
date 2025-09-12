@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Link, useNavigate } => "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Corrected import syntax
 import { showSuccess, showError } from "@/utils/toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
-import { useRef } from "react";
+import { useRef, useEffect } from "react"; // Added useEffect import
 import { Separator } from "@/components/ui/separator";
-import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth';
+import { useAuth } from "@/contexts/AuthContext";
+import { Chrome } from "lucide-react"; // Added Chrome import
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),

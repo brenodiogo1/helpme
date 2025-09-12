@@ -6,7 +6,7 @@ import { Schoonmaker } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-// import { Checkbox } from "@/components/ui/checkbox"; // Removed unused import
+// import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
@@ -36,15 +36,7 @@ const mockSchoonmaker: Schoonmaker = {
     phoneNumber: "+31612345678",
 };
 
-const extraServices = [
-    { id: "ramen", label: "Ramen wassen", price: 25.00 },
-    { id: "oven", label: "Oven reinigen", price: 15.00 },
-    { id: "koelkast", label: "Koelkast reinigen", price: 15.00 },
-    { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
-];
-
-const MIN_SERVICES_FOR_DISCOUNT = 2; // Mínimo de serviços para aplicar desconto
-const DISCOUNT_PERCENTAGE = 0.10; // 10% de desconto
+// Removed extraServices array as it is no longer used in this component.
 
 // Carregar o Stripe fora do componente para evitar recargas desnecessárias
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -60,7 +52,7 @@ const Boeken = () => {
 
     const [currentStep, setCurrentStep] = useState(1); // Start at step 1
     const [hours, setHours] = useState(3);
-    const [selectedServices, setSelectedServices] = useState<string[]>([]);
+    // const [selectedServices, setSelectedServices] = useState<string[]>([]); // Removed as it's not used here
     const [frequency, setFrequency] = useState<FrequencyCode>('once');
     // const [homeSizeM2, setHomeSizeM2] = useState<number | undefined>(undefined); // Removed unused state
     // const [allowAltWeekday, setAllowAltWeekday] = useState(false); // Removed unused state
@@ -78,10 +70,10 @@ const Boeken = () => {
 
     const basePrice = hours * settings.baseHourlyRate;
     const extrasPrice = useMemo(() => {
-        return extraServices
-            .filter(service => selectedServices.includes(service.id))
-            .reduce((total, service) => total + service.price, 0);
-    }, [selectedServices]);
+        // Assuming selectedServices is managed elsewhere or not needed for this page's calculation
+        // For now, setting to 0 as selectedServices state is removed.
+        return 0; 
+    }, []); // No dependencies as selectedServices is removed
 
     const frequencyDiscountAmount = useMemo(() => {
       const discountRate = FREQ[frequency]?.discount || 0;
@@ -205,30 +197,30 @@ const Boeken = () => {
                 throw new Error(bookingError?.message || "Fout bij het aanmaken van de boekingsaanvraag.");
             }
 
-            if (selectedServices.length > 0) {
-                const { data: addonsData, error: addonsError } = await supabase
-                    .from('addons')
-                    .select('id, name')
-                    .in('name', extraServices.filter(es => selectedServices.includes(es.id)).map(es => es.label));
+            // if (selectedServices.length > 0) { // Removed as selectedServices state is removed
+            //     const { data: addonsData, error: addonsError } = await supabase
+            //         .from('addons')
+            //         .select('id, name')
+            //         .in('name', extraServices.filter(es => selectedServices.includes(es.id)).map(es => es.label));
 
-                if (addonsError) {
-                    throw new Error(addonsError.message);
-                }
+            //     if (addonsError) {
+            //         throw new Error(addonsError.message);
+            //     }
 
-                const bookingAddonsToInsert = addonsData.map(addon => ({
-                    booking_id: bookingData.id,
-                    addon_id: addon.id,
-                    qty: 1,
-                }));
+            //     const bookingAddonsToInsert = addonsData.map(addon => ({
+            //         booking_id: bookingData.id,
+            //         addon_id: addon.id,
+            //         qty: 1,
+            //     }));
 
-                const { error: insertAddonsError } = await supabase
-                    .from('booking_addons')
-                    .insert(bookingAddonsToInsert);
+            //     const { error: insertAddonsError } = await supabase
+            //         .from('booking_addons')
+            //         .insert(bookingAddonsToInsert);
 
-                if (insertAddonsError) {
-                    throw new Error(insertAddonsError.message);
-                }
-            }
+            //     if (insertAddonsError) {
+            //         throw new Error(insertAddonsError.message);
+            //     }
+            // }
 
             dismissToast(toastId);
             showSuccess("Boekingsaanvraag succesvol verzonden! De schoonmaker zal uw aanvraag beoordelen.");

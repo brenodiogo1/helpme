@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import BookingDetailsForm, { bookingDetailsSchema } from "@/components/quick-booking/BookingDetailsForm";
-import ExtraServicesForm, { extraServicesSchema } from "@/components/quick-booking/ExtraServicesForm";
+import BookingDetailsForm from "@/components/quick-booking/BookingDetailsForm";
+import ExtraServicesForm from "@/components/quick-booking/ExtraServicesForm";
 import ContactDetailsForm, { contactDetailsSchema } from "@/components/quick-booking/ContactDetailsForm";
-// import PriceSummary from "@/components/quick-booking/PriceSummary"; // Removed unused import
+// import PriceSummary from "@/components/quick-booking/PriceSummary";
 import PaymentMethodSelection from "@/components/quick-booking/PaymentMethodSelection";
 import StripeCheckoutEmbed from "@/components/quick-booking/StripeCheckoutEmbed";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -23,13 +23,13 @@ import { BookingSummary } from "@/components/booking/BookingSummary";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { Label } from "@/components/ui/label"; // Removed unused Label import
+// import { Label } from "@/components/ui/label";
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { useRef } from "react";
 
 // Define o schema para a primeira etapa (Booking Builder)
 const step1Schema = z.object({
-  frequency: z.nativeEnum(FREQ).transform(val => val.code), // Use transform to get the code
+  frequency: z.enum(Object.keys(FREQ) as [FrequencyCode, ...FrequencyCode[]]).transform(val => val),
   homeSizeM2: z.coerce.number().min(0, { message: "Tamanho da casa não pode ser negativo." }).optional(),
   durationHours: z.coerce.number().min(2, { message: "Duur moet minimaal 2 uur zijn." }).step(0.5, { message: "Duur moet in stappen van 0.5 uur zijn." }),
   bookingDate: z.date({ required_error: "Datum is verplicht." }),
@@ -95,11 +95,11 @@ const PublicQuickBooking: React.FC = () => {
   const { handleSubmit, watch, formState, reset, trigger, setValue } = methods;
 
   const frequency = watch("frequency");
-  const homeSizeM2 = watch("homeSizeM2");
+  // const homeSizeM2 = watch("homeSizeM2"); // Removed as it's only used via 'data' in handleCashBookingSubmit
   const durationHours = watch("durationHours");
   const bookingDate = watch("bookingDate");
   const bookingTime = watch("bookingTime");
-  const allowAltWeekday = watch("allowAltWeekday");
+  // const allowAltWeekday = watch("allowAltWeekday"); // Removed as it's only used via 'data' in handleCashBookingSubmit
   const postcode = watch("postcode");
   const city = watch("city");
   const selectedExtraServices = watch("selectedExtraServices") || [];
@@ -197,7 +197,7 @@ const PublicQuickBooking: React.FC = () => {
         frequency_code: data.frequency,
         home_size_m2: data.homeSizeM2,
         duration_hours: data.durationHours,
-        date: data.bookingDate!.toISOString().split('T')[0], // Added non-null assertion
+        date: (data.bookingDate as Date).toISOString().split('T')[0],
         start_time: data.bookingTime,
         allow_alt_weekday: data.allowAltWeekday,
         postcode: data.postcode,
@@ -241,7 +241,7 @@ const PublicQuickBooking: React.FC = () => {
 
       toast.success("Uw boeking is succesvol ingediend!");
       reset();
-      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_payment', totalPrice: totalPrice, date: data.bookingDate!.toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode, notes: data.notes, selectedExtraServices: data.selectedExtraServices, basePrice: basePrice, extrasPrice: extrasPrice, discountAmount: discountAmount, platformFee: settings.serviceFeeFixed } } });
+      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_payment', totalPrice: totalPrice, date: (data.bookingDate as Date).toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode, notes: data.notes, selectedExtraServices: data.selectedExtraServices, basePrice: basePrice, extrasPrice: extrasPrice, discountAmount: discountAmount, platformFee: settings.serviceFeeFixed } } });
     } catch (error: any) {
       toast.error(error.message || "Er is een fout opgetreden bij het indienen van uw boeking. Probeer het opnieuw.");
       console.error("Cash booking submission error:", error);

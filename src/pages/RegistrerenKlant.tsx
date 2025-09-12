@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chrome } from "lucide-react";
 import { useEffect } from "react";
-import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
+import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth';
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "Voornaam is verplicht." }),
@@ -58,7 +58,7 @@ const RegistrerenKlant = () => {
         if (!values.password) {
           throw new Error("Wachtwoord is verplicht voor handmatige registratie.");
         }
-        const { data: authData } = await authSignUpEmailPassword(
+        const { data: authData } = await authSignUpEmailPassword( // authData is correctly typed as AuthResponse
           values.email,
           values.password,
           'provider', // Role for customer

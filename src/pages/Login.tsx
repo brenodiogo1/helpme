@@ -12,7 +12,7 @@ import { showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chrome } from "lucide-react";
-import { signInWithGoogle, signUpEmailPassword as authSignUpEmailPassword } from '@/lib/auth'; // Import new auth functions
+import { signInWithGoogle } from '@/lib/auth'; // Removed unused authSignUpEmailPassword import
 
 const formSchema = z.object({
   email: z.string().email({ message: "Voer een geldig e-mailadres in." }),

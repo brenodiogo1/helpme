@@ -1,7 +1,8 @@
 "use client";
 
 import { supabase } from '@/integrations/supabase/client';
-import { showSuccess, showError } from '@/utils/toast';
+import { showError } from '@/utils/toast'; // Removed showSuccess as it was unused
+import { AuthResponse } from '@supabase/supabase-js'; // Import AuthResponse for explicit typing
 
 type UserRole = 'admin' | 'cleaner' | 'provider';
 
@@ -9,8 +10,10 @@ export async function signInWithGoogle(role: UserRole = 'provider') {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      queryParams: { prompt: 'select_account' },
-      data: { signup_role: role }, // trigger lê isso
+      queryParams: {
+        prompt: 'select_account',
+        signup_role: role, // Pass signup_role via queryParams for OAuth metadata
+      },
       redirectTo: `${window.location.origin}/auth/callback`
     }
   });
@@ -21,11 +24,11 @@ export async function signInWithGoogle(role: UserRole = 'provider') {
   return data;
 }
 
-export async function signUpEmailPassword(email: string, password: string, role: UserRole = 'provider', full_name?: string) {
+export async function signUpEmailPassword(email: string, password: string, role: UserRole = 'provider', full_name?: string): Promise<AuthResponse> { // Explicitly typed return
   const { data, error } = await supabase.auth.signUp({
     email, password,
     options: {
-      data: { signup_role: role, full_name: full_name ?? '' },
+      data: { signup_role: role, full_name: full_name ?? '' }, // 'data' is correct for email/password signup options
       emailRedirectTo: `${window.location.origin}/auth/callback`
     }
   });
@@ -33,7 +36,7 @@ export async function signUpEmailPassword(email: string, password: string, role:
     console.error("Email/password sign-up error:", error);
     throw new Error(error.message);
   }
-  return data;
+  return { data, error }; // Return the full AuthResponse object
 }
 
 export async function linkGoogleIdentity() {
@@ -69,9 +72,6 @@ export async function routeAfterAuth() {
   }
 
   if (!profile) {
-    // This case should ideally be handled by the handle_new_user trigger,
-    // but as a fallback, redirect to an onboarding or profile creation page.
-    // For now, we'll redirect to login, but a dedicated onboarding is better.
     console.warn("Profile not found for user, redirecting to login as fallback.");
     showError("Seu perfil não foi encontrado. Por favor, tente novamente.");
     return window.location.assign('/login');
