@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom"; // Added Link import
 import SchoonmakerCard from "@/components/SchoonmakerCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,79 +12,17 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { showError } from "@/utils/toast";
 
 const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
-const allServices = ["Dieptereiniging", "Ramen wassen", "Strijken", "Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging", "Na verbouwing", "Grote schoonmaak", "Organiseren", "Boodschappen doen", "Student", "Kleine klusjes", "Tuinonderhoud", "Anti-allergeen", "Kantoor schoonmaak"]; // Consolidated all services
-const allCities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"]; // Consolidated all cities
+const allServices = ["Dieptereiniging", "Ramen wassen", "Strijken", "Reguliere schoonmaak", "Milieuvriendelijk", "Huisdier-vriendelijk", "Ovenreiniging", "Na verbouwing", "Grote schoonmaak", "Organiseren", "Boodschappen doen", "Student", "Kleine klusjes", "Tuinonderhoud", "Anti-allergeen", "Kantoor schoonmaak"];
+const allCities = ["Amsterdam", "Utrecht", "Rotterdam", "Den Haag", "Eindhoven", "Groningen"];
 const daysOfWeek = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-
-// Mock data for cleaners
-const mockCleaners: Schoonmaker[] = [
-  {
-    id: "mock-1",
-    name: "Sophie Jansen",
-    photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.8,
-    ratingCount: 95,
-    hourlyRate: 22.00,
-    bio: "Ervaren en betrouwbare schoonmaakster met oog voor detail. Ik zorg ervoor dat uw huis weer straalt!",
-    services: ["Reguliere schoonmaak", "Ramen wassen", "Milieuvriendelijk"],
-    city: "Amsterdam",
-    address: "Damrak 1, 1012 LK Amsterdam",
-    phoneNumber: "+31611223344",
-    availableDaysOfWeek: ["Maandag", "Woensdag", "Vrijdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "mock-2",
-    name: "Thomas Bakker",
-    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.5,
-    ratingCount: 70,
-    hourlyRate: 20.00,
-    bio: "Flexibele en hardwerkende schoonmaker, beschikbaar voor diverse klussen. Uw tevredenheid is mijn prioriteit.",
-    services: ["Dieptereiniging", "Ovenreiniging", "Kleine klusjes"],
-    city: "Utrecht",
-    address: "Oudegracht 100, 3511 AW Utrecht",
-    phoneNumber: "+31655443322",
-    availableDaysOfWeek: ["Dinsdag", "Donderdag", "Zaterdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "mock-3",
-    name: "Laura de Jong",
-    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.9,
-    ratingCount: 110,
-    hourlyRate: 25.00,
-    bio: "Specialist in grote schoonmaak en na verbouwing. Ik werk snel en efficiënt, met een perfect resultaat.",
-    services: ["Na verbouwing", "Grote schoonmaak", "Strijken"],
-    city: "Rotterdam",
-    address: "Coolsingel 1, 3011 AA Rotterdam",
-    phoneNumber: "+31677889900",
-    availableDaysOfWeek: ["Maandag", "Dinsdag", "Donderdag"],
-    unavailableDates: [],
-  },
-  {
-    id: "mock-4",
-    name: "Mohammed El-Amin",
-    photoUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=500&auto=format&fit=crop",
-    ratingAvg: 4.7,
-    ratingCount: 80,
-    hourlyRate: 19.50,
-    bio: "Vriendelijke en grondige schoonmaker. Ik help u graag met uw huishouden, inclusief huisdier-vriendelijke opties.",
-    services: ["Reguliere schoonmaak", "Huisdier-vriendelijk", "Boodschappen doen"],
-    city: "Den Haag",
-    address: "Spui 1, 2511 AA Den Haag",
-    phoneNumber: "+31699887766",
-    availableDaysOfWeek: ["Woensdag", "Vrijdag", "Zondag"],
-    unavailableDates: [],
-  },
-];
 
 const Zoeken = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,9 +39,9 @@ const Zoeken = () => {
   );
   const [selectedTime, setSelectedTime] = useState<string | undefined>(initialTimeParam || undefined);
 
-  const [realCleaners, setRealCleaners] = useState<Schoonmaker[]>([]); // Stores cleaners from Supabase
+  const [cleaners, setCleaners] = useState<Schoonmaker[]>([]);
   const [loading, setLoading] = useState(true);
-  // const [supabaseError, setSupabaseError] = useState<string | null>(null); // Specific error for Supabase fetch - REMOVED
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // New states for sorting and rating filter
   const [sortOption, setSortOption] = useState<string>("recommended"); // 'recommended', 'price_low_high', 'price_high_low', 'rating'
@@ -112,7 +50,7 @@ const Zoeken = () => {
   useEffect(() => {
     const fetchCleaners = async () => {
       setLoading(true);
-      // setSupabaseError(null); // Clear previous Supabase errors - REMOVED
+      setFetchError(null);
       try {
         let query = supabase.from('cleaners').select('*');
 
@@ -122,24 +60,44 @@ const Zoeken = () => {
         if (filterPostcode) {
           query = query.ilike('postcode', `%${filterPostcode}%`);
         }
+        if (minRating > 0) {
+          query = query.gte('rating_avg', minRating);
+        }
 
         const { data, error } = await query;
 
         if (error) {
-          // throw new Error(error.message); // No longer throwing to prevent UI error
-          console.error("Error fetching cleaners from Supabase:", error.message); // Log error but don't block UI
+          throw error;
         }
-        setRealCleaners(data || []);
+
+        const mappedCleaners: Schoonmaker[] = data.map(item => ({
+          id: item.id,
+          name: item.name || `${item.first_name || ''} ${item.last_name || ''}`.trim(),
+          photoUrl: item.photo_url || "https://via.placeholder.com/150",
+          ratingAvg: item.rating_avg || 0,
+          ratingCount: item.rating_count || 0,
+          hourlyRate: item.hourly_rate || 0,
+          bio: item.bio || "Geen biografie beschikbaar.",
+          services: item.services || [],
+          city: item.city || "Onbekend",
+          address: item.address || "Onbekend adres",
+          phoneNumber: item.phone_number || "Onbekend telefoonnummer",
+          availableDaysOfWeek: item.available_days_of_week || [],
+          unavailableDates: item.unavailable_dates || [],
+        }));
+
+        setCleaners(mappedCleaners);
       } catch (err: any) {
-        // setSupabaseError(err.message); // REMOVED
-        console.error("Error fetching cleaners from Supabase (catch block):", err);
+        console.error("Error fetching cleaners from Supabase:", err.message);
+        setFetchError(`Falha ao carregar limpadores: ${err.message}`);
+        showError(`Falha ao carregar limpadores: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCleaners();
-  }, [filterCity, filterPostcode]);
+  }, [filterCity, filterPostcode, minRating]);
 
   useEffect(() => {
     const newSearchParams = new URLSearchParams(searchParams);
@@ -195,17 +153,8 @@ const Zoeken = () => {
     setSearchParams({}); // Clear URL search params
   };
 
-  const allAvailableCleaners = useMemo(() => {
-    // Combine mock cleaners with real cleaners, ensuring uniqueness by ID
-    const combinedCleanersMap = new Map<string, Schoonmaker>();
-    mockCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
-    realCleaners.forEach(cleaner => combinedCleanersMap.set(cleaner.id, cleaner));
-    return Array.from(combinedCleanersMap.values());
-  }, [realCleaners]);
-
-
-  const filteredSchoonmakers = useMemo(() => {
-    let currentFilteredCleaners = allAvailableCleaners;
+  const filteredAndSortedCleaners = useMemo(() => {
+    let currentFilteredCleaners = cleaners;
 
     // Apply price range filter
     currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker => {
@@ -239,13 +188,6 @@ const Zoeken = () => {
       });
     }
 
-    // Apply minimum rating filter
-    if (minRating > 0) {
-      currentFilteredCleaners = currentFilteredCleaners.filter(schoonmaker =>
-        (schoonmaker.ratingAvg || 0) >= minRating
-      );
-    }
-
     // Apply sorting
     if (sortOption === "price_low_high") {
       currentFilteredCleaners.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
@@ -257,15 +199,34 @@ const Zoeken = () => {
     // "recommended" (default) doesn't require explicit sorting here, as the initial order is maintained or can be randomized.
 
     return currentFilteredCleaners;
-  }, [allAvailableCleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate, minRating, sortOption]);
+  }, [cleaners, priceRange, selectedServices, selectedDaysOfWeek, selectedDate, minRating, sortOption]);
 
   const initialPostcode = searchParams.get("postcode");
   const initialCity = searchParams.get("city");
 
   if (loading) {
     return (
-      <div className="container py-8 text-center">
-        <p>Laden van schoonmakers...</p>
+      <div className="container flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Laden van schoonmakers...</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="container py-20 text-center">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-500">Fout</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{fetchError}</p>
+            <Button asChild className="mt-4">
+              <Link to="/">Terug naar Home</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -418,10 +379,9 @@ const Zoeken = () => {
           <h1 className="text-3xl font-bold mb-4">
             {initialCity && initialPostcode ? `Schoonmakers in ${initialCity} (${initialPostcode})` : initialCity ? `Schoonmakers in ${initialCity}` : initialPostcode ? `Schoonmakers in de buurt van ${initialPostcode}` : "Schoonmakers in jouw buurt"}
           </h1>
-          {/* REMOVED: Error message for Supabase API key */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredSchoonmakers.length > 0 ? (
-              filteredSchoonmakers.map((schoonmaker) => (
+            {filteredAndSortedCleaners.length > 0 ? (
+              filteredAndSortedCleaners.map((schoonmaker) => (
                 <SchoonmakerCard key={schoonmaker.id} schoonmaker={schoonmaker} />
               ))
             ) : (
