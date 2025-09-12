@@ -1,0 +1,1 @@
+CREATE POLICY "Public read access for cleaners" ON public.cleaners FOR SELECT USING (true);
