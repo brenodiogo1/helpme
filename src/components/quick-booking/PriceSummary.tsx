@@ -8,7 +8,7 @@ interface PriceSummaryProps {
   durationHours: number;
   selectedExtraServices: string[];
   basePrice: number;
-  extrasPrice: number; // Added this property
+  extrasPrice: number;
   discountAmount: number;
   totalPrice: number;
 }
@@ -24,12 +24,12 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
   durationHours,
   selectedExtraServices,
   basePrice,
-  extrasPrice, // Now correctly destructured
+  extrasPrice,
   discountAmount,
   totalPrice,
 }) => {
   const { settings } = useSettings();
-  const platformFee = settings.platformBookingFee;
+  const platformFee = settings.serviceFeeFixed;
 
   return (
     <div className="space-y-4">

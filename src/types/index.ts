@@ -18,62 +18,35 @@ export interface Schoonmaker {
   services: string[];
   city: string;
   address: string;
-  postcode: string; // Added postcode
+  postcode: string;
   phoneNumber: string;
   reviews?: Review[];
   availableDaysOfWeek?: string[];
   unavailableDates?: string[];
 }
 
+// New Booking interface based on the provided schema
+export type BookingStatus = 'draft' | 'pending_payment' | 'paid' | 'cancelled';
+
 export interface Booking {
   id: string;
-  customer_id: string;
-  cleaner_id: string | null; // Permitir que cleaner_id seja nulo
-  booking_date: string;
-  booking_time: string;
+  customer_id: string | null; // Can be null for anonymous bookings
+  service_id: number | null;
+  frequency_code: 'once' | 'weekly' | 'biweekly' | null;
+  home_size_m2: number | null;
   duration_hours: number;
-  total_price: number;
-  status: 'pending_offer' | 'accepted' | 'rejected' | 'executing' | 'completed' | 'cancelled' | 'pending_assignment' | 'paid_pending_assignment'; // Adicionado 'paid_pending_assignment'
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:mm
+  allow_alt_weekday: boolean;
+  postcode: string | null;
+  city: string | null;
+  base_hourly_rate: number;
+  discount: number;
+  service_fee: number;
+  addons_total: number;
+  estimated_total: number;
+  status: BookingStatus;
   created_at: string;
-  updated_at: string;
-  address?: string; // Novo campo
-  postcode?: string; // Novo campo
-  phone_number?: string; // Novo campo
-  first_name?: string; // Novo campo
-  last_name?: string; // Novo campo
-  email?: string; // Novo campo
-  cleaners: {
-    name: string;
-    photo_url?: string;
-  } | null;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-    address?: string; // Added address to profile
-    postcode?: string; // Added postcode to profile
-  } | null;
-}
-
-export interface JobOffer {
-  id: string;
-  booking_id: string;
-  cleaner_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  bookings: {
-    id: string;
-    customer_id: string;
-    booking_date: string;
-    booking_time: string;
-    duration_hours: number;
-    total_price: number;
-    status: string;
-    profiles: {
-      first_name: string;
-      last_name: string;
-      address?: string; // Added address to profile
-      postcode?: string; // Added postcode to profile
-    } | null;
-  } | null;
+  // No cleaner_id, profiles, or cleaners directly in this new Booking interface
+  // These would be fetched separately if needed, or the schema would need to be extended.
 }

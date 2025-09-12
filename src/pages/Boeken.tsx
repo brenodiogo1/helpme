@@ -22,7 +22,7 @@ const mockSchoonmaker: Schoonmaker = {
     photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop",
     ratingAvg: 4.9,
     ratingCount: 128,
-    hourlyRate: 18.50,
+    hourlyRate: 18.50, // This will be overridden by baseHourlyRate from settings for calculation
     bio: "Bio",
     services: [],
     city: "Amsterdam",
@@ -60,9 +60,9 @@ const Boeken = () => {
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe'); // Novo estado para método de pagamento
     const checkoutRef = useRef<HTMLDivElement>(null);
 
-    const schoonmaker = mockSchoonmaker; // Fetch cleaner by id
+    const schoonmaker = mockSchoonmaker; // Fetch cleaner by id (for display purposes, pricing from settings)
 
-    const basePrice = hours * schoonmaker.hourlyRate;
+    const basePrice = hours * settings.baseHourlyRate;
     const extrasPrice = useMemo(() => {
         return extraServices
             .filter(service => selectedServices.includes(service.id))
@@ -77,7 +77,7 @@ const Boeken = () => {
     }, [selectedServices, extrasPrice]);
 
     const subtotal = basePrice + extrasPrice - discountAmount;
-    const platformFee = settings.platformBookingFee; // Get platform fee from settings
+    const platformFee = settings.serviceFeeFixed; // Get platform fee from settings
     const totalPrice = subtotal + platformFee;
 
     const handleServiceChange = (serviceId: string) => {
@@ -144,7 +144,7 @@ const Boeken = () => {
             setIsLoadingStripe(false); // No Stripe loading for cash payments
             setStripeError(null);
         }
-    }, [date, time, totalPrice, id, paymentMethod]); // Recarregar se o método de pagamento mudar
+    }, [date, time, totalPrice, id, paymentMethod, settings.baseHourlyRate, settings.serviceFeeFixed]); // Recarregar se o método de pagamento ou configurações mudarem
 
     const handleCashBooking = async () => {
         setIsLoadingStripe(true); // Usar isLoadingStripe para indicar processamento geral
@@ -156,35 +156,67 @@ const Boeken = () => {
                 throw new Error("Gebruiker niet ingelogd.");
             }
 
+            // Fetch service_id for 'Find a cleaner'
+            const { data: serviceData, error: serviceError } = await supabase
+                .from('services')
+                .select('id')
+                .eq('name', 'Find a cleaner')
+                .single();
+
+            if (serviceError || !serviceData) {
+                throw new Error(serviceError?.message || "Service 'Find a cleaner' not found.");
+            }
+
             const { data: bookingData, error: bookingError } = await supabase
                 .from('bookings')
                 .insert({
                     customer_id: user.id,
-                    cleaner_id: schoonmaker.id,
-                    booking_date: format(new Date(date), "yyyy-MM-dd"),
-                    booking_time: time,
+                    service_id: serviceData.id,
+                    frequency_code: 'once', // Default to 'once' for now, will be dynamic in new flow
                     duration_hours: hours,
-                    total_price: totalPrice,
-                    status: 'pending_offer', // Status para pagamento em dinheiro, aguardando aceitação do limpador
+                    date: format(new Date(date), "yyyy-MM-dd"),
+                    start_time: time,
+                    allow_alt_weekday: false, // Default for now
+                    postcode: schoonmaker.postcode, // Use cleaner's postcode for now
+                    city: schoonmaker.city, // Use cleaner's city for now
+                    base_hourly_rate: settings.baseHourlyRate,
+                    discount: 0, // No discount for 'once'
+                    service_fee: settings.serviceFeeFixed,
+                    addons_total: extrasPrice,
+                    estimated_total: totalPrice,
+                    status: 'pending_payment', // Status for cash payment, awaiting cleaner acceptance
                 })
-                .select()
+                .select('id')
                 .single();
 
             if (bookingError || !bookingData) {
                 throw new Error(bookingError?.message || "Fout bij het aanmaken van de boekingsaanvraag.");
             }
 
-            // Create a job offer for the cleaner
-            const { error: offerError } = await supabase
-                .from('job_offers')
-                .insert({
-                    booking_id: bookingData.id,
-                    cleaner_id: schoonmaker.id,
-                    status: 'pending', // Oferta pendente para o limpador
-                });
+            // Insert booking addons
+            if (selectedServices.length > 0) {
+                const { data: addonsData, error: addonsError } = await supabase
+                    .from('addons')
+                    .select('id, name')
+                    .in('name', extraServices.filter(es => selectedServices.includes(es.id)).map(es => es.label));
 
-            if (offerError) {
-                throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding.");
+                if (addonsError) {
+                    throw new Error(addonsError.message);
+                }
+
+                const bookingAddonsToInsert = addonsData.map(addon => ({
+                    booking_id: bookingData.id,
+                    addon_id: addon.id,
+                    qty: 1, // Assuming quantity is 1 for now
+                }));
+
+                const { error: insertAddonsError } = await supabase
+                    .from('booking_addons')
+                    .insert(bookingAddonsToInsert);
+
+                if (insertAddonsError) {
+                    throw new Error(insertAddonsError.message);
+                }
             }
 
             dismissToast(toastId);
@@ -192,11 +224,11 @@ const Boeken = () => {
 
             const confirmationDetails = {
                 schoonmaker,
-                date: date.toISOString(),
+                date: new Date(date).toISOString(),
                 time,
                 hours,
                 totalPrice,
-                status: 'pending_offer', // Status para a página de confirmação
+                status: 'pending_payment', // Status for the confirmation page
                 bookingId: bookingData.id,
             };
             navigate("/bevestiging", { state: { bookingDetails: confirmationDetails } });

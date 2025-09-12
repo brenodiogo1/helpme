@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 import { loadStripe } from '@stripe/stripe-js';
-// Removido import { Schoonmaker } from "@/types";
+import { BookingStatus } from "@/types";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -25,13 +25,21 @@ const Bevestiging = () => {
       const params = new URLSearchParams(location.search);
       const sessionId = params.get('session_id');
 
+      if (!bookingDetails) {
+        setPaymentStatus('failed'); // No booking details means something went wrong
+        showError("Geen boekingsinformatie gevonden.");
+        return;
+      }
+
+      // Handle cash bookings or direct navigation to confirmation
+      if (bookingDetails.status === 'pending_payment') {
+        setPaymentStatus('pending');
+        return;
+      }
+
       if (!sessionId) {
-        // If no session_id, it means it's a quick booking (cash) or direct navigation
-        if (bookingDetails?.status === 'pending_assignment') {
-          setPaymentStatus('pending');
-        } else {
-          setPaymentStatus('failed'); // Or handle as a direct confirmation without payment
-        }
+        setPaymentStatus('failed'); // If it's supposed to be a Stripe payment but no session ID
+        showError("Geen Stripe sessie ID gevonden voor betalingsbevestiging.");
         return;
       }
 
@@ -60,89 +68,83 @@ const Bevestiging = () => {
         if (status === 'complete' && payment_status === 'paid') {
           setPaymentStatus('succeeded');
 
-          // Retrieve booking details from location state
-          const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, phone, address, city, zipCode, notes, selectedExtraServices, basePrice, extrasPrice, discountAmount, platformFee } = bookingDetails; // Removido selectedServices
-
           if (!bookingCreated && bookingDetails) {
-            // Check if it's a quick booking (no cleaner_id) or a regular booking
-            const isQuickBooking = !schoonmaker?.id;
+            // Retrieve booking details from location state
+            const { date, time, hours, totalPrice, city, zipCode, selectedExtraServices, basePrice, extrasPrice, discountAmount, platformFee } = bookingDetails;
 
-            let insertData: any = {
-                booking_date: format(new Date(date), "yyyy-MM-dd"),
-                booking_time: time,
-                duration_hours: hours,
-                total_price: totalPrice,
-                status: 'paid_pending_assignment', // Status inicial para quick booking pago
-            };
+            // Fetch service_id for 'Find a cleaner'
+            const { data: serviceData, error: serviceError } = await supabase
+                .from('services')
+                .select('id')
+                .eq('name', 'Find a cleaner')
+                .single();
 
-            if (isQuickBooking) {
-                // For quick bookings, insert into quick_bookings table
-                insertData = {
-                    ...insertData,
-                    first_name: firstName,
-                    last_name: lastName,
-                    email: email,
-                    phone: phone,
-                    address: address,
-                    city: city,
-                    zip_code: zipCode,
-                    notes: notes,
-                    extra_services: selectedExtraServices,
-                    base_price: basePrice,
-                    extras_price: extrasPrice,
-                    discount_amount: discountAmount,
-                    platform_fee: platformFee,
-                };
-
-                const { data: newQuickBookingData, error: quickBookingError } = await supabase
-                    .from('quick_bookings')
-                    .insert(insertData)
-                    .select()
-                    .single();
-
-                if (quickBookingError || !newQuickBookingData) {
-                    throw new Error(quickBookingError?.message || "Fout bij het aanmaken van de snelle boeking na betaling.");
-                }
-                setBookingDetails({ ...bookingDetails, status: 'paid_pending_assignment', bookingId: newQuickBookingData.id });
-
-            } else {
-                // For regular bookings, insert into bookings table
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) {
-                    throw new Error("Gebruiker niet ingelogd.");
-                }
-                insertData = {
-                    ...insertData,
-                    customer_id: user.id,
-                    cleaner_id: schoonmaker.id,
-                    status: 'accepted', // Status 'accepted' após pagamento bem-sucedido
-                };
-
-                const { data: newBookingData, error: bookingError } = await supabase
-                    .from('bookings')
-                    .insert(insertData)
-                    .select()
-                    .single();
-
-                if (bookingError || !newBookingData) {
-                    throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
-                }
-
-                // Create the job offer for the cleaner
-                const { error: offerError } = await supabase
-                    .from('job_offers')
-                    .insert({
-                        booking_id: newBookingData.id,
-                        cleaner_id: schoonmaker.id,
-                        status: 'accepted', // Oferta aceita automaticamente se o pagamento foi feito
-                    });
-
-                if (offerError) {
-                    throw new Error(offerError?.message || "Fout bij het aanmaken van de jobaanbieding na betaling.");
-                }
-                setBookingDetails({ ...bookingDetails, status: 'accepted', bookingId: newBookingData.id });
+            if (serviceError || !serviceData) {
+                throw new Error(serviceError?.message || "Service 'Find a cleaner' not found.");
             }
 
+            const insertData = {
+                customer_id: null, // For public quick booking, customer_id is null initially
+                service_id: serviceData.id,
+                frequency_code: 'once', // Default for quick booking
+                home_size_m2: null,
+                duration_hours: hours,
+                date: format(new Date(date), "yyyy-MM-dd"),
+                start_time: time,
+                allow_alt_weekday: false,
+                postcode: zipCode,
+                city: city,
+                base_hourly_rate: basePrice / hours, // Calculate hourly rate from basePrice and hours
+                discount: discountAmount,
+                service_fee: platformFee,
+                addons_total: extrasPrice,
+                estimated_total: totalPrice,
+                status: 'paid' as BookingStatus, // Mark as paid
+            };
+
+            const { data: newBookingData, error: bookingError } = await supabase
+                .from('bookings')
+                .insert(insertData)
+                .select('id')
+                .single();
+
+            if (bookingError || !newBookingData) {
+                throw new Error(bookingError?.message || "Fout bij het aanmaken van de boeking na betaling.");
+            }
+
+            // Insert booking addons
+            if (selectedExtraServices && selectedExtraServices.length > 0) {
+                const extraServicesOptions = [
+                    { id: "ramen", label: "Ramen wassen", price: 25.00 },
+                    { id: "oven", label: "Oven reinigen", price: 15.00 },
+                    { id: "koelkast", label: "Koelkast reinigen", price: 15.00 },
+                    { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
+                ];
+                const { data: addonsData, error: addonsFetchError } = await supabase
+                    .from('addons')
+                    .select('id, name')
+                    .in('name', extraServicesOptions.filter(es => selectedExtraServices.includes(es.id)).map(es => es.label));
+
+                if (addonsFetchError) {
+                    throw new Error(addonsFetchError.message);
+                }
+
+                const bookingAddonsToInsert = addonsData.map(addon => ({
+                    booking_id: newBookingData.id,
+                    addon_id: addon.id,
+                    qty: 1, // Assuming quantity is 1 for now
+                }));
+
+                const { error: insertAddonsError } = await supabase
+                    .from('booking_addons')
+                    .insert(bookingAddonsToInsert);
+
+                if (insertAddonsError) {
+                    throw new Error(insertAddonsError.message);
+                }
+            }
+
+            setBookingDetails({ ...bookingDetails, status: 'paid', bookingId: newBookingData.id });
             setBookingCreated(true);
             showSuccess("Betaling succesvol! Je boeking is bevestigd.");
           }
@@ -173,7 +175,7 @@ const Bevestiging = () => {
   }
 
   const { schoonmaker, date, time, hours, totalPrice, firstName, lastName, email, address, city, zipCode } = bookingDetails;
-  const isQuickBooking = !schoonmaker?.id;
+  const isQuickBooking = !schoonmaker?.id; // Determine if it's a quick booking based on cleaner presence
 
   const renderContent = () => {
     switch (paymentStatus) {
@@ -209,12 +211,12 @@ const Bevestiging = () => {
                         <p><strong>E-mail:</strong> {email}</p>
                         <p><strong>Adres:</strong> {address}, {zipCode} {city}</p>
                         <p><strong>Schoonmaker:</strong> Wordt toegewezen</p>
-                        <p><strong>Status:</strong> Betaald, wacht op toewijzing</p>
+                        <p><strong>Status:</strong> Betaald</p>
                     </>
                 ) : (
                     <>
                         <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
-                        <p><strong>Status:</strong> Geaccepteerd</p>
+                        <p><strong>Status:</strong> Betaald</p>
                     </>
                 )}
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>
@@ -246,12 +248,12 @@ const Bevestiging = () => {
                         <p><strong>E-mail:</strong> {email}</p>
                         <p><strong>Adres:</strong> {address}, {zipCode} {city}</p>
                         <p><strong>Schoonmaker:</strong> Wordt toegewezen</p>
-                        <p><strong>Status:</strong> In afwachting van toewijzing</p>
+                        <p><strong>Status:</strong> In afwachting van betaling/toewijzing</p>
                     </>
                 ) : (
                     <>
                         <p><strong>Schoonmaker:</strong> {schoonmaker?.name || "Nog niet toegewezen"}</p>
-                        <p><strong>Status:</strong> In afwachting van aanbieding</p>
+                        <p><strong>Status:</strong> In afwachting van betaling/aanbieding</p>
                     </>
                 )}
                 <p><strong>Datum:</strong> {format(new Date(date), "eeee d MMMM yyyy", { locale: nl })}</p>

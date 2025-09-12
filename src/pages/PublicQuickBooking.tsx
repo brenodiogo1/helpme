@@ -71,8 +71,8 @@ const PublicQuickBooking: React.FC = () => {
   ];
 
   useEffect(() => {
-    if (settings.hourlyRate !== undefined && settings.hourlyRate !== null) {
-      const calculatedBasePrice = durationHours * settings.hourlyRate;
+    if (settings.baseHourlyRate !== undefined && settings.baseHourlyRate !== null) {
+      const calculatedBasePrice = durationHours * settings.baseHourlyRate;
       setBasePrice(calculatedBasePrice);
 
       const calculatedExtrasPrice = selectedExtraServices.reduce((sum: number, serviceId: string) => {
@@ -81,41 +81,82 @@ const PublicQuickBooking: React.FC = () => {
       }, 0);
       setExtrasPrice(calculatedExtrasPrice);
 
-      const calculatedTotalPrice = calculatedBasePrice + calculatedExtrasPrice + settings.platformBookingFee - discountAmount;
+      const calculatedTotalPrice = calculatedBasePrice + calculatedExtrasPrice + settings.serviceFeeFixed - discountAmount;
       setTotalPrice(calculatedTotalPrice);
     }
-  }, [durationHours, selectedExtraServices, settings.hourlyRate, settings.platformBookingFee, discountAmount]);
+  }, [durationHours, selectedExtraServices, settings.baseHourlyRate, settings.serviceFeeFixed, discountAmount]);
 
   const handleCashBookingSubmit = async (data: QuickBookingFormData) => {
-    const { error } = await supabase.from('quick_bookings').insert({
-      booking_date: data.bookingDate.toISOString().split('T')[0],
-      booking_time: data.bookingTime,
+    // Fetch service_id for 'Find a cleaner'
+    const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('id')
+        .eq('name', 'Find a cleaner')
+        .single();
+
+    if (serviceError || !serviceData) {
+        console.error("Error fetching service ID:", serviceError);
+        toast.error("Service 'Find a cleaner' not found. Please contact support.");
+        return;
+    }
+
+    const { data: newBooking, error } = await supabase.from('bookings').insert({
+      service_id: serviceData.id,
+      frequency_code: 'once', // Default to 'once' for quick booking
+      home_size_m2: null, // Not collected in quick booking
       duration_hours: data.durationHours,
-      extra_services: data.selectedExtraServices,
-      first_name: data.firstName,
-      last_name: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
+      date: data.bookingDate.toISOString().split('T')[0],
+      start_time: data.bookingTime,
+      allow_alt_weekday: false, // Default for quick booking
+      postcode: data.zipCode,
       city: data.city,
-      zip_code: data.zipCode,
-      notes: data.notes,
-      base_price: basePrice,
-      extras_price: extrasPrice,
-      discount_amount: discountAmount,
-      total_price: totalPrice,
-      platform_fee: settings.platformBookingFee,
-      status: 'pending',
-    });
+      base_hourly_rate: settings.baseHourlyRate,
+      discount: discountAmount,
+      service_fee: settings.serviceFeeFixed,
+      addons_total: extrasPrice,
+      estimated_total: totalPrice,
+      status: 'draft', // Initial status for cash booking
+    }).select('id').single();
 
     if (error) {
       console.error("Error submitting cash booking:", error);
       toast.error("Er is een fout opgetreden bij het indienen van uw boeking. Probeer het opnieuw.");
-    } else {
-      toast.success("Uw boeking is succesvol ingediend!");
-      reset();
-      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours } } });
+      return;
     }
+
+    // Insert booking addons
+    if (selectedExtraServices.length > 0) {
+        const { data: addonsData, error: addonsFetchError } = await supabase
+            .from('addons')
+            .select('id, name')
+            .in('name', extraServicesOptions.filter(es => selectedExtraServices.includes(es.id)).map(es => es.label));
+
+        if (addonsFetchError) {
+            console.error("Error fetching addons:", addonsFetchError);
+            toast.error("Er is een fout opgetreden bij het toevoegen van extra diensten.");
+            return;
+        }
+
+        const bookingAddonsToInsert = addonsData.map(addon => ({
+            booking_id: newBooking.id,
+            addon_id: addon.id,
+            qty: 1, // Assuming quantity is 1 for now
+        }));
+
+        const { error: insertAddonsError } = await supabase
+            .from('booking_addons')
+            .insert(bookingAddonsToInsert);
+
+        if (insertAddonsError) {
+            console.error("Error inserting booking addons:", insertAddonsError);
+            toast.error("Er is een fout opgetreden bij het opslaan van extra diensten.");
+            return;
+        }
+    }
+
+    toast.success("Uw boeking is succesvol ingediend!");
+    reset();
+    navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_payment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode, notes: data.notes, selectedExtraServices: data.selectedExtraServices, basePrice: basePrice, extrasPrice: extrasPrice, discountAmount: discountAmount, platformFee: settings.serviceFeeFixed } } });
   };
 
   const onSubmit = async (data: QuickBookingFormData) => {
@@ -169,7 +210,7 @@ const PublicQuickBooking: React.FC = () => {
                   stripeError={stripeError}
                   setStripeError={setStripeError}
                   formTrigger={trigger}
-                  isLoadingStripe={isLoadingStripe} // <--- Passed isLoadingStripe here
+                  isLoadingStripe={isLoadingStripe}
                 />
               )}
 

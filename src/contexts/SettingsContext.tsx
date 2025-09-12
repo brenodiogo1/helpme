@@ -1,17 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Corrected import path
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppSettings {
-  hourlyRate: number;
-  platformBookingFee: number;
   googleMapsApiKey: string;
   twilioAccountSid: string;
   twilioAuthToken: string;
   twilioPhoneNumber: string;
   sendGridApiKey: string;
   platformCommissionPercentage: number;
+  baseHourlyRate: number;
+  serviceFeeFixed: number;
 }
 
 interface SettingsContextType {
@@ -23,14 +23,14 @@ interface SettingsContextType {
 }
 
 const defaultSettings: AppSettings = {
-  hourlyRate: 25.00,
-  platformBookingFee: 5.00,
   googleMapsApiKey: '',
   twilioAccountSid: '',
   twilioAuthToken: '',
   twilioPhoneNumber: '',
   sendGridApiKey: '',
   platformCommissionPercentage: 0,
+  baseHourlyRate: 16.90,
+  serviceFeeFixed: 2.90,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -44,29 +44,38 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      // Fetch from app_settings for general settings
+      const { data: appSettingsData, error: appSettingsError } = await supabase
         .from('app_settings')
         .select('*')
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (appSettingsError && appSettingsError.code !== 'PGRST116') {
+        console.warn("No app_settings found, using defaults for some fields:", appSettingsError.message);
       }
 
-      if (data) {
-        setSettings({
-          hourlyRate: data.hourly_rate || defaultSettings.hourlyRate,
-          platformBookingFee: data.platform_booking_fee || defaultSettings.platformBookingFee,
-          googleMapsApiKey: data.google_maps_api_key || defaultSettings.googleMapsApiKey,
-          twilioAccountSid: data.twilio_account_sid || defaultSettings.twilioAccountSid,
-          twilioAuthToken: data.twilio_auth_token || defaultSettings.twilioAuthToken,
-          twilioPhoneNumber: data.twilio_phone_number || defaultSettings.twilioPhoneNumber,
-          sendGridApiKey: data.send_grid_api_key || defaultSettings.sendGridApiKey,
-          platformCommissionPercentage: data.platform_commission_percentage || defaultSettings.platformCommissionPercentage,
-        });
-      } else {
-        setSettings(defaultSettings);
+      // Fetch base_hourly_rate and service_fee from the 'services' table
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('base_hourly_rate, service_fee')
+        .eq('name', 'Find a cleaner')
+        .single();
+
+      if (serviceError && serviceError.code !== 'PGRST116') {
+        console.error("Failed to fetch 'Find a cleaner' service settings:", serviceError);
+        throw serviceError;
       }
+
+      setSettings({
+        googleMapsApiKey: appSettingsData?.google_maps_api_key || defaultSettings.googleMapsApiKey,
+        twilioAccountSid: appSettingsData?.twilio_account_sid || defaultSettings.twilioAccountSid,
+        twilioAuthToken: appSettingsData?.twilio_auth_token || defaultSettings.twilioAuthToken,
+        twilioPhoneNumber: appSettingsData?.twilio_phone_number || defaultSettings.twilioPhoneNumber,
+        sendGridApiKey: appSettingsData?.send_grid_api_key || defaultSettings.sendGridApiKey,
+        platformCommissionPercentage: appSettingsData?.platform_commission_percentage || defaultSettings.platformCommissionPercentage,
+        baseHourlyRate: serviceData?.base_hourly_rate || defaultSettings.baseHourlyRate,
+        serviceFeeFixed: serviceData?.service_fee || defaultSettings.serviceFeeFixed,
+      });
     } catch (err: any) {
       console.error("Failed to fetch settings:", err);
       setError(err.message || "Failed to load application settings.");
@@ -82,7 +91,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       [key]: value,
     }));
     // In a real app, you'd also persist this to Supabase here
-    // For now, it's an in-memory update.
   };
 
   useEffect(() => {

@@ -19,7 +19,8 @@ const formSchema = z.object({
   twilioAuthToken: z.string().optional(),
   twilioPhoneNumber: z.string().optional(),
   sendGridApiKey: z.string().optional(),
-  platformBookingFee: z.coerce.number().min(0, { message: "A taxa de reserva não pode ser negativa." }).optional(),
+  baseHourlyRate: z.coerce.number().min(0, { message: "A taxa horária base não pode ser negativa." }).optional(),
+  serviceFeeFixed: z.coerce.number().min(0, { message: "A taxa de serviço fixa não pode ser negativa." }).optional(),
   platformCommissionPercentage: z.coerce.number().min(0).max(100, { message: "A comissão deve ser entre 0 e 100%." }).optional(),
 });
 
@@ -34,7 +35,8 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
-      platformBookingFee: settings.platformBookingFee,
+      baseHourlyRate: settings.baseHourlyRate,
+      serviceFeeFixed: settings.serviceFeeFixed,
       platformCommissionPercentage: settings.platformCommissionPercentage,
     },
   });
@@ -46,7 +48,8 @@ const AdminSettings = () => {
       twilioAuthToken: settings.twilioAuthToken,
       twilioPhoneNumber: settings.twilioPhoneNumber,
       sendGridApiKey: settings.sendGridApiKey,
-      platformBookingFee: settings.platformBookingFee,
+      baseHourlyRate: settings.baseHourlyRate,
+      serviceFeeFixed: settings.serviceFeeFixed,
       platformCommissionPercentage: settings.platformCommissionPercentage,
     });
   }, [settings, form]);
@@ -58,7 +61,8 @@ const AdminSettings = () => {
     updateSetting("twilioAuthToken", values.twilioAuthToken || "");
     updateSetting("twilioPhoneNumber", values.twilioPhoneNumber || "");
     updateSetting("sendGridApiKey", values.sendGridApiKey || "");
-    updateSetting("platformBookingFee", values.platformBookingFee || 0);
+    updateSetting("baseHourlyRate", values.baseHourlyRate || 0);
+    updateSetting("serviceFeeFixed", values.serviceFeeFixed || 0);
     updateSetting("platformCommissionPercentage", values.platformCommissionPercentage || 0);
 
     console.log("Configurações salvas (simulação):", values);
@@ -81,12 +85,28 @@ const AdminSettings = () => {
                 <h3 className="font-semibold">Algemene Tarieven & Commissies</h3>
                 <FormField
                   control={form.control}
-                  name="platformBookingFee"
+                  name="baseHourlyRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Vaste Boekingskosten (€)</FormLabel>
+                      <FormLabel>Basis Uurtarief (€)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" placeholder="4.90" {...field} />
+                        <Input type="number" step="0.01" placeholder="16.90" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Het standaard uurtarief voor schoonmakers.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="serviceFeeFixed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vaste Servicekosten (€)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="2.90" {...field} />
                       </FormControl>
                       <FormDescription>
                         Een vaste vergoeding die aan elke boeking wordt toegevoegd.
