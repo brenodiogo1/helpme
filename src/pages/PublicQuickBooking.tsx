@@ -48,19 +48,20 @@ const PublicQuickBooking: React.FC = () => {
     },
   });
 
-  const { handleSubmit, watch, formState, reset, trigger } = methods;
+  const { handleSubmit, watch, formState, reset, trigger, getValues } = methods; // Adicionado getValues
 
   const durationHours = watch("durationHours");
   const selectedExtraServices = watch("selectedExtraServices") || [];
   const bookingDate = watch("bookingDate");
   const bookingTime = watch("bookingTime");
+  const quickBookingFormData = getValues(); // Obter todos os dados do formulário
 
   const [basePrice, setBasePrice] = useState(0);
   const [extrasPrice, setExtrasPrice] = useState(0);
-  const [discountAmount] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0); // Alterado para useState
   const [totalPrice, setTotalPrice] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
-  const [isLoadingStripe, setIsLoadingStripe] = useState(false); // Estado para carregamento do Stripe
+  const [isLoadingStripe, setIsLoadingStripe] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
 
   const extraServicesOptions = [
@@ -70,21 +71,31 @@ const PublicQuickBooking: React.FC = () => {
     { id: "strijken", label: "Strijken (per uur)", price: 10.00 },
   ];
 
+  const MIN_SERVICES_FOR_DISCOUNT = 2;
+  const DISCOUNT_PERCENTAGE = 0.10;
+
   useEffect(() => {
     if (settings.hourlyRate !== undefined && settings.hourlyRate !== null) {
       const calculatedBasePrice = durationHours * settings.hourlyRate;
       setBasePrice(calculatedBasePrice);
 
-      const calculatedExtrasPrice = selectedExtraServices.reduce((sum: number, serviceId: string) => {
+      const currentExtrasPrice = selectedExtraServices.reduce((sum: number, serviceId: string) => {
         const service = extraServicesOptions.find(s => s.id === serviceId);
         return sum + (service ? service.price : 0);
       }, 0);
-      setExtrasPrice(calculatedExtrasPrice);
+      setExtrasPrice(currentExtrasPrice);
 
-      const calculatedTotalPrice = calculatedBasePrice + calculatedExtrasPrice + settings.platformBookingFee - discountAmount;
+      let currentDiscountAmount = 0;
+      if (selectedExtraServices.length >= MIN_SERVICES_FOR_DISCOUNT) {
+        currentDiscountAmount = currentExtrasPrice * DISCOUNT_PERCENTAGE;
+      }
+      setDiscountAmount(currentDiscountAmount);
+
+      const calculatedTotalPrice = calculatedBasePrice + currentExtrasPrice + settings.platformBookingFee - currentDiscountAmount;
       setTotalPrice(calculatedTotalPrice);
     }
-  }, [durationHours, selectedExtraServices, settings.hourlyRate, settings.platformBookingFee, discountAmount]);
+  }, [durationHours, selectedExtraServices, settings.hourlyRate, settings.platformBookingFee, discountAmount, extraServicesOptions]);
+
 
   const handleCashBookingSubmit = async (data: QuickBookingFormData) => {
     const { error } = await supabase.from('quick_bookings').insert({
@@ -114,7 +125,7 @@ const PublicQuickBooking: React.FC = () => {
     } else {
       toast.success("Uw boeking is succesvol ingediend!");
       reset();
-      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours } } });
+      navigate('/bevestiging', { state: { bookingDetails: { status: 'pending_assignment', totalPrice: totalPrice, date: data.bookingDate.toISOString(), time: data.bookingTime, hours: data.durationHours, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, address: data.address, city: data.city, zipCode: data.zipCode } } });
     }
   };
 
@@ -169,7 +180,12 @@ const PublicQuickBooking: React.FC = () => {
                   stripeError={stripeError}
                   setStripeError={setStripeError}
                   formTrigger={trigger}
-                  isLoadingStripe={isLoadingStripe} // <--- Passed isLoadingStripe here
+                  isLoadingStripe={isLoadingStripe}
+                  quickBookingFormData={quickBookingFormData} // Passa todos os dados do formulário
+                  basePrice={basePrice}
+                  extrasPrice={extrasPrice}
+                  discountAmount={discountAmount}
+                  platformFee={settings.platformBookingFee}
                 />
               )}
 
