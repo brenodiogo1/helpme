@@ -8,7 +8,7 @@ import NotFound from "@/pages/NotFound";
 import Layout from "@/components/Layout";
 import Zoeken from "@/pages/Zoeken";
 import SchoonmakerProfiel from "@/pages/SchoonmakerProfiel";
-import Boeken from "@/pages/Boeken";
+// import Boeken from "@/pages/Boeken"; // Removed
 import Bevestiging from "@/pages/Bevestiging";
 import VoorSchoonmakers from "@/pages/VoorSchoonmakers";
 import Login from "@/pages/Login";
@@ -97,7 +97,7 @@ const App = () => {
                   <Route path="/" element={<Index />} />
                   <Route path="/zoeken" element={<Zoeken />} />
                   <Route path="/schoonmaker/:id" element={<SchoonmakerProfiel />} />
-                  <Route path="/boeken/:id" element={<Boeken />} />
+                  {/* <Route path="/boeken/:id" element={<Boeken />} /> */} {/* Removed this route */}
                   <Route path="/bevestiging" element={<Bevestiging />} />
                   <Route path="/voor-schoonmakers" element={<VoorSchoonmakers />} />
                   <Route path="/login" element={<Login />} />

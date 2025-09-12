@@ -16,7 +16,7 @@ import { nl } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 
-const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
+const timeSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"];
 
 const SchoonmakerProfiel = () => {
   const { id } = useParams<{ id: string }>();
@@ -117,7 +117,17 @@ const SchoonmakerProfiel = () => {
 
   const handleBooking = () => {
     if (selectedDate && selectedTime && cleaner) {
-      navigate(`/boeken/${cleaner.id}`, { state: { date: selectedDate.toISOString(), time: selectedTime } });
+      // Navigate to PublicQuickBooking with pre-filled parameters
+      navigate(`/quick-booking`, { 
+        state: { 
+          date: selectedDate.toISOString(), 
+          time: selectedTime,
+          postcode: cleaner.postcode,
+          city: cleaner.city,
+          // You might want to pass cleaner.id if the quick booking needs to pre-select a cleaner
+          // For now, the quick booking is generic, so we'll just pass location details.
+        } 
+      });
     }
   };
 

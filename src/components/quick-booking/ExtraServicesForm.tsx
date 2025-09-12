@@ -35,44 +35,36 @@ const ExtraServicesSelection: React.FC<ExtraServicesSelectionProps> = ({ isSubmi
     <div className="space-y-4">
       <h3 className="font-semibold text-lg">Extra diensten</h3>
       <div className="grid grid-cols-2 gap-4 mt-2">
-        <FormField
-          control={control}
-          name="selectedExtraServices"
-          render={({ field: _field }) => ( // Renamed 'field' to '_field'
-            <FormItem>
-              {extraServices.map(service => (
-                <FormField
-                  key={service.id}
-                  control={control}
-                  name="selectedExtraServices"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value?.includes(service.id)}
-                          onCheckedChange={(checked) => {
-                            return checked
-                              ? field.onChange([...(field.value || []), service.id])
-                              : field.onChange(
-                                  field.value?.filter(
-                                    (value: string) => value !== service.id
-                                  )
-                                );
-                          }}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <Label className="flex justify-between w-full font-normal cursor-pointer">
-                        <span>{service.label}</span>
-                        <span>€{service.price.toFixed(2)}</span>
-                      </Label>
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </FormItem>
-          )}
-        />
+        {extraServices.map(service => (
+          <FormField
+            key={service.id}
+            control={control}
+            name="selectedExtraServices"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value?.includes(service.id)}
+                    onCheckedChange={(checked) => {
+                      return checked
+                        ? field.onChange([...(field.value || []), service.id])
+                        : field.onChange(
+                            field.value?.filter(
+                              (value: string) => value !== service.id
+                            )
+                          );
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <Label className="flex justify-between w-full font-normal cursor-pointer">
+                  <span>{service.label}</span>
+                  <span>€{service.price.toFixed(2)}</span>
+                </Label>
+              </FormItem>
+            )}
+          />
+        ))}
       </div>
       {selectedExtraServices.length >= MIN_SERVICES_FOR_DISCOUNT && (
           <p className="text-sm text-green-600 mt-2">
