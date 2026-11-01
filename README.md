@@ -21,3 +21,7 @@ pnpm lint
 ```
 
 This project is still being developed. Do not commit private keys or service credentials.
+
+## Ownership and permissions
+
+Original material owned by Breno Diogo Ramos de Souza is proprietary, with all rights reserved. See [LICENSE](LICENSE). Third-party components retain their own licenses; prior license grants are not revoked.
